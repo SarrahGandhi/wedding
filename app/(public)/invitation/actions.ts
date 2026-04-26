@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import type { Database } from "@/database.types";
+import type { Database } from "@/lib/supabase/database.types";
 
 type RsvpStatus = Database["public"]["Enums"]["event_rsvp_status"];
 
