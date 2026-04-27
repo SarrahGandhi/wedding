@@ -46,8 +46,8 @@ importers:
         specifier: 16.2.1
         version: 16.2.1(@typescript-eslint/parser@8.57.2(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
       supabase:
-        specifier: ^2.84.4
-        version: 2.84.4
+        specifier: ^2.84.6
+        version: 2.95.3
       tailwindcss:
         specifier: ^4
         version: 4.2.2
@@ -769,9 +769,9 @@ packages:
     engines: {node: '>=0.4.0'}
     hasBin: true
 
-  agent-base@8.0.0:
-    resolution: {integrity: sha512-QT8i0hCz6C/KQ+KTAbSNwCHDGdmUJl2tp2ZpNlGSWCfhUNVbYG2WLE3MdZGBAgXPV4GAvjGMxo+C1hroyxmZEg==}
-    engines: {node: '>= 14'}
+  agent-base@9.0.0:
+    resolution: {integrity: sha512-TQf59BsZnytt8GdJKLPfUZ54g/iaUL2OWDSFCCvMOhsHduDQxO8xC4PNeyIkVcA5KwL2phPSv0douC0fgWzmnA==}
+    engines: {node: '>= 20'}
 
   ajv@6.14.0:
     resolution: {integrity: sha512-IWrosm/yrn43eiKqkfkHis7QioDleaXQHdDVPKg0FSwwd/DuvyX79TZnFOnYpB7dcsFAMmtFztZuXPDvSePkFw==}
@@ -1306,9 +1306,9 @@ packages:
   hermes-parser@0.25.1:
     resolution: {integrity: sha512-6pEjquH3rqaI6cYAXYPcz9MS4rY6R4ngRgrgfDshRptUZIc3lw0MCIJIGDj9++mfySOuPTHB4nrSW99BCvOPIA==}
 
-  https-proxy-agent@8.0.0:
-    resolution: {integrity: sha512-YYeW+iCnAS3xhvj2dvVoWgsbca3RfQy/IlaNHHOtDmU0jMqPI9euIq3Y9BJETdxk16h9NHHCKqp/KB9nIMStCQ==}
-    engines: {node: '>= 14'}
+  https-proxy-agent@9.0.0:
+    resolution: {integrity: sha512-/MVmHp58WkOypgFhCLk4fzpPcFQvTJ/e6LBI7irpIO2HfxUbpmYoHF+KzipzJpxxzJu7aJNWQ0xojJ/dzV2G5g==}
+    engines: {node: '>= 20'}
 
   iceberg-js@0.8.1:
     resolution: {integrity: sha512-1dhVQZXhcHje7798IVM+xoo/1ZdVfzOMIc8/rgVSijRK38EDqOJoGula9N/8ZI5RD8QTxNQtK/Gozpr+qUqRRA==}
@@ -1957,8 +1957,8 @@ packages:
       babel-plugin-macros:
         optional: true
 
-  supabase@2.84.4:
-    resolution: {integrity: sha512-+WSe/7FFMuEOa1LJr1tZh12WDwW6lpKSmBjiEmf7m9j/ialf2oxeUMlsJCdYpST5kQ7PN0XDyvqnjE0tv/AB2w==}
+  supabase@2.95.3:
+    resolution: {integrity: sha512-KsAEOmmZsnO8WYP8nI9LhXwLExcGgoPpIUrFnxm56eDsAaeBUiGJRMG6nerMuv/rDvqFByco16Po3IhUnFPpmQ==}
     engines: {npm: '>=8'}
     hasBin: true
 
@@ -2768,7 +2768,7 @@ snapshots:
 
   acorn@8.16.0: {}
 
-  agent-base@8.0.0: {}
+  agent-base@9.0.0: {}
 
   ajv@6.14.0:
     dependencies:
@@ -3476,9 +3476,9 @@ snapshots:
     dependencies:
       hermes-estree: 0.25.1
 
-  https-proxy-agent@8.0.0:
+  https-proxy-agent@9.0.0:
     dependencies:
-      agent-base: 8.0.0
+      agent-base: 9.0.0
       debug: 4.4.3
     transitivePeerDependencies:
       - supports-color
@@ -4168,10 +4168,10 @@ snapshots:
     optionalDependencies:
       '@babel/core': 7.29.0
 
-  supabase@2.84.4:
+  supabase@2.95.3:
     dependencies:
       bin-links: 6.0.0
-      https-proxy-agent: 8.0.0
+      https-proxy-agent: 9.0.0
       node-fetch: 3.3.2
       tar: 7.5.13
     transitivePeerDependencies:
