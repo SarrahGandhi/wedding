@@ -3,13 +3,14 @@
 import { useState, useTransition } from "react";
 import { updateGuest, deleteGuest } from "./actions";
 import { BabyIcon, MarsIcon, VenusIcon } from "lucide-react";
+import type { GuestCategory, GuestSide } from "@/lib/types";
 
-type Family = { id: number; side: "BRIDE" | "GROOM"; label: string };
+type Family = { id: number; side: GuestSide; label: string };
 
 type Guest = {
   id: number;
   name: string;
-  category: "MALE" | "FEMALE" | "CHILD";
+  category: GuestCategory;
   family_id: number;
 };
 

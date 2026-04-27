@@ -1,11 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { createFamily } from "./actions";
 import { FamilySection } from "./FamilySection";
+import type { GuestCategory } from "@/lib/types";
 
 type Guest = {
   id: number;
   name: string;
-  category: "MALE" | "FEMALE" | "CHILD";
+  category: GuestCategory;
   family_id: number;
 };
 

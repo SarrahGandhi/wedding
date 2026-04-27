@@ -2,22 +2,27 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/supabase/admin-auth";
-import type { Enums } from "@/lib/supabase/database.types";
+import {
+  GUEST_CATEGORIES,
+  GUEST_SIDES,
+  type GuestCategory,
+  type GuestSide,
+} from "@/lib/types";
 
-const CATEGORIES: Enums<"guest_category">[] = ["MALE", "FEMALE", "CHILD"];
-const SIDES: Enums<"guest_side">[] = ["BRIDE", "GROOM"];
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-function parseCategory(value: FormDataEntryValue | null): Enums<"guest_category"> | null {
+function parseCategory(value: FormDataEntryValue | null): GuestCategory | null {
   const v = String(value ?? "");
-  return (CATEGORIES as string[]).includes(v)
-    ? (v as Enums<"guest_category">)
+  return (GUEST_CATEGORIES as readonly string[]).includes(v)
+    ? (v as GuestCategory)
     : null;
 }
 
-function parseSide(value: FormDataEntryValue | null): Enums<"guest_side"> | null {
+function parseSide(value: FormDataEntryValue | null): GuestSide | null {
   const v = String(value ?? "");
-  return (SIDES as string[]).includes(v) ? (v as Enums<"guest_side">) : null;
+  return (GUEST_SIDES as readonly string[]).includes(v)
+    ? (v as GuestSide)
+    : null;
 }
 
 function parseFamilyId(value: FormDataEntryValue | null): number | null {

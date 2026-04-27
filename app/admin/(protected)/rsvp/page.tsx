@@ -1,8 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
-import { ensureEventRsvpRows } from "./actions";
+import { addGuestsToEvent, removeRsvpRow } from "./actions";
 import { RsvpStatusSelect } from "./RsvpStatusSelect";
-
-type Status = "PENDING" | "ACCEPTED" | "DECLINED";
+import { GUEST_SIDES, type GuestSide, type RsvpStatus } from "@/lib/types";
 
 function formatDate(iso: string) {
   return new Date(iso + "T00:00:00").toLocaleDateString("en-US", {
@@ -20,10 +19,21 @@ export default async function RsvpPage({
   const supabase = await createClient();
   const params = await searchParams;
 
-  const { data: events } = await supabase
-    .from("events")
-    .select("id, name, date")
-    .order("date", { ascending: true });
+  const [{ data: events }, { data: families }, { data: allGuests }] =
+    await Promise.all([
+      supabase
+        .from("events")
+        .select("id, name, date")
+        .order("date", { ascending: true }),
+      supabase
+        .from("guest_families")
+        .select("id, side")
+        .order("id", { ascending: true }),
+      supabase
+        .from("guests")
+        .select("id, name, family_id")
+        .order("name", { ascending: true }),
+    ]);
 
   const requestedId = params.event ? Number(params.event) : NaN;
   const selectedId =
@@ -33,7 +43,7 @@ export default async function RsvpPage({
 
   type RsvpRow = {
     id: number;
-    rsvp_status: Status;
+    rsvp_status: RsvpStatus;
     guest_id: number;
     guest: { id: number; name: string; family_id: number | null } | null;
   };
@@ -64,6 +74,28 @@ export default async function RsvpPage({
   }
 
   const selectedEvent = events?.find((e) => e.id === selectedId) ?? null;
+
+  // Compute uninvited guests grouped by side, then by family.
+  const invitedGuestIds = new Set(rsvps.map((r) => r.guest_id));
+  const familySideById = new Map<number, GuestSide>(
+    (families ?? []).map((f) => [f.id, f.side as GuestSide])
+  );
+  const uninvitedBySide: Record<GuestSide, Map<number, { id: number; name: string }[]>> = {
+    BRIDE: new Map(),
+    GROOM: new Map(),
+  };
+  for (const g of allGuests ?? []) {
+    if (invitedGuestIds.has(g.id)) continue;
+    if (g.family_id == null) continue;
+    const side = familySideById.get(g.family_id);
+    if (!side) continue;
+    const list = uninvitedBySide[side].get(g.family_id) ?? [];
+    list.push({ id: g.id, name: g.name });
+    uninvitedBySide[side].set(g.family_id, list);
+  }
+  const uninvitedTotal =
+    Array.from(uninvitedBySide.BRIDE.values()).reduce((n, l) => n + l.length, 0) +
+    Array.from(uninvitedBySide.GROOM.values()).reduce((n, l) => n + l.length, 0);
 
   return (
     <div className="animate-fade-up">
@@ -102,7 +134,7 @@ export default async function RsvpPage({
       ) : (
         <>
           {/* Event picker */}
-          <section className="mb-8 border-t border-b border-border/40 py-5 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+          <section className="mb-8 border-t border-b border-border/40 py-5">
             <form method="get" className="flex items-end gap-3">
               <label className="block">
                 <span className="text-[10px] tracking-[0.3em] uppercase text-text-secondary font-body">
@@ -127,18 +159,6 @@ export default async function RsvpPage({
                 View
               </button>
             </form>
-
-            {selectedId !== null && (
-              <form action={ensureEventRsvpRows}>
-                <input type="hidden" name="event_id" value={selectedId} />
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-foreground text-background text-[10px] tracking-[0.3em] uppercase font-body hover:bg-accent transition-colors cursor-pointer"
-                >
-                  Sync guests
-                </button>
-              </form>
-            )}
           </section>
 
           {selectedEvent && (
@@ -157,13 +177,12 @@ export default async function RsvpPage({
 
           {/* RSVP table */}
           {rsvps.length === 0 ? (
-            <p className="text-sm text-text-secondary font-body italic">
-              No replies on file for this event yet. Press{" "}
-              <span className="not-italic">“Sync guests”</span> above to seed
-              pending rows.
+            <p className="text-sm text-text-secondary font-body italic mb-12">
+              No replies on file for this event yet — choose guests below to
+              invite them.
             </p>
           ) : (
-            <table className="w-full border-collapse">
+            <table className="w-full border-collapse mb-12">
               <thead>
                 <tr className="border-b border-border/60">
                   <th className="text-left py-3 px-2 text-[10px] tracking-[0.3em] uppercase font-body text-text-secondary font-normal">
@@ -173,7 +192,7 @@ export default async function RsvpPage({
                     Status
                   </th>
                   <th className="text-right py-3 px-2 text-[10px] tracking-[0.3em] uppercase font-body text-text-secondary font-normal">
-                    ID
+                    &nbsp;
                   </th>
                 </tr>
               </thead>
@@ -196,13 +215,108 @@ export default async function RsvpPage({
                         status={r.rsvp_status}
                       />
                     </td>
-                    <td className="py-4 px-2 text-right text-[10px] tracking-[0.25em] uppercase font-body text-text-secondary tabular-nums">
-                      #{r.id}
+                    <td className="py-4 px-2 text-right">
+                      <form action={removeRsvpRow} className="inline">
+                        <input type="hidden" name="rsvp_id" value={r.id} />
+                        <button
+                          type="submit"
+                          aria-label="Remove guest from event"
+                          className="text-[10px] tracking-[0.25em] uppercase font-body text-text-secondary hover:text-red-500 transition-colors cursor-pointer"
+                        >
+                          Remove
+                        </button>
+                      </form>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          )}
+
+          {/* Add guests panel */}
+          {selectedId !== null && (
+            <section className="border-t border-border/40 pt-6">
+              <div className="mb-4 flex items-end justify-between gap-4 flex-wrap">
+                <div>
+                  <p className="text-[10px] tracking-[0.4em] uppercase text-accent font-body mb-1">
+                    Invite more
+                  </p>
+                  <p className="text-sm font-body italic text-text-secondary">
+                    Pick the guests you’d like to add — they’ll start as
+                    pending.
+                  </p>
+                </div>
+                <p className="text-[10px] tracking-[0.25em] uppercase font-body text-text-secondary tabular-nums">
+                  {uninvitedTotal}{" "}
+                  {uninvitedTotal === 1 ? "guest" : "guests"} not yet invited
+                </p>
+              </div>
+
+              {uninvitedTotal === 0 ? (
+                <p className="text-sm text-text-secondary font-body italic">
+                  Every guest is already on this event.
+                </p>
+              ) : (
+                <form action={addGuestsToEvent} className="space-y-8">
+                  <input
+                    type="hidden"
+                    name="event_id"
+                    value={selectedId}
+                  />
+                  {GUEST_SIDES.map((side) => {
+                    const families = uninvitedBySide[side];
+                    if (families.size === 0) return null;
+                    return (
+                      <div key={side}>
+                        <p className="text-[10px] tracking-[0.4em] uppercase text-accent font-body mb-2">
+                          {side === "BRIDE"
+                            ? "Bride’s side"
+                            : "Groom’s side"}
+                        </p>
+                        <div className="w-10 h-px bg-accent/40 mb-4" />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                          {Array.from(families.entries()).map(
+                            ([familyId, guests]) => (
+                              <div key={familyId}>
+                                <p className="text-[10px] tracking-[0.3em] uppercase font-body text-text-secondary mb-2">
+                                  {guests.map((g) => g.name).join(", ")}
+                                </p>
+                                <ul className="space-y-1.5">
+                                  {guests.map((g) => (
+                                    <li key={g.id}>
+                                      <label className="flex items-center gap-3 cursor-pointer group">
+                                        <input
+                                          type="checkbox"
+                                          name="guest_ids"
+                                          value={g.id}
+                                          className="accent-foreground w-4 h-4 cursor-pointer"
+                                        />
+                                        <span className="font-display text-base text-foreground group-hover:text-accent transition-colors">
+                                          {g.name}
+                                        </span>
+                                      </label>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  <div className="pt-2">
+                    <button
+                      type="submit"
+                      className="px-5 py-2 bg-foreground text-background text-[10px] tracking-[0.3em] uppercase font-body hover:bg-accent transition-colors cursor-pointer"
+                    >
+                      Add selected guests
+                    </button>
+                  </div>
+                </form>
+              )}
+            </section>
           )}
         </>
       )}

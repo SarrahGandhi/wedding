@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { RSVP_STATUSES } from "@/lib/types";
 
 async function getCount(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -22,7 +23,7 @@ export default async function DashboardPage() {
     getCount(supabase, "events"),
     getCount(supabase, "event_guests_rsvp", {
       column: "rsvp_status",
-      value: "PENDING",
+      value: RSVP_STATUSES[0],
     }),
   ]);
 

@@ -2,10 +2,9 @@
 
 import { useTransition, useState } from "react";
 import { setRsvpStatus } from "./actions";
+import type { RsvpStatus } from "@/lib/types";
 
-type Status = "PENDING" | "ACCEPTED" | "DECLINED";
-
-const STATUS_DOT: Record<Status, string> = {
+const STATUS_DOT: Record<RsvpStatus, string> = {
   PENDING: "bg-muted",
   ACCEPTED: "bg-sage",
   DECLINED: "bg-red-400",
@@ -16,14 +15,14 @@ export function RsvpStatusSelect({
   status,
 }: {
   rsvpId: number;
-  status: Status;
+  status: RsvpStatus;
 }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [optimistic, setOptimistic] = useState<Status>(status);
+  const [optimistic, setOptimistic] = useState<RsvpStatus>(status);
 
   function onChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const next = e.currentTarget.value as Status;
+    const next = e.currentTarget.value as RsvpStatus;
     setOptimistic(next);
     setError(null);
     const formData = new FormData();

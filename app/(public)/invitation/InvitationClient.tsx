@@ -11,8 +11,7 @@ import {
   type FamilyInvitation,
   type EventRsvp,
 } from "./actions";
-
-type RsvpStatus = "PENDING" | "ACCEPTED" | "DECLINED";
+import type { RsvpStatus } from "@/lib/types";
 
 function StatusBadge({ status }: { status: RsvpStatus }) {
   const styles: Record<RsvpStatus, string> = {

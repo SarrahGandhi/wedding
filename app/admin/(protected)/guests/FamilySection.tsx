@@ -8,10 +8,11 @@ import {
   deleteFamily,
 } from "./actions";
 import { GuestRow } from "./GuestRow";
+import type { GuestCategory, GuestSide } from "@/lib/types";
 
 type Family = {
   id: number;
-  side: "BRIDE" | "GROOM";
+  side: GuestSide;
   email: string[];
   phone: string | null;
 };
@@ -19,13 +20,13 @@ type Family = {
 type Guest = {
   id: number;
   name: string;
-  category: "MALE" | "FEMALE" | "CHILD";
+  category: GuestCategory;
   family_id: number;
 };
 
 type FamilyOption = {
   id: number;
-  side: "BRIDE" | "GROOM";
+  side: GuestSide;
   label: string;
 };
 
