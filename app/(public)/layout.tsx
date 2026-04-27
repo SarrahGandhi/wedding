@@ -1,4 +1,6 @@
+import Image from "next/image";
 import Link from "next/link";
+import logo from "@/public/logo.png";
 import { NavLinks } from "../components/NavLinks";
 
 export default function PublicLayout({
@@ -14,7 +16,7 @@ export default function PublicLayout({
             href="/"
             className="font-display text-xl font-semibold tracking-wide text-foreground hover:text-accent transition-colors"
           >
-            <img src="/logo.png" alt="Logo" className="h-10" />
+            <Image src={logo} alt="Logo" className="h-10 w-auto" priority />
           </Link>
           <NavLinks />
         </nav>
