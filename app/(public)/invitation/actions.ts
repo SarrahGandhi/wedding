@@ -1,9 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import type { Database } from "@/database.types";
-
-type RsvpStatus = Database["public"]["Enums"]["event_rsvp_status"];
+import type { GuestSide, RsvpStatus } from "@/lib/types";
 
 export interface GuestResult {
   id: number;
@@ -26,7 +24,7 @@ export interface EventRsvp {
 
 export interface FamilyInvitation {
   familyId: number;
-  familySide: string;
+  familySide: GuestSide;
   guests: GuestResult[];
   rsvps: EventRsvp[];
 }

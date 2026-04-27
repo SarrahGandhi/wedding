@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
-const WEDDING_DATE = new Date("2026-10-22T00:00:00");
+const WEDDING_DATE = new Date("2026-10-22T00:00:00").getTime();
 
 interface TimeLeft {
   days: number;
@@ -11,8 +11,8 @@ interface TimeLeft {
   seconds: number;
 }
 
-function getTimeLeft(): TimeLeft {
-  const diff = WEDDING_DATE.getTime() - Date.now();
+function getTimeLeft(now: number): TimeLeft {
+  const diff = WEDDING_DATE - now;
   if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
   return {
     days: Math.floor(diff / (1000 * 60 * 60 * 24)),
@@ -20,6 +20,21 @@ function getTimeLeft(): TimeLeft {
     minutes: Math.floor((diff / (1000 * 60)) % 60),
     seconds: Math.floor((diff / 1000) % 60),
   };
+}
+
+function subscribe(callback: () => void) {
+  const id = setInterval(callback, 1000);
+  return () => clearInterval(id);
+}
+
+// Quantize to whole seconds so consecutive snapshots within the same tick
+// return the same value (useSyncExternalStore relies on referential stability).
+function getSnapshot() {
+  return Math.floor(Date.now() / 1000);
+}
+
+function getServerSnapshot() {
+  return 0;
 }
 
 function Digit({ value, label }: { value: number; label: string }) {
@@ -36,15 +51,13 @@ function Digit({ value, label }: { value: number; label: string }) {
 }
 
 export function Countdown() {
-  const [time, setTime] = useState<TimeLeft | null>(null);
+  const nowSeconds = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot,
+  );
 
-  useEffect(() => {
-    setTime(getTimeLeft());
-    const id = setInterval(() => setTime(getTimeLeft()), 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  if (!time) {
+  if (nowSeconds === 0) {
     return (
       <div className="flex items-center gap-2 sm:gap-6 md:gap-10 lg:gap-14">
         {["Days", "Hours", "Minutes", "Seconds"].map((label) => (
@@ -53,6 +66,8 @@ export function Countdown() {
       </div>
     );
   }
+
+  const time = getTimeLeft(nowSeconds * 1000);
 
   return (
     <div className="flex items-center gap-2 sm:gap-6 md:gap-10 lg:gap-14">
