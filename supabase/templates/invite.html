@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>You're Invited</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant:wght@300;400&family=Jost:wght@300;400&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body
+    style="
+      margin: 0;
+      padding: 0;
+      background-color: #faf7f2;
+      font-family:
+        &quot;Jost&quot;, &quot;Helvetica Neue&quot;, Helvetica, Arial,
+        sans-serif;
+    "
+  >
+    <table
+      role="presentation"
+      width="100%"
+      cellpadding="0"
+      cellspacing="0"
+      border="0"
+      style="background-color: #faf7f2"
+    >
+      <tr>
+        <td align="center" style="padding: 40px 20px 60px">
+          <table
+            role="presentation"
+            width="520"
+            cellpadding="0"
+            cellspacing="0"
+            border="0"
+            style="max-width: 520px; width: 100%"
+          >
+            <!-- Logo -->
+            <tr>
+              <td align="center" style="padding-bottom: 32px">
+                <img
+                  src="{{ .SiteURL }}/logo.png"
+                  alt="S & M"
+                  width="100"
+                  style="display: block; width: 100px; height: auto"
+                />
+              </td>
+            </tr>
+
+            <!-- Decorative line -->
+            <tr>
+              <td align="center" style="padding-bottom: 36px">
+                <table
+                  role="presentation"
+                  cellpadding="0"
+                  cellspacing="0"
+                  border="0"
+                >
+                  <tr>
+                    <td
+                      style="
+                        width: 60px;
+                        height: 1px;
+                        background-color: #d4cfc5;
+                      "
+                    ></td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Heading -->
+            <tr>
+              <td align="center" style="padding-bottom: 12px">
+                <h1
+                  style="
+                    margin: 0;
+                    font-family:
+                      &quot;Cormorant&quot;, Georgia,
+                      &quot;Times New Roman&quot;, serif;
+                    font-size: 32px;
+                    font-weight: 300;
+                    color: #2a2a28;
+                    letter-spacing: 0.02em;
+                  "
+                >
+                  You're Invited
+                </h1>
+              </td>
+            </tr>
+
+            <!-- Subheading -->
+            <tr>
+              <td align="center" style="padding-bottom: 36px">
+                <p
+                  style="
+                    margin: 0;
+                    font-family:
+                      &quot;Jost&quot;, &quot;Helvetica Neue&quot;, Helvetica,
+                      Arial, sans-serif;
+                    font-size: 11px;
+                    font-weight: 300;
+                    color: #8b7355;
+                    text-transform: uppercase;
+                    letter-spacing: 0.3em;
+                  "
+                >
+                  Admin Access
+                </p>
+              </td>
+            </tr>
+
+            <!-- Body text -->
+            <tr>
+              <td align="center" style="padding: 0 20px 40px">
+                <p
+                  style="
+                    margin: 0;
+                    font-family:
+                      &quot;Jost&quot;, &quot;Helvetica Neue&quot;, Helvetica,
+                      Arial, sans-serif;
+                    font-size: 15px;
+                    font-weight: 300;
+                    color: #6e6b64;
+                    line-height: 1.7;
+                  "
+                >
+                  You've been invited to join as an admin. Accept the invitation
+                  below to set up your account and get started.
+                </p>
+              </td>
+            </tr>
+
+            <!-- CTA Button -->
+            <tr>
+              <td align="center" style="padding-bottom: 44px">
+                <table
+                  role="presentation"
+                  cellpadding="0"
+                  cellspacing="0"
+                  border="0"
+                >
+                  <tr>
+                    <td
+                      align="center"
+                      style="background-color: #2a2a28; border-radius: 0"
+                    >
+                      <a
+                        href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=invite"
+                        target="_blank"
+                        style="
+                          display: inline-block;
+                          padding: 14px 48px;
+                          font-family:
+                            &quot;Jost&quot;, &quot;Helvetica Neue&quot;,
+                            Helvetica, Arial, sans-serif;
+                          font-size: 11px;
+                          font-weight: 400;
+                          color: #faf7f2;
+                          text-decoration: none;
+                          text-transform: uppercase;
+                          letter-spacing: 0.3em;
+                        "
+                      >
+                        Accept Invite
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Decorative line -->
+            <tr>
+              <td align="center" style="padding-bottom: 32px">
+                <table
+                  role="presentation"
+                  cellpadding="0"
+                  cellspacing="0"
+                  border="0"
+                >
+                  <tr>
+                    <td
+                      style="
+                        width: 60px;
+                        height: 1px;
+                        background-color: #d4cfc5;
+                      "
+                    ></td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td align="center">
+                <p
+                  style="
+                    margin: 0;
+                    font-family:
+                      &quot;Jost&quot;, &quot;Helvetica Neue&quot;, Helvetica,
+                      Arial, sans-serif;
+                    font-size: 12px;
+                    font-weight: 300;
+                    color: #b7b7a4;
+                    line-height: 1.6;
+                  "
+                >
+                  If you didn't expect this invitation, you can safely ignore
+                  this email.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

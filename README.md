@@ -39,7 +39,7 @@ Copy the output from `supabase start` and create a `.env.local` file:
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54322
-NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-local-anon-key>
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<your-local-anon-key>
 ```
 
 ### 4. Apply migrations and seed data
@@ -60,12 +60,12 @@ Open [http://localhost:3000](http://localhost:3000) to view the app.
 
 ### Useful commands
 
-| Command | Description |
-|---|---|
-| `pnpm supabase start` | Start local Supabase |
-| `pnpm supabase stop` | Stop local Supabase |
+| Command                  | Description                         |
+| ------------------------ | ----------------------------------- |
+| `pnpm supabase start`    | Start local Supabase                |
+| `pnpm supabase stop`     | Stop local Supabase                 |
 | `pnpm supabase db reset` | Reset DB, reapply migrations + seed |
-| `pnpm supabase status` | Show local Supabase URLs and keys |
+| `pnpm supabase status`   | Show local Supabase URLs and keys   |
 
 ## Linking to Remote Supabase
 
@@ -105,5 +105,5 @@ Set your production environment variables to point at the remote Supabase projec
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=https://<your-project-ref>.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-remote-anon-key>
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<your-remote-anon-key>
 ```
