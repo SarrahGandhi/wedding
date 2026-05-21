@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useEffect, useTransition } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Mail, Check, ChevronRight } from "lucide-react";
 import {
   searchGuests,
-  getFamilyInvitation,
+  getFamilyInvitationByFamilyId,
   updateRsvpStatus,
   addFamilyEmail,
   type GuestResult,
@@ -231,7 +232,13 @@ function EventCard({
 }
 
 export function InvitationClient() {
-  const [query, setQuery] = useState("");
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const queryParam = searchParams.get("q");
+  const familyParam = searchParams.get("family");
+
+  const [query, setQuery] = useState(queryParam ?? "");
   const [results, setResults] = useState<GuestResult[] | null>(null);
   const [invitation, setInvitation] = useState<FamilyInvitation | null>(null);
   const [searching, startSearching] = useTransition();
@@ -239,22 +246,48 @@ export function InvitationClient() {
   const [updating, startUpdating] = useTransition();
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  useEffect(() => {
+    setQuery(queryParam ?? "");
+  }, [queryParam]);
+
+  useEffect(() => {
+    if (familyParam) {
+      setResults(null);
+      return;
+    }
+    if (queryParam && queryParam.trim().length >= 2) {
+      startSearching(async () => {
+        const found = await searchGuests(queryParam);
+        setResults(found);
+      });
+    } else {
+      setResults(null);
+    }
+  }, [queryParam, familyParam]);
+
+  useEffect(() => {
+    if (familyParam) {
+      const familyId = parseInt(familyParam, 10);
+      if (!isNaN(familyId)) {
+        startLoading(async () => {
+          const data = await getFamilyInvitationByFamilyId(familyId);
+          setInvitation(data);
+        });
+      }
+    } else {
+      setInvitation(null);
+    }
+  }, [familyParam]);
+
   function handleSearch() {
     if (query.trim().length < 2) return;
-    setInvitation(null);
-    setResults(null);
-    startSearching(async () => {
-      const found = await searchGuests(query);
-      setResults(found);
-    });
+    router.push(`/invitation?q=${encodeURIComponent(query.trim())}`);
   }
 
-  function handleSelectGuest(guestId: number) {
-    startLoading(async () => {
-      const data = await getFamilyInvitation(guestId);
-      setInvitation(data);
-      setResults(null);
-    });
+  function handleSelectGuest(guest: GuestResult) {
+    if (guest.familyId) {
+      router.push(`/invitation?family=${guest.familyId}`);
+    }
   }
 
   function handleUpdateRsvp(rsvpId: number, status: RsvpStatus) {
@@ -304,31 +337,57 @@ export function InvitationClient() {
       )
     : {};
 
+  const showHero = !queryParam && !familyParam;
+
   return (
     <div className="w-full">
+      {/* Hero */}
+      {showHero && (
+        <section className="relative flex flex-col items-center justify-center py-24 md:py-32 px-6 overflow-hidden">
+          <div className="absolute inset-0 bg-linear-to-b from-cream/50 via-background to-background" />
+          <div className="relative z-10 text-center max-w-2xl mx-auto">
+            <p className="text-xs tracking-[0.5em] uppercase text-accent font-body mb-6 animate-fade-in">
+              You&apos;re invited
+            </p>
+            <h1 className="font-display text-4xl sm:text-6xl md:text-7xl font-light text-foreground animate-fade-up delay-100 leading-tight md:leading-none">
+              Find Your Invitation
+            </h1>
+            <div className="mt-6 w-24 h-px bg-accent/40 mx-auto animate-draw-line delay-300" />
+            <p className="mt-6 text-sm md:text-base text-text-secondary leading-relaxed font-body animate-fade-up delay-400">
+              Search for your name below to view your events and manage RSVP
+              responses for yourself and your family.
+            </p>
+          </div>
+        </section>
+      )}
+
+      {/* Content */}
+      <section className={`max-w-4xl mx-auto px-6 pb-32 ${!showHero ? "pt-16 md:pt-24" : ""}`}>
       {/* Search */}
-      <div className="max-w-md mx-auto mb-16">
-        <div className="relative">
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            placeholder="Enter your name..."
-            className="w-full bg-warm-white border border-border/60 px-5 py-4 pr-28 font-display text-xl text-foreground placeholder:text-muted focus:outline-none focus:border-accent/50 transition-colors"
-          />
-          <button
-            onClick={handleSearch}
-            disabled={searching || query.trim().length < 2}
-            className="absolute right-2 top-1/2 -translate-y-1/2 px-5 py-2 bg-foreground text-background text-[10px] tracking-[0.25em] uppercase font-body hover:bg-accent transition-colors disabled:opacity-40 cursor-pointer"
-          >
-            {searching ? "..." : "Search"}
-          </button>
+      {!familyParam && (
+        <div className="max-w-md mx-auto mb-16">
+          <div className="relative">
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              placeholder="Enter your name..."
+              className="w-full bg-warm-white border border-border/60 px-5 py-4 pr-28 font-display text-xl text-foreground placeholder:text-muted focus:outline-none focus:border-accent/50 transition-colors"
+            />
+            <button
+              onClick={handleSearch}
+              disabled={searching || query.trim().length < 2}
+              className="absolute right-2 top-1/2 -translate-y-1/2 px-5 py-2 bg-foreground text-background text-[10px] tracking-[0.25em] uppercase font-body hover:bg-accent transition-colors disabled:opacity-40 cursor-pointer"
+            >
+              {searching ? "..." : "Search"}
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Search results */}
-      {results !== null && !invitation && (
+      {!familyParam && results !== null && (
         <div className="max-w-md mx-auto">
           {results.length === 0 ? (
             <p className="text-center text-text-secondary font-body text-sm">
@@ -342,7 +401,7 @@ export function InvitationClient() {
               {results.map((guest) => (
                 <button
                   key={guest.id}
-                  onClick={() => handleSelectGuest(guest.id)}
+                  onClick={() => handleSelectGuest(guest)}
                   disabled={loading}
                   className="w-full text-left px-5 py-4 hover:bg-cream/50 transition-colors flex items-center justify-between group cursor-pointer"
                 >
@@ -428,11 +487,7 @@ export function InvitationClient() {
           {/* Back button */}
           <div className="mt-10 text-center">
             <button
-              onClick={() => {
-                setInvitation(null);
-                setResults(null);
-                setQuery("");
-              }}
+              onClick={() => router.push("/invitation")}
               className="text-xs tracking-[0.2em] uppercase text-text-secondary hover:text-accent transition-colors font-body cursor-pointer"
             >
               &larr; Search for another guest
@@ -440,6 +495,7 @@ export function InvitationClient() {
           </div>
         </div>
       )}
+      </section>
     </div>
   );
 }

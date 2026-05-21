@@ -7,6 +7,7 @@ export interface GuestResult {
   id: number;
   name: string;
   category: string;
+  familyId: number | null;
 }
 
 export interface EventRsvp {
@@ -35,31 +36,28 @@ export async function searchGuests(name: string): Promise<GuestResult[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("guests")
-    .select("id, name, category")
+    .select("id, name, category, family_id")
     .ilike("name", `%${name.trim()}%`)
     .limit(10);
 
   if (error) throw new Error("Failed to search guests");
-  return data ?? [];
+  return (data ?? []).map((g) => ({
+    id: g.id,
+    name: g.name,
+    category: g.category,
+    familyId: g.family_id,
+  }));
 }
 
-export async function getFamilyInvitation(
-  guestId: number
+export async function getFamilyInvitationByFamilyId(
+  familyId: number
 ): Promise<FamilyInvitation | null> {
   const supabase = await createClient();
-
-  const { data: guest, error: guestError } = await supabase
-    .from("guests")
-    .select("id, name, category, family_id")
-    .eq("id", guestId)
-    .single();
-
-  if (guestError || !guest?.family_id) return null;
 
   const { data: family, error: familyError } = await supabase
     .from("guest_families")
     .select("id, side")
-    .eq("id", guest.family_id)
+    .eq("id", familyId)
     .single();
 
   if (familyError || !family) return null;
@@ -113,9 +111,27 @@ export async function getFamilyInvitation(
   return {
     familyId: family.id,
     familySide: family.side,
-    guests: familyGuests ?? [],
+    guests: (familyGuests ?? []).map((g) => ({
+      ...g,
+      familyId: family.id,
+    })),
     rsvps,
   };
+}
+
+export async function getFamilyInvitation(
+  guestId: number
+): Promise<FamilyInvitation | null> {
+  const supabase = await createClient();
+
+  const { data: guest, error: guestError } = await supabase
+    .from("guests")
+    .select("family_id")
+    .eq("id", guestId)
+    .single();
+
+  if (guestError || !guest?.family_id) return null;
+  return getFamilyInvitationByFamilyId(guest.family_id);
 }
 
 export async function updateRsvpStatus(
