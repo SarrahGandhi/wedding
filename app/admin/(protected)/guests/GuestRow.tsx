@@ -3,9 +3,7 @@
 import { useState, useTransition } from "react";
 import { updateGuest, deleteGuest } from "./actions";
 import { BabyIcon, MarsIcon, VenusIcon } from "lucide-react";
-import type { GuestCategory, GuestSide } from "@/lib/types";
-
-type Family = { id: number; side: GuestSide; label: string };
+import type { GuestCategory } from "@/lib/types";
 
 type Guest = {
   id: number;
@@ -20,18 +18,10 @@ const categoryGlyph: Record<Guest["category"], React.ReactNode> = {
   CHILD: <BabyIcon className="inline mb-1" />,
 };
 
-export function GuestRow({
-  guest,
-  families,
-}: {
-  guest: Guest;
-  families: Family[];
-}) {
+export function GuestRow({ guest }: { guest: Guest }) {
   const [editing, setEditing] = useState(false);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-
-  const family = families.find((f) => f.id === guest.family_id);
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -47,11 +37,11 @@ export function GuestRow({
     });
   }
 
-  function onDelete(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  function onDelete() {
     if (!confirm(`Delete guest "${guest.name}"? This cannot be undone.`))
       return;
-    const formData = new FormData(e.currentTarget);
+    const formData = new FormData();
+    formData.set("id", String(guest.id));
     startTransition(async () => {
       const result = await deleteGuest(formData);
       if (result.error) setError(result.error);
@@ -63,10 +53,10 @@ export function GuestRow({
       <tr
         className={`border-b border-border/30 ${pending ? "opacity-60" : ""}`}
       >
-        <td colSpan={5} className="py-4">
+        <td colSpan={4} className="py-4">
           <form
             onSubmit={onSubmit}
-            className="grid grid-cols-1 md:grid-cols-[2fr_1fr_2fr_auto] gap-3 items-end"
+            className="grid grid-cols-1 md:grid-cols-[2fr_1fr_auto] gap-3 items-end"
           >
             <input type="hidden" name="id" value={guest.id} />
             <label className="block">
@@ -94,23 +84,6 @@ export function GuestRow({
                 <option value="CHILD">Child</option>
               </select>
             </label>
-            <label className="block">
-              <span className="text-[10px] tracking-[0.25em] uppercase text-text-secondary font-body">
-                Family
-              </span>
-              <select
-                name="family_id"
-                defaultValue={String(guest.family_id)}
-                required
-                className="mt-1 w-full bg-warm-white border border-border/60 px-3 py-2 font-body text-sm focus:outline-none focus:border-accent/60 transition-colors"
-              >
-                {families.map((f) => (
-                  <option key={f.id} value={f.id}>
-                    {f.label}
-                  </option>
-                ))}
-              </select>
-            </label>
             <div className="flex gap-2">
               <button
                 type="submit"
@@ -132,7 +105,7 @@ export function GuestRow({
               </button>
             </div>
             {error && (
-              <p className="md:col-span-4 text-xs text-red-500 font-body">
+              <p className="md:col-span-3 text-xs text-red-500 font-body">
                 {error}
               </p>
             )}
@@ -155,13 +128,6 @@ export function GuestRow({
         </span>
         {guest.category.charAt(0) + guest.category.slice(1).toLowerCase()}
       </td>
-      <td className="py-4 px-2 text-sm font-body">
-        {family ? (
-          <span className="text-foreground">{family.label}</span>
-        ) : (
-          <span className="text-muted italic">Unknown family</span>
-        )}
-      </td>
       <td className="py-4 px-2 text-[10px] tracking-[0.25em] uppercase font-body text-text-secondary tabular-nums">
         #{guest.id}
       </td>
@@ -174,16 +140,14 @@ export function GuestRow({
           >
             Edit
           </button>
-          <form onSubmit={onDelete} className="inline">
-            <input type="hidden" name="id" value={guest.id} />
-            <button
-              type="submit"
-              disabled={pending}
-              className="text-[10px] tracking-[0.25em] uppercase font-body text-text-secondary hover:text-red-500 transition-colors cursor-pointer disabled:opacity-40"
-            >
-              Delete
-            </button>
-          </form>
+          <button
+            type="button"
+            onClick={onDelete}
+            disabled={pending}
+            className="text-[10px] tracking-[0.25em] uppercase font-body text-text-secondary hover:text-red-500 transition-colors cursor-pointer disabled:opacity-40"
+          >
+            Delete
+          </button>
         </div>
         {error && (
           <p className="text-xs text-red-500 font-body mt-1">{error}</p>

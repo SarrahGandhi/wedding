@@ -24,21 +24,13 @@ type Guest = {
   family_id: number;
 };
 
-type FamilyOption = {
-  id: number;
-  side: GuestSide;
-  label: string;
-};
-
 export function FamilySection({
   family,
   guests,
-  familyOptions,
   label,
 }: {
   family: Family;
   guests: Guest[];
-  familyOptions: FamilyOption[];
   label: string;
 }) {
   const [editing, setEditing] = useState(false);
@@ -72,7 +64,7 @@ export function FamilySection({
     e.preventDefault();
     if (
       !confirm(
-        `Delete family "${label}"? This cannot be undone. Guests linked to it must be moved or deleted first.`
+        `Delete family "${label}"? This cannot be undone. Guests linked to it must be moved or deleted first.`,
       )
     )
       return;
@@ -85,12 +77,17 @@ export function FamilySection({
 
   return (
     <article
+      id={`family-${family.id}`}
+      data-family-id={family.id}
       className={`border-t border-border/40 py-8 ${pending ? "opacity-60" : ""}`}
     >
       {/* Family heading */}
       <header className="flex flex-col md:flex-row md:items-baseline md:justify-between gap-2 mb-5">
         <div className="flex items-baseline gap-3 flex-wrap">
-          <h2 className="font-display italic text-2xl md:text-3xl text-foreground leading-tight">
+          <h2
+            className="font-display italic text-2xl md:text-3xl text-foreground leading-tight"
+            onClick={() => console.log(label)}
+          >
             {label}
           </h2>
           <span className="text-[10px] tracking-[0.3em] uppercase text-accent font-body">
@@ -255,9 +252,6 @@ export function FamilySection({
                 Category
               </th>
               <th className="text-left py-2 px-2 text-[10px] tracking-[0.3em] uppercase font-body text-text-secondary font-normal">
-                Family
-              </th>
-              <th className="text-left py-2 px-2 text-[10px] tracking-[0.3em] uppercase font-body text-text-secondary font-normal">
                 ID
               </th>
               <th className="text-right py-2 px-2 text-[10px] tracking-[0.3em] uppercase font-body text-text-secondary font-normal">
@@ -266,9 +260,11 @@ export function FamilySection({
             </tr>
           </thead>
           <tbody>
-            {guests.map((g) => (
-              <GuestRow key={g.id} guest={g} families={familyOptions} />
-            ))}
+            {guests
+              .sort((a, b) => a.id - b.id)
+              .map((g) => (
+                <GuestRow key={g.id} guest={g} />
+              ))}
           </tbody>
         </table>
       )}
@@ -276,7 +272,7 @@ export function FamilySection({
       {/* Add a guest to this family */}
       <form
         action={createGuest}
-        className="grid grid-cols-1 md:grid-cols-[2fr_1fr_auto] gap-3 items-end pt-2"
+        className="grid grid-cols-1 md:grid-cols-[2fr_1fr_auto] gap-3 pt-2"
       >
         <input type="hidden" name="family_id" value={family.id} />
         <label className="block">
@@ -312,9 +308,7 @@ export function FamilySection({
         </button>
       </form>
 
-      {error && (
-        <p className="mt-3 text-xs text-red-500 font-body">{error}</p>
-      )}
+      {error && <p className="mt-3 text-xs text-red-500 font-body">{error}</p>}
     </article>
   );
 }
