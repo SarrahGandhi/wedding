@@ -2,21 +2,15 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/supabase/admin-auth";
-import { RSVP_STATUSES, type RsvpStatus } from "@/lib/types";
-
-function parseStatus(value: FormDataEntryValue | null): RsvpStatus | null {
-  const v = String(value ?? "");
-  return (RSVP_STATUSES as readonly string[]).includes(v)
-    ? (v as RsvpStatus)
-    : null;
-}
+import { RSVP_STATUSES } from "@/lib/types";
+import { parseEnum, parseId } from "@/app/shared/action-helpers";
 
 export async function setRsvpStatus(formData: FormData) {
   const { supabase } = await requireAdmin();
-  const id = Number(formData.get("rsvp_id"));
-  const status = parseStatus(formData.get("status"));
+  const id = parseId(formData.get("rsvp_id"));
+  const status = parseEnum(formData.get("status"), RSVP_STATUSES);
 
-  if (!Number.isFinite(id)) return { error: "Invalid RSVP id." };
+  if (id === null) return { error: "Invalid RSVP id." };
   if (!status) return { error: "Invalid status." };
 
   const { error } = await supabase
@@ -31,8 +25,8 @@ export async function setRsvpStatus(formData: FormData) {
 
 export async function addGuestsToEvent(formData: FormData): Promise<void> {
   const { supabase } = await requireAdmin();
-  const event_id = Number(formData.get("event_id"));
-  if (!Number.isFinite(event_id)) throw new Error("Invalid event id.");
+  const event_id = parseId(formData.get("event_id"));
+  if (event_id === null) throw new Error("Invalid event id.");
 
   const guestIds = formData
     .getAll("guest_ids")
@@ -60,8 +54,8 @@ export async function addGuestsToEvent(formData: FormData): Promise<void> {
 
 export async function removeRsvpRow(formData: FormData): Promise<void> {
   const { supabase } = await requireAdmin();
-  const id = Number(formData.get("rsvp_id"));
-  if (!Number.isFinite(id)) throw new Error("Invalid RSVP id.");
+  const id = parseId(formData.get("rsvp_id"));
+  if (id === null) throw new Error("Invalid RSVP id.");
 
   const { error } = await supabase
     .from("event_guests_rsvp")
