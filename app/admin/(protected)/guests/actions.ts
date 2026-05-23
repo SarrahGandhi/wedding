@@ -84,16 +84,14 @@ export async function updateGuest(formData: FormData) {
   const id = Number(formData.get("id"));
   const name = String(formData.get("name") ?? "").trim();
   const category = parseCategory(formData.get("category"));
-  const family_id = parseFamilyId(formData.get("family_id"));
 
   if (!Number.isFinite(id)) return { error: "Invalid id." };
   if (!name) return { error: "Name is required." };
   if (!category) return { error: "Pick a category." };
-  if (family_id === null) return { error: "Family is required." };
 
   const { error } = await supabase
     .from("guests")
-    .update({ name, category, family_id })
+    .update({ name, category })
     .eq("id", id);
   if (error) return { error: error.message };
 
