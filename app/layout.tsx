@@ -15,8 +15,21 @@ const jost = Jost({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://murtazasarrah.ca"),
   title: "Murtaza & Sarrah",
-  description: "We're getting married — October 20, 2026",
+  description: "We're getting married — October 2026",
+  openGraph: {
+    title: "Murtaza & Sarrah",
+    description: "We're getting married — October 2026",
+    siteName: "Murtaza & Sarrah",
+    locale: "en_CA",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Murtaza & Sarrah",
+    description: "We're getting married — October 2026",
+  },
 };
 
 export default function RootLayout({
