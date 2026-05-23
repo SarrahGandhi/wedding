@@ -1,9 +1,13 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { updateGuest, deleteGuest } from "./actions";
 import { BabyIcon, MarsIcon, VenusIcon } from "lucide-react";
 import type { GuestCategory } from "@/lib/types";
+import { FormField, SelectField } from "@/app/shared/FormField";
+import { Button } from "@/app/shared/Button";
+import { ErrorMessage } from "@/app/shared/ErrorMessage";
+import { useServerAction } from "@/app/shared/useServerAction";
 
 type Guest = {
   id: number;
@@ -20,21 +24,13 @@ const categoryGlyph: Record<Guest["category"], React.ReactNode> = {
 
 export function GuestRow({ guest }: { guest: Guest }) {
   const [editing, setEditing] = useState(false);
-  const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const update = useServerAction(updateGuest);
+  const remove = useServerAction(deleteGuest);
+  const pending = update.pending || remove.pending;
+  const error = update.error || remove.error;
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setError(null);
-    const formData = new FormData(e.currentTarget);
-    startTransition(async () => {
-      const result = await updateGuest(formData);
-      if (result.error) {
-        setError(result.error);
-      } else {
-        setEditing(false);
-      }
-    });
+    update.runForm(e, { onSuccess: () => setEditing(false) });
   }
 
   function onDelete() {
@@ -42,10 +38,7 @@ export function GuestRow({ guest }: { guest: Guest }) {
       return;
     const formData = new FormData();
     formData.set("id", String(guest.id));
-    startTransition(async () => {
-      const result = await deleteGuest(formData);
-      if (result.error) setError(result.error);
-    });
+    remove.run(formData);
   }
 
   if (editing) {
@@ -59,55 +52,41 @@ export function GuestRow({ guest }: { guest: Guest }) {
             className="grid grid-cols-1 md:grid-cols-[2fr_1fr_auto] gap-3 items-end"
           >
             <input type="hidden" name="id" value={guest.id} />
-            <label className="block">
-              <span className="text-[10px] tracking-[0.25em] uppercase text-text-secondary font-body">
-                Name
-              </span>
-              <input
-                name="name"
-                defaultValue={guest.name}
-                required
-                className="mt-1 w-full bg-warm-white border border-border/60 px-3 py-2 font-body text-sm focus:outline-none focus:border-accent/60 transition-colors"
-              />
-            </label>
-            <label className="block">
-              <span className="text-[10px] tracking-[0.25em] uppercase text-text-secondary font-body">
-                Category
-              </span>
-              <select
-                name="category"
-                defaultValue={guest.category}
-                className="mt-1 w-full bg-warm-white border border-border/60 px-3 py-2 font-body text-sm focus:outline-none focus:border-accent/60 transition-colors"
-              >
-                <option value="MALE">Male</option>
-                <option value="FEMALE">Female</option>
-                <option value="CHILD">Child</option>
-              </select>
-            </label>
+            <FormField
+              label="Name"
+              name="name"
+              defaultValue={guest.name}
+              required
+            />
+            <SelectField
+              label="Category"
+              name="category"
+              defaultValue={guest.category}
+            >
+              <option value="MALE">Male</option>
+              <option value="FEMALE">Female</option>
+              <option value="CHILD">Child</option>
+            </SelectField>
             <div className="flex gap-2">
-              <button
-                type="submit"
-                disabled={pending}
-                className="px-4 py-2 bg-foreground text-background text-[10px] tracking-[0.25em] uppercase font-body hover:bg-accent transition-colors disabled:opacity-40 cursor-pointer"
-              >
+              <Button type="submit" pending={pending} className="px-4 tracking-[0.25em]">
                 {pending ? "…" : "Save"}
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                variant="secondary"
                 onClick={() => {
                   setEditing(false);
-                  setError(null);
+                  update.setError(null);
                 }}
                 disabled={pending}
-                className="px-4 py-2 border border-border text-text-secondary text-[10px] tracking-[0.25em] uppercase font-body hover:text-foreground transition-colors cursor-pointer"
+                className="hover:text-foreground hover:border-border"
               >
                 Cancel
-              </button>
+              </Button>
             </div>
             {error && (
-              <p className="md:col-span-3 text-xs text-red-500 font-body">
+              <ErrorMessage variant="inline" className="md:col-span-3">
                 {error}
-              </p>
+              </ErrorMessage>
             )}
           </form>
         </td>
@@ -133,24 +112,17 @@ export function GuestRow({ guest }: { guest: Guest }) {
       </td>
       <td className="py-4 px-2 text-right">
         <div className="inline-flex items-center gap-4">
-          <button
-            type="button"
-            onClick={() => setEditing(true)}
-            className="text-[10px] tracking-[0.25em] uppercase font-body text-text-secondary hover:text-accent transition-colors cursor-pointer"
-          >
+          <Button variant="ghost" onClick={() => setEditing(true)}>
             Edit
-          </button>
-          <button
-            type="button"
-            onClick={onDelete}
-            disabled={pending}
-            className="text-[10px] tracking-[0.25em] uppercase font-body text-text-secondary hover:text-red-500 transition-colors cursor-pointer disabled:opacity-40"
-          >
+          </Button>
+          <Button variant="danger" onClick={onDelete} disabled={pending}>
             Delete
-          </button>
+          </Button>
         </div>
         {error && (
-          <p className="text-xs text-red-500 font-body mt-1">{error}</p>
+          <ErrorMessage variant="inline" className="mt-1">
+            {error}
+          </ErrorMessage>
         )}
       </td>
     </tr>

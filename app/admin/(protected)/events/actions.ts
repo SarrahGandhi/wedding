@@ -2,21 +2,20 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/supabase/admin-auth";
-
-const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-
-function nullable(value: FormDataEntryValue | null): string | null {
-  const v = String(value ?? "").trim();
-  return v ? v : null;
-}
+import {
+  DATE_RE,
+  parseId,
+  parseNullable,
+  parseString,
+} from "@/app/shared/action-helpers";
 
 export async function createEvent(formData: FormData): Promise<void> {
   const { supabase } = await requireAdmin();
-  const name = String(formData.get("name") ?? "").trim();
-  const date = String(formData.get("date") ?? "").trim();
-  const location = nullable(formData.get("location"));
-  const dress_code = nullable(formData.get("dress_code"));
-  const details = nullable(formData.get("details"));
+  const name = parseString(formData.get("name"));
+  const date = parseString(formData.get("date"));
+  const location = parseNullable(formData.get("location"));
+  const dress_code = parseNullable(formData.get("dress_code"));
+  const details = parseNullable(formData.get("details"));
 
   if (!name) throw new Error("Name is required.");
   if (!DATE_RE.test(date)) throw new Error("Date must be YYYY-MM-DD.");
@@ -32,14 +31,14 @@ export async function createEvent(formData: FormData): Promise<void> {
 
 export async function updateEvent(formData: FormData) {
   const { supabase } = await requireAdmin();
-  const id = Number(formData.get("id"));
-  const name = String(formData.get("name") ?? "").trim();
-  const date = String(formData.get("date") ?? "").trim();
-  const location = nullable(formData.get("location"));
-  const dress_code = nullable(formData.get("dress_code"));
-  const details = nullable(formData.get("details"));
+  const id = parseId(formData.get("id"));
+  const name = parseString(formData.get("name"));
+  const date = parseString(formData.get("date"));
+  const location = parseNullable(formData.get("location"));
+  const dress_code = parseNullable(formData.get("dress_code"));
+  const details = parseNullable(formData.get("details"));
 
-  if (!Number.isFinite(id)) return { error: "Invalid id." };
+  if (id === null) return { error: "Invalid id." };
   if (!name) return { error: "Name is required." };
   if (!DATE_RE.test(date)) return { error: "Date must be YYYY-MM-DD." };
 
@@ -56,8 +55,8 @@ export async function updateEvent(formData: FormData) {
 
 export async function deleteEvent(formData: FormData) {
   const { supabase } = await requireAdmin();
-  const id = Number(formData.get("id"));
-  if (!Number.isFinite(id)) return { error: "Invalid id." };
+  const id = parseId(formData.get("id"));
+  if (id === null) return { error: "Invalid id." };
 
   const { error } = await supabase.from("events").delete().eq("id", id);
   if (error) return { error: error.message };

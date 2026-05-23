@@ -1,7 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { updateEvent, deleteEvent } from "./actions";
+import { FormField, TextareaField } from "@/app/shared/FormField";
+import { Button } from "@/app/shared/Button";
+import { ErrorMessage } from "@/app/shared/ErrorMessage";
+import { useServerAction } from "@/app/shared/useServerAction";
 
 type Event = {
   id: number;
@@ -23,18 +27,13 @@ function formatDate(iso: string) {
 
 export function EventRow({ event }: { event: Event }) {
   const [editing, setEditing] = useState(false);
-  const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const update = useServerAction(updateEvent);
+  const remove = useServerAction(deleteEvent);
+  const pending = update.pending || remove.pending;
+  const error = update.error || remove.error;
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setError(null);
-    const formData = new FormData(e.currentTarget);
-    startTransition(async () => {
-      const result = await updateEvent(formData);
-      if (result.error) setError(result.error);
-      else setEditing(false);
-    });
+    update.runForm(e, { onSuccess: () => setEditing(false) });
   }
 
   function onDelete(e: React.FormEvent<HTMLFormElement>) {
@@ -45,11 +44,7 @@ export function EventRow({ event }: { event: Event }) {
       )
     )
       return;
-    const formData = new FormData(e.currentTarget);
-    startTransition(async () => {
-      const result = await deleteEvent(formData);
-      if (result.error) setError(result.error);
-    });
+    remove.run(new FormData(e.currentTarget));
   }
 
   return (
@@ -67,25 +62,20 @@ export function EventRow({ event }: { event: Event }) {
         </div>
         <div className="flex items-center gap-5 text-[10px] tracking-[0.25em] uppercase font-body">
           <span className="text-muted tabular-nums">#{event.id}</span>
-          <button
-            type="button"
+          <Button
+            variant="ghost"
             onClick={() => {
               setEditing((v) => !v);
-              setError(null);
+              update.setError(null);
             }}
-            className="text-text-secondary hover:text-accent transition-colors cursor-pointer"
           >
             {editing ? "Cancel" : "Edit"}
-          </button>
+          </Button>
           <form onSubmit={onDelete} className="inline">
             <input type="hidden" name="id" value={event.id} />
-            <button
-              type="submit"
-              disabled={pending}
-              className="text-text-secondary hover:text-red-500 transition-colors cursor-pointer disabled:opacity-40"
-            >
+            <Button variant="danger" type="submit" disabled={pending}>
               Delete
-            </button>
+            </Button>
           </form>
         </div>
       </div>
@@ -96,68 +86,40 @@ export function EventRow({ event }: { event: Event }) {
           className="grid grid-cols-1 md:grid-cols-2 gap-3"
         >
           <input type="hidden" name="id" value={event.id} />
-          <label className="block">
-            <span className="text-[10px] tracking-[0.25em] uppercase text-text-secondary font-body">
-              Name
-            </span>
-            <input
-              name="name"
-              defaultValue={event.name}
-              required
-              className="mt-1 w-full bg-warm-white border border-border/60 px-3 py-2 font-body text-sm focus:outline-none focus:border-accent/60 transition-colors"
-            />
-          </label>
-          <label className="block">
-            <span className="text-[10px] tracking-[0.25em] uppercase text-text-secondary font-body">
-              Date
-            </span>
-            <input
-              name="date"
-              type="date"
-              defaultValue={event.date}
-              required
-              className="mt-1 w-full bg-warm-white border border-border/60 px-3 py-2 font-body text-sm focus:outline-none focus:border-accent/60 transition-colors"
-            />
-          </label>
-          <label className="block">
-            <span className="text-[10px] tracking-[0.25em] uppercase text-text-secondary font-body">
-              Location
-            </span>
-            <input
-              name="location"
-              defaultValue={event.location ?? ""}
-              className="mt-1 w-full bg-warm-white border border-border/60 px-3 py-2 font-body text-sm focus:outline-none focus:border-accent/60 transition-colors"
-            />
-          </label>
-          <label className="block">
-            <span className="text-[10px] tracking-[0.25em] uppercase text-text-secondary font-body">
-              Dress code
-            </span>
-            <input
-              name="dress_code"
-              defaultValue={event.dress_code ?? ""}
-              className="mt-1 w-full bg-warm-white border border-border/60 px-3 py-2 font-body text-sm focus:outline-none focus:border-accent/60 transition-colors"
-            />
-          </label>
-          <label className="block md:col-span-2">
-            <span className="text-[10px] tracking-[0.25em] uppercase text-text-secondary font-body">
-              Details
-            </span>
-            <textarea
-              name="details"
-              rows={3}
-              defaultValue={event.details ?? ""}
-              className="mt-1 w-full bg-warm-white border border-border/60 px-3 py-2 font-body text-sm leading-relaxed focus:outline-none focus:border-accent/60 transition-colors resize-y"
-            />
-          </label>
+          <FormField
+            label="Name"
+            name="name"
+            defaultValue={event.name}
+            required
+          />
+          <FormField
+            label="Date"
+            name="date"
+            type="date"
+            defaultValue={event.date}
+            required
+          />
+          <FormField
+            label="Location"
+            name="location"
+            defaultValue={event.location ?? ""}
+          />
+          <FormField
+            label="Dress code"
+            name="dress_code"
+            defaultValue={event.dress_code ?? ""}
+          />
+          <TextareaField
+            label="Details"
+            name="details"
+            rows={3}
+            defaultValue={event.details ?? ""}
+            labelClassName="md:col-span-2"
+          />
           <div className="md:col-span-2">
-            <button
-              type="submit"
-              disabled={pending}
-              className="px-5 py-2 bg-foreground text-background text-[10px] tracking-[0.3em] uppercase font-body hover:bg-accent transition-colors disabled:opacity-40 cursor-pointer"
-            >
+            <Button type="submit" pending={pending}>
               {pending ? "…" : "Save changes"}
-            </button>
+            </Button>
           </div>
         </form>
       ) : (
@@ -191,7 +153,9 @@ export function EventRow({ event }: { event: Event }) {
       )}
 
       {error && (
-        <p className="mt-3 text-xs text-red-500 font-body">{error}</p>
+        <ErrorMessage variant="inline" className="mt-3">
+          {error}
+        </ErrorMessage>
       )}
     </article>
   );
