@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { AddFamilyForm } from "./AddFamilyForm";
 import { GuestRoster } from "./GuestRoster";
 import type { GuestCategory } from "@/lib/types";
+import { PageHeader } from "@/app/shared/PageHeader";
 
 type Guest = {
   id: number;
@@ -54,21 +55,17 @@ export default async function GuestsPage() {
 
   return (
     <div className="animate-fade-up">
-      <header className="mb-10 flex items-end justify-between flex-wrap gap-4">
-        <div>
-          <p className="text-[10px] tracking-[0.4em] uppercase text-accent font-body mb-2">
-            Chapter I
-          </p>
-          <h1 className="font-display italic text-5xl font-light text-foreground leading-none">
-            Roster.
-          </h1>
-        </div>
-        <p className="text-[10px] tracking-[0.25em] uppercase text-text-secondary font-body tabular-nums">
-          {guests.length} {guests.length === 1 ? "guest" : "guests"} across{" "}
-          {families?.length ?? 0}{" "}
-          {(families?.length ?? 0) === 1 ? "family" : "families"}
-        </p>
-      </header>
+      <PageHeader
+        chapter="Chapter I"
+        title="Roster."
+        meta={
+          <>
+            {guests.length} {guests.length === 1 ? "guest" : "guests"} across{" "}
+            {families?.length ?? 0}{" "}
+            {(families?.length ?? 0) === 1 ? "family" : "families"}
+          </>
+        }
+      />
 
       <section className="mb-12 border-t border-b border-border/40 py-6">
         <p className="text-[10px] tracking-[0.3em] uppercase text-text-secondary font-body mb-2">

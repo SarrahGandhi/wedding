@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import {
   createGuest,
   updateFamily,
@@ -12,6 +12,7 @@ import type { GuestCategory, GuestSide } from "@/lib/types";
 import { FormField, SelectField } from "@/app/shared/FormField";
 import { Button } from "@/app/shared/Button";
 import { ErrorMessage } from "@/app/shared/ErrorMessage";
+import { useServerAction } from "@/app/shared/useServerAction";
 
 type Family = {
   id: number;
@@ -38,29 +39,18 @@ export function FamilySection({
 }) {
   const [editing, setEditing] = useState(false);
   const [appendEmail, setAppendEmail] = useState("");
-  const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const update = useServerAction(updateFamily);
+  const append = useServerAction(appendFamilyEmail);
+  const remove = useServerAction(deleteFamily);
+  const pending = update.pending || append.pending || remove.pending;
+  const error = update.error || append.error || remove.error;
 
   function onUpdateFamily(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setError(null);
-    const formData = new FormData(e.currentTarget);
-    startTransition(async () => {
-      const result = await updateFamily(formData);
-      if (result.error) setError(result.error);
-      else setEditing(false);
-    });
+    update.runForm(e, { onSuccess: () => setEditing(false) });
   }
 
   function onAppendEmail(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setError(null);
-    const formData = new FormData(e.currentTarget);
-    startTransition(async () => {
-      const result = await appendFamilyEmail(formData);
-      if (result.error) setError(result.error);
-      else setAppendEmail("");
-    });
+    append.runForm(e, { onSuccess: () => setAppendEmail("") });
   }
 
   function onDeleteFamily(e: React.FormEvent<HTMLFormElement>) {
@@ -71,11 +61,7 @@ export function FamilySection({
       )
     )
       return;
-    const formData = new FormData(e.currentTarget);
-    startTransition(async () => {
-      const result = await deleteFamily(formData);
-      if (result.error) setError(result.error);
-    });
+    remove.run(new FormData(e.currentTarget));
   }
 
   return (
@@ -108,7 +94,7 @@ export function FamilySection({
             variant="ghost"
             onClick={() => {
               setEditing((v) => !v);
-              setError(null);
+              update.setError(null);
             }}
           >
             {editing ? "Cancel" : "Edit family"}

@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { updateGuest, deleteGuest } from "./actions";
 import { BabyIcon, MarsIcon, VenusIcon } from "lucide-react";
 import type { GuestCategory } from "@/lib/types";
 import { FormField, SelectField } from "@/app/shared/FormField";
 import { Button } from "@/app/shared/Button";
 import { ErrorMessage } from "@/app/shared/ErrorMessage";
+import { useServerAction } from "@/app/shared/useServerAction";
 
 type Guest = {
   id: number;
@@ -23,21 +24,13 @@ const categoryGlyph: Record<Guest["category"], React.ReactNode> = {
 
 export function GuestRow({ guest }: { guest: Guest }) {
   const [editing, setEditing] = useState(false);
-  const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const update = useServerAction(updateGuest);
+  const remove = useServerAction(deleteGuest);
+  const pending = update.pending || remove.pending;
+  const error = update.error || remove.error;
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setError(null);
-    const formData = new FormData(e.currentTarget);
-    startTransition(async () => {
-      const result = await updateGuest(formData);
-      if (result.error) {
-        setError(result.error);
-      } else {
-        setEditing(false);
-      }
-    });
+    update.runForm(e, { onSuccess: () => setEditing(false) });
   }
 
   function onDelete() {
@@ -45,10 +38,7 @@ export function GuestRow({ guest }: { guest: Guest }) {
       return;
     const formData = new FormData();
     formData.set("id", String(guest.id));
-    startTransition(async () => {
-      const result = await deleteGuest(formData);
-      if (result.error) setError(result.error);
-    });
+    remove.run(formData);
   }
 
   if (editing) {
@@ -85,7 +75,7 @@ export function GuestRow({ guest }: { guest: Guest }) {
                 variant="secondary"
                 onClick={() => {
                   setEditing(false);
-                  setError(null);
+                  update.setError(null);
                 }}
                 disabled={pending}
                 className="hover:text-foreground hover:border-border"

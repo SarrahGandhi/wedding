@@ -4,6 +4,8 @@ import { RsvpStatusSelect } from "./RsvpStatusSelect";
 import { GUEST_SIDES, type GuestSide, type RsvpStatus } from "@/lib/types";
 import { SelectField } from "@/app/shared/FormField";
 import { Button } from "@/app/shared/Button";
+import { PageHeader } from "@/app/shared/PageHeader";
+import { StatusDot } from "@/app/shared/StatusDot";
 
 function formatDate(iso: string) {
   return new Date(iso + "T00:00:00").toLocaleDateString("en-US", {
@@ -101,32 +103,28 @@ export default async function RsvpPage({
 
   return (
     <div className="animate-fade-up">
-      <header className="mb-10 flex items-end justify-between flex-wrap gap-4">
-        <div>
-          <p className="text-[10px] tracking-[0.4em] uppercase text-accent font-body mb-2">
-            Chapter IV
-          </p>
-          <h1 className="font-display italic text-5xl font-light text-foreground leading-none">
-            Replies.
-          </h1>
-        </div>
-        {selectedEvent && (
-          <div className="flex items-center gap-6 text-[10px] tracking-[0.3em] uppercase font-body text-text-secondary tabular-nums">
-            <span>
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-sage mr-2" />
-              {totals.accepted} accepted
-            </span>
-            <span>
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-muted mr-2" />
-              {totals.pending} pending
-            </span>
-            <span>
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-400 mr-2" />
-              {totals.declined} declined
-            </span>
-          </div>
-        )}
-      </header>
+      <PageHeader
+        chapter="Chapter IV"
+        title="Replies."
+        meta={
+          selectedEvent && (
+            <div className="flex items-center gap-6 tracking-[0.3em]">
+              <span>
+                <StatusDot status="ACCEPTED" className="mr-2" />
+                {totals.accepted} accepted
+              </span>
+              <span>
+                <StatusDot status="PENDING" className="mr-2" />
+                {totals.pending} pending
+              </span>
+              <span>
+                <StatusDot status="DECLINED" className="mr-2" />
+                {totals.declined} declined
+              </span>
+            </div>
+          )
+        }
+      />
 
       {!events || events.length === 0 ? (
         <p className="text-sm text-text-secondary font-body italic">

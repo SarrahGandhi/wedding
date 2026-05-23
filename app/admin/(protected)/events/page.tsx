@@ -3,6 +3,7 @@ import { createEvent } from "./actions";
 import { EventRow } from "./EventRow";
 import { FormField, TextareaField } from "@/app/shared/FormField";
 import { Button } from "@/app/shared/Button";
+import { PageHeader } from "@/app/shared/PageHeader";
 
 export default async function EventsPage() {
   const supabase = await createClient();
@@ -13,19 +14,11 @@ export default async function EventsPage() {
 
   return (
     <div className="animate-fade-up">
-      <header className="mb-10 flex items-end justify-between">
-        <div>
-          <p className="text-[10px] tracking-[0.4em] uppercase text-accent font-body mb-2">
-            Chapter III
-          </p>
-          <h1 className="font-display italic text-5xl font-light text-foreground leading-none">
-            Events.
-          </h1>
-        </div>
-        <p className="text-[10px] tracking-[0.25em] uppercase text-text-secondary font-body tabular-nums">
-          {events?.length ?? 0} on the calendar
-        </p>
-      </header>
+      <PageHeader
+        chapter="Chapter III"
+        title="Events."
+        meta={<>{events?.length ?? 0} on the calendar</>}
+      />
 
       {/* Create form */}
       <section className="mb-10 border-t border-b border-border/40 py-6">

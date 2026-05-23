@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { updateEvent, deleteEvent } from "./actions";
 import { FormField, TextareaField } from "@/app/shared/FormField";
 import { Button } from "@/app/shared/Button";
 import { ErrorMessage } from "@/app/shared/ErrorMessage";
+import { useServerAction } from "@/app/shared/useServerAction";
 
 type Event = {
   id: number;
@@ -26,18 +27,13 @@ function formatDate(iso: string) {
 
 export function EventRow({ event }: { event: Event }) {
   const [editing, setEditing] = useState(false);
-  const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const update = useServerAction(updateEvent);
+  const remove = useServerAction(deleteEvent);
+  const pending = update.pending || remove.pending;
+  const error = update.error || remove.error;
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setError(null);
-    const formData = new FormData(e.currentTarget);
-    startTransition(async () => {
-      const result = await updateEvent(formData);
-      if (result.error) setError(result.error);
-      else setEditing(false);
-    });
+    update.runForm(e, { onSuccess: () => setEditing(false) });
   }
 
   function onDelete(e: React.FormEvent<HTMLFormElement>) {
@@ -48,11 +44,7 @@ export function EventRow({ event }: { event: Event }) {
       )
     )
       return;
-    const formData = new FormData(e.currentTarget);
-    startTransition(async () => {
-      const result = await deleteEvent(formData);
-      if (result.error) setError(result.error);
-    });
+    remove.run(new FormData(e.currentTarget));
   }
 
   return (
@@ -74,7 +66,7 @@ export function EventRow({ event }: { event: Event }) {
             variant="ghost"
             onClick={() => {
               setEditing((v) => !v);
-              setError(null);
+              update.setError(null);
             }}
           >
             {editing ? "Cancel" : "Edit"}

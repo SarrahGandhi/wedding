@@ -1,14 +1,11 @@
 "use client";
 
-import { useTransition, useState } from "react";
+import { useState } from "react";
 import { setRsvpStatus } from "./actions";
 import type { RsvpStatus } from "@/lib/types";
-
-const STATUS_DOT: Record<RsvpStatus, string> = {
-  PENDING: "bg-muted",
-  ACCEPTED: "bg-sage",
-  DECLINED: "bg-red-400",
-};
+import { useServerAction } from "@/app/shared/useServerAction";
+import { StatusDot } from "@/app/shared/StatusDot";
+import { ErrorMessage } from "@/app/shared/ErrorMessage";
 
 export function RsvpStatusSelect({
   rsvpId,
@@ -17,32 +14,23 @@ export function RsvpStatusSelect({
   rsvpId: number;
   status: RsvpStatus;
 }) {
-  const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const { pending, error, run } = useServerAction(setRsvpStatus);
   const [optimistic, setOptimistic] = useState<RsvpStatus>(status);
 
   function onChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const next = e.currentTarget.value as RsvpStatus;
     setOptimistic(next);
-    setError(null);
     const formData = new FormData();
     formData.append("rsvp_id", String(rsvpId));
     formData.append("status", next);
-    startTransition(async () => {
-      const result = await setRsvpStatus(formData);
-      if (result.error) {
-        setError(result.error);
-        setOptimistic(status);
-      }
+    run(formData, {
+      onError: () => setOptimistic(status),
     });
   }
 
   return (
     <div className="flex items-center gap-3">
-      <span
-        className={`inline-block w-1.5 h-1.5 rounded-full ${STATUS_DOT[optimistic]} transition-colors`}
-        aria-hidden
-      />
+      <StatusDot status={optimistic} />
       <select
         value={optimistic}
         onChange={onChange}
@@ -58,9 +46,7 @@ export function RsvpStatusSelect({
           …
         </span>
       )}
-      {error && (
-        <span className="text-[10px] font-body text-red-500">{error}</span>
-      )}
+      {error && <ErrorMessage variant="badge">{error}</ErrorMessage>}
     </div>
   );
 }
