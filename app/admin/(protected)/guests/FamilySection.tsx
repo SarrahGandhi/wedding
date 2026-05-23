@@ -9,6 +9,9 @@ import {
 } from "./actions";
 import { GuestRow } from "./GuestRow";
 import type { GuestCategory, GuestSide } from "@/lib/types";
+import { FormField, SelectField } from "@/app/shared/FormField";
+import { Button } from "@/app/shared/Button";
+import { ErrorMessage } from "@/app/shared/ErrorMessage";
 
 type Family = {
   id: number;
@@ -101,25 +104,20 @@ export function FamilySection({
           <span className="text-text-secondary tabular-nums">
             {guests.length} {guests.length === 1 ? "guest" : "guests"}
           </span>
-          <button
-            type="button"
+          <Button
+            variant="ghost"
             onClick={() => {
               setEditing((v) => !v);
               setError(null);
             }}
-            className="text-text-secondary hover:text-accent transition-colors cursor-pointer"
           >
             {editing ? "Cancel" : "Edit family"}
-          </button>
+          </Button>
           <form onSubmit={onDeleteFamily} className="inline">
             <input type="hidden" name="id" value={family.id} />
-            <button
-              type="submit"
-              disabled={pending}
-              className="text-text-secondary hover:text-red-500 transition-colors cursor-pointer disabled:opacity-40"
-            >
+            <Button variant="danger" type="submit" disabled={pending}>
               Delete
-            </button>
+            </Button>
           </form>
         </div>
       </header>
@@ -131,48 +129,31 @@ export function FamilySection({
           className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3 items-end mb-6"
         >
           <input type="hidden" name="id" value={family.id} />
-          <label className="block md:col-span-2">
-            <span className="text-[10px] tracking-[0.25em] uppercase text-text-secondary font-body">
-              Emails (comma separated · replaces all)
-            </span>
-            <input
-              name="emails"
-              defaultValue={family.email.join(", ")}
-              placeholder="alice@example.com, bob@example.com"
-              className="mt-1 w-full bg-warm-white border border-border/60 px-3 py-2 font-body text-sm focus:outline-none focus:border-accent/60 transition-colors"
-            />
-          </label>
-          <label className="block">
-            <span className="text-[10px] tracking-[0.25em] uppercase text-text-secondary font-body">
-              Side
-            </span>
-            <select
-              name="side"
-              defaultValue={family.side}
-              className="mt-1 w-full bg-warm-white border border-border/60 px-3 py-2 font-body text-sm focus:outline-none focus:border-accent/60 transition-colors"
-            >
-              <option value="BRIDE">Bride</option>
-              <option value="GROOM">Groom</option>
-            </select>
-          </label>
-          <label className="block md:col-span-2">
-            <span className="text-[10px] tracking-[0.25em] uppercase text-text-secondary font-body">
-              Phone (optional)
-            </span>
-            <input
-              name="phone"
-              defaultValue={family.phone ?? ""}
-              placeholder="+1 555 0100"
-              className="mt-1 w-full bg-warm-white border border-border/60 px-3 py-2 font-body text-sm focus:outline-none focus:border-accent/60 transition-colors"
-            />
-          </label>
-          <button
-            type="submit"
-            disabled={pending}
-            className="px-5 py-2 bg-foreground text-background text-[10px] tracking-[0.3em] uppercase font-body hover:bg-accent transition-colors disabled:opacity-40 cursor-pointer self-end"
+          <FormField
+            label="Emails (comma separated · replaces all)"
+            name="emails"
+            defaultValue={family.email.join(", ")}
+            placeholder="alice@example.com, bob@example.com"
+            labelClassName="md:col-span-2"
+          />
+          <SelectField
+            label="Side"
+            name="side"
+            defaultValue={family.side}
           >
+            <option value="BRIDE">Bride</option>
+            <option value="GROOM">Groom</option>
+          </SelectField>
+          <FormField
+            label="Phone (optional)"
+            name="phone"
+            defaultValue={family.phone ?? ""}
+            placeholder="+1 555 0100"
+            labelClassName="md:col-span-2"
+          />
+          <Button type="submit" pending={pending} className="self-end">
             {pending ? "…" : "Save"}
-          </button>
+          </Button>
         </form>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_auto] gap-x-8 gap-y-3 items-start mb-6">
@@ -212,26 +193,24 @@ export function FamilySection({
             className="flex items-end gap-2 self-end justify-self-end"
           >
             <input type="hidden" name="id" value={family.id} />
-            <label className="block">
-              <span className="text-[10px] tracking-[0.25em] uppercase text-muted font-body">
-                Append email
-              </span>
-              <input
-                name="email"
-                type="email"
-                value={appendEmail}
-                onChange={(e) => setAppendEmail(e.target.value)}
-                placeholder="new@example.com"
-                className="mt-1 bg-warm-white border border-border/60 px-3 py-2 font-body text-sm focus:outline-none focus:border-accent/60 transition-colors"
-              />
-            </label>
-            <button
+            <FormField
+              label="Append email"
+              name="email"
+              type="email"
+              value={appendEmail}
+              onChange={(e) => setAppendEmail(e.target.value)}
+              placeholder="new@example.com"
+              labelTone="muted"
+              className="w-auto"
+            />
+            <Button
+              variant="secondary"
               type="submit"
               disabled={pending || !appendEmail.trim()}
-              className="px-3 py-2 border border-border text-text-secondary hover:text-accent hover:border-accent text-[10px] tracking-[0.25em] uppercase font-body transition-colors disabled:opacity-40 cursor-pointer"
+              className="px-3"
             >
               + Add
-            </button>
+            </Button>
           </form>
         </div>
       )}
@@ -275,40 +254,33 @@ export function FamilySection({
         className="grid grid-cols-1 md:grid-cols-[2fr_1fr_auto] gap-3 pt-2"
       >
         <input type="hidden" name="family_id" value={family.id} />
-        <label className="block">
-          <span className="text-[10px] tracking-[0.25em] uppercase text-muted font-body">
-            Add guest · Name
-          </span>
-          <input
-            name="name"
-            required
-            placeholder="Full name"
-            className="mt-1 w-full bg-warm-white border border-border/60 px-3 py-2 font-body text-sm focus:outline-none focus:border-accent/60 transition-colors"
-          />
-        </label>
-        <label className="block">
-          <span className="text-[10px] tracking-[0.25em] uppercase text-muted font-body">
-            Category
-          </span>
-          <select
-            name="category"
-            defaultValue="FEMALE"
-            className="mt-1 w-full bg-warm-white border border-border/60 px-3 py-2 font-body text-sm focus:outline-none focus:border-accent/60 transition-colors"
-          >
-            <option value="MALE">Male</option>
-            <option value="FEMALE">Female</option>
-            <option value="CHILD">Child</option>
-          </select>
-        </label>
-        <button
-          type="submit"
-          className="px-4 py-2 border border-border text-text-secondary hover:text-accent hover:border-accent text-[10px] tracking-[0.25em] uppercase font-body transition-colors cursor-pointer"
+        <FormField
+          label="Add guest · Name"
+          name="name"
+          required
+          placeholder="Full name"
+          labelTone="muted"
+        />
+        <SelectField
+          label="Category"
+          name="category"
+          defaultValue="FEMALE"
+          labelTone="muted"
         >
+          <option value="MALE">Male</option>
+          <option value="FEMALE">Female</option>
+          <option value="CHILD">Child</option>
+        </SelectField>
+        <Button variant="secondary" type="submit" className="self-end">
           + Add guest
-        </button>
+        </Button>
       </form>
 
-      {error && <p className="mt-3 text-xs text-red-500 font-body">{error}</p>}
+      {error && (
+        <ErrorMessage variant="inline" className="mt-3">
+          {error}
+        </ErrorMessage>
+      )}
     </article>
   );
 }

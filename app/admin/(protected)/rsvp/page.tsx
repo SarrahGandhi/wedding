@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { addGuestsToEvent, removeRsvpRow } from "./actions";
 import { RsvpStatusSelect } from "./RsvpStatusSelect";
 import { GUEST_SIDES, type GuestSide, type RsvpStatus } from "@/lib/types";
+import { SelectField } from "@/app/shared/FormField";
+import { Button } from "@/app/shared/Button";
 
 function formatDate(iso: string) {
   return new Date(iso + "T00:00:00").toLocaleDateString("en-US", {
@@ -136,28 +138,25 @@ export default async function RsvpPage({
           {/* Event picker */}
           <section className="mb-8 border-t border-b border-border/40 py-5">
             <form method="get" className="flex items-end gap-3">
-              <label className="block">
-                <span className="text-[10px] tracking-[0.3em] uppercase text-text-secondary font-body">
-                  Event
-                </span>
-                <select
-                  name="event"
-                  defaultValue={String(selectedId ?? "")}
-                  className="mt-1 bg-warm-white border border-border/60 px-3 py-2 font-body text-sm focus:outline-none focus:border-accent/60 transition-colors"
-                >
-                  {events.map((e) => (
-                    <option key={e.id} value={e.id}>
-                      {e.name} · {formatDate(e.date)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <button
+              <SelectField
+                label="Event"
+                name="event"
+                defaultValue={String(selectedId ?? "")}
+                className="w-auto"
+              >
+                {events.map((e) => (
+                  <option key={e.id} value={e.id}>
+                    {e.name} · {formatDate(e.date)}
+                  </option>
+                ))}
+              </SelectField>
+              <Button
+                variant="secondary"
                 type="submit"
-                className="px-4 py-2 border border-border text-text-secondary hover:text-foreground hover:border-foreground text-[10px] tracking-[0.25em] uppercase font-body transition-colors cursor-pointer"
+                className="hover:text-foreground hover:border-foreground"
               >
                 View
-              </button>
+              </Button>
             </form>
           </section>
 
@@ -218,13 +217,13 @@ export default async function RsvpPage({
                     <td className="py-4 px-2 text-right">
                       <form action={removeRsvpRow} className="inline">
                         <input type="hidden" name="rsvp_id" value={r.id} />
-                        <button
+                        <Button
+                          variant="danger"
                           type="submit"
                           aria-label="Remove guest from event"
-                          className="text-[10px] tracking-[0.25em] uppercase font-body text-text-secondary hover:text-red-500 transition-colors cursor-pointer"
                         >
                           Remove
-                        </button>
+                        </Button>
                       </form>
                     </td>
                   </tr>
@@ -307,12 +306,7 @@ export default async function RsvpPage({
                   })}
 
                   <div className="pt-2">
-                    <button
-                      type="submit"
-                      className="px-5 py-2 bg-foreground text-background text-[10px] tracking-[0.3em] uppercase font-body hover:bg-accent transition-colors cursor-pointer"
-                    >
-                      Add selected guests
-                    </button>
+                    <Button type="submit">Add selected guests</Button>
                   </div>
                 </form>
               )}
