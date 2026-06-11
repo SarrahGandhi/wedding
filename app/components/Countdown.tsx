@@ -37,13 +37,50 @@ function getServerSnapshot() {
   return 0;
 }
 
-function Digit({ value, label }: { value: number; label: string }) {
+const TILES = [
+  { label: "Days", tile: "bg-blush text-rose", tilt: "-rotate-2" },
+  { label: "Hours", tile: "bg-mint text-leaf", tilt: "rotate-1" },
+  { label: "Minutes", tile: "bg-sky text-bluebell", tilt: "-rotate-1" },
+  {
+    label: "Seconds",
+    tile: "bg-peach text-tangerine",
+    tilt: "rotate-2",
+    hideOnMobile: true,
+  },
+];
+
+function Digit({
+  value,
+  label,
+  tile,
+  tilt,
+  hideOnMobile,
+}: {
+  value: number;
+  label: string;
+  tile: string;
+  tilt: string;
+  hideOnMobile?: boolean;
+}) {
   return (
-    <div className="flex flex-col items-center">
-      <span className="font-display text-5xl sm:text-7xl md:text-8xl lg:text-[9rem] leading-none font-light text-foreground tabular-nums">
-        {String(value).padStart(2, "0")}
+    <div
+      className={`${hideOnMobile ? "hidden sm:flex" : "flex"} flex-col items-center gap-2 sm:gap-3`}
+    >
+      <span
+        className={`${tile} ${tilt} font-display display-wonk rounded-2xl sm:rounded-3xl px-3.5 py-2.5 sm:px-6 sm:py-4 text-4xl sm:text-6xl md:text-7xl leading-none border border-white/70 shadow-[0_12px_28px_-14px_rgba(90,80,90,0.4)] transition-transform duration-300 hover:rotate-0 hover:scale-105`}
+      >
+        {/* Fraunces digits are proportional; fixed-width cells keep the tile
+            from resizing as the numbers tick over. */}
+        {String(value)
+          .padStart(2, "0")
+          .split("")
+          .map((digit, i) => (
+            <span key={i} className="inline-block w-[0.64em] text-center">
+              {digit}
+            </span>
+          ))}
       </span>
-      <span className="text-[10px] sm:text-xs tracking-[0.2em] sm:tracking-[0.35em] uppercase text-text-secondary mt-2 sm:mt-3 font-body text-center">
+      <span className="text-[10px] sm:text-xs tracking-[0.2em] sm:tracking-[0.3em] uppercase text-text-secondary font-body text-center">
         {label}
       </span>
     </div>
@@ -57,35 +94,17 @@ export function Countdown() {
     getServerSnapshot,
   );
 
-  if (nowSeconds === 0) {
-    return (
-      <div className="flex items-center gap-2 sm:gap-6 md:gap-10 lg:gap-14">
-        {["Days", "Hours", "Minutes", "Seconds"].map((label) => (
-          <Digit key={label} value={0} label={label} />
-        ))}
-      </div>
-    );
-  }
-
-  const time = getTimeLeft(nowSeconds * 1000);
+  const time =
+    nowSeconds === 0
+      ? { days: 0, hours: 0, minutes: 0, seconds: 0 }
+      : getTimeLeft(nowSeconds * 1000);
+  const values = [time.days, time.hours, time.minutes, time.seconds];
 
   return (
-    <div className="flex items-center gap-2 sm:gap-6 md:gap-10 lg:gap-14">
-      <Digit value={time.days} label="Days" />
-      <span className="font-display text-3xl sm:text-5xl md:text-6xl lg:text-7xl text-muted font-light self-start mt-2 md:mt-4">
-        :
-      </span>
-      <Digit value={time.hours} label="Hours" />
-      <span className="font-display text-3xl sm:text-5xl md:text-6xl lg:text-7xl text-muted font-light self-start mt-2 md:mt-4">
-        :
-      </span>
-      <Digit value={time.minutes} label="Minutes" />
-      <span className="font-display text-3xl sm:text-5xl md:text-6xl lg:text-7xl text-muted font-light self-start mt-2 md:mt-4 hidden sm:block">
-        :
-      </span>
-      <div className="hidden sm:flex flex-col items-center">
-        <Digit value={time.seconds} label="Seconds" />
-      </div>
+    <div className="flex items-start gap-3 sm:gap-5 md:gap-7">
+      {TILES.map((t, i) => (
+        <Digit key={t.label} value={values[i]} {...t} />
+      ))}
     </div>
   );
 }
