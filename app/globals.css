@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --background: #faf7f2;
+  --background: #fdfaf6;
   --foreground: #2a2a28;
   --accent: #8b7355;
   --accent-light: #b49a7a;
@@ -13,6 +13,18 @@
   --warm-white: #fefcf9;
   --border: #d4cfc5;
   --text-secondary: #6e6b64;
+
+  /* Pastel celebration palette */
+  --blush: #ffe7ee; /* day one — light pink */
+  --rose: #c2647f;
+  --mint: #e2f1e3; /* day one — light green */
+  --leaf: #5f8f68;
+  --sky: #deecfa; /* day two — light blue */
+  --bluebell: #5b82b5;
+  --peach: #ffe9d8; /* day two — light orange */
+  --tangerine: #c97c3f;
+  --powder: #e9f1fa; /* day three — white & blue */
+  --deepblue: #44679a;
 }
 
 @theme inline {
@@ -28,7 +40,17 @@
   --color-warm-white: var(--warm-white);
   --color-border: var(--border);
   --color-text-secondary: var(--text-secondary);
-  --font-display: var(--font-cormorant);
+  --color-blush: var(--blush);
+  --color-rose: var(--rose);
+  --color-mint: var(--mint);
+  --color-leaf: var(--leaf);
+  --color-sky: var(--sky);
+  --color-bluebell: var(--bluebell);
+  --color-peach: var(--peach);
+  --color-tangerine: var(--tangerine);
+  --color-powder: var(--powder);
+  --color-deepblue: var(--deepblue);
+  --font-display: var(--font-fraunces);
   --font-body: var(--font-jost);
 }
 
@@ -38,8 +60,15 @@ body {
 }
 
 ::selection {
-  background: var(--accent-light);
+  background: var(--rose);
   color: var(--warm-white);
+}
+
+/* Fraunces playful axes — soft, slightly wonky letterforms at display sizes */
+.display-wonk {
+  font-variation-settings:
+    "SOFT" 70,
+    "WONK" 1;
 }
 
 @keyframes fade-up {
@@ -89,6 +118,51 @@ body {
 .animate-draw-line {
   animation: draw-line 1s ease-out both;
   transform-origin: left;
+}
+
+@keyframes drift {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(2.5rem, -1.5rem) scale(1.08);
+  }
+}
+
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(var(--bob-tilt, 0deg));
+  }
+  50% {
+    transform: translateY(-12px) rotate(var(--bob-tilt, 0deg));
+  }
+}
+
+.animate-drift {
+  animation: drift 16s ease-in-out infinite;
+}
+
+.animate-bob {
+  animation: bob 7s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-drift,
+  .animate-bob {
+    animation: none;
+  }
+}
+
+/* Subtle paper grain over soft gradients */
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 .delay-100 { animation-delay: 100ms; }

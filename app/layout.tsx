@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
-import { Cormorant, Jost } from "next/font/google";
+import { Fraunces, Jost } from "next/font/google";
 import "./globals.css";
 
-const cormorant = Cormorant({
-  variable: "--font-cormorant",
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
   subsets: ["latin"],
   display: "swap",
+  style: ["normal", "italic"],
+  axes: ["SOFT", "WONK", "opsz"],
 });
 
 const jost = Jost({
@@ -40,7 +42,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${cormorant.variable} ${jost.variable} h-full antialiased`}
+      className={`${fraunces.variable} ${jost.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-body overflow-x-hidden w-full text-foreground relative">
         {children}
