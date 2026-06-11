@@ -21,10 +21,8 @@ export const metadata: Metadata = {
 
 export default function InvitationPage() {
   return (
-    <div className="min-h-screen">
-      <Suspense>
-        <InvitationClient />
-      </Suspense>
-    </div>
+    <Suspense>
+      <InvitationClient />
+    </Suspense>
   );
 }
