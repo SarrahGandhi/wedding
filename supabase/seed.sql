@@ -107,25 +107,28 @@ values
   );
 
 -- Seed wedding-related events.
-insert into public.events (name, date, location, dress_code, details)
+insert into public.events (name, date, time, location, dress_code, details)
 values
   (
     'Henna Night',
-    timestamp '2026-10-20 18:00',
+    date '2026-10-20',
+    time '18:00',
     'Rose Garden Hall',
     'Traditional attire',
     'Join the family for an intimate evening of henna, sweets, and music before the wedding day.'
   ),
   (
     'Nikah Ceremony',
-    timestamp '2026-10-22 11:00',
+    date '2026-10-22',
+    time '11:00',
     'Masjid Al Noor',
     'Formal modest wear',
     'Please arrive 30 minutes early for seating. Ceremony will be followed by light refreshments.'
   ),
   (
     'Ring Ceremony',
-    timestamp '2026-10-21 16:00',
+    date '2026-10-21',
+    time '16:00',
     'Farmhouse Manor',
     'Pastel colors',
     'Full day event with food, ceremonial games and activities for all ages.'

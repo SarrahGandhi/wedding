@@ -2,29 +2,29 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/supabase/admin-auth";
-import {
-  DATE_TIME_LOCAL_RE,
-  parseId,
-  parseNullable,
-  parseString,
-} from "@/app/shared/action-helpers";
+import { parseId, parseNullable, parseString } from "@/app/shared/action-helpers";
+import { DATE_RE, TIME_RE } from "@/app/shared/event-date-time";
 
 export async function createEvent(formData: FormData): Promise<void> {
   const { supabase } = await requireAdmin();
   const name = parseString(formData.get("name"));
   const date = parseString(formData.get("date"));
+  const time = parseString(formData.get("time"));
   const location = parseNullable(formData.get("location"));
   const dress_code = parseNullable(formData.get("dress_code"));
   const details = parseNullable(formData.get("details"));
 
   if (!name) throw new Error("Name is required.");
-  if (!DATE_TIME_LOCAL_RE.test(date)) {
-    throw new Error("Date and time must be YYYY-MM-DDTHH:mm.");
+  if (!DATE_RE.test(date)) {
+    throw new Error("Date must be YYYY-MM-DD.");
+  }
+  if (!TIME_RE.test(time)) {
+    throw new Error("Time must be HH:mm.");
   }
 
   const { error } = await supabase
     .from("events")
-    .insert({ name, date, location, dress_code, details });
+    .insert({ name, date, time, location, dress_code, details });
   if (error) throw new Error(error.message);
 
   revalidatePath("/admin/events");
@@ -36,19 +36,23 @@ export async function updateEvent(formData: FormData) {
   const id = parseId(formData.get("id"));
   const name = parseString(formData.get("name"));
   const date = parseString(formData.get("date"));
+  const time = parseString(formData.get("time"));
   const location = parseNullable(formData.get("location"));
   const dress_code = parseNullable(formData.get("dress_code"));
   const details = parseNullable(formData.get("details"));
 
   if (id === null) return { error: "Invalid id." };
   if (!name) return { error: "Name is required." };
-  if (!DATE_TIME_LOCAL_RE.test(date)) {
-    return { error: "Date and time must be YYYY-MM-DDTHH:mm." };
+  if (!DATE_RE.test(date)) {
+    return { error: "Date must be YYYY-MM-DD." };
+  }
+  if (!TIME_RE.test(time)) {
+    return { error: "Time must be HH:mm." };
   }
 
   const { error } = await supabase
     .from("events")
-    .update({ name, date, location, dress_code, details })
+    .update({ name, date, time, location, dress_code, details })
     .eq("id", id);
   if (error) return { error: error.message };
 

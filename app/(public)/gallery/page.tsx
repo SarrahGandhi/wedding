@@ -281,7 +281,7 @@ function PhotoCard({ photo, index }: { photo: Photo; index: number }) {
         )}
       </div>
       <figcaption className="flex items-baseline justify-between gap-3 px-2 pt-3">
-        <span className="font-display italic text-lg text-foreground leading-snug">
+        <span className="font-accent italic text-lg text-foreground leading-snug">
           {photo.caption}
         </span>
         <span
@@ -330,7 +330,7 @@ export default function GalleryPage() {
           </p>
           <h1 className="font-display display-wonk text-5xl sm:text-7xl md:text-8xl font-light text-foreground leading-tight sm:leading-none animate-fade-up delay-200">
             The{" "}
-            <span className="italic font-normal text-tangerine">Gallery</span>
+            <span className="font-accent italic font-normal text-tangerine">Gallery</span>
           </h1>
           <p className="mt-10 text-base md:text-lg text-text-secondary leading-relaxed font-body max-w-xl mx-auto animate-fade-up delay-400">
             A few snapshots from along the way — bus stops, borrowed cats, cliff

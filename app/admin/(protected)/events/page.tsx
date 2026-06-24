@@ -9,8 +9,9 @@ export default async function EventsPage() {
   const supabase = await createClient();
   const { data: events } = await supabase
     .from("events")
-    .select("id, name, date, location, dress_code, details")
-    .order("date", { ascending: true });
+    .select("id, name, date, time, location, dress_code, details")
+    .order("date", { ascending: true })
+    .order("time", { ascending: true });
 
   return (
     <div className="animate-fade-up">
@@ -36,11 +37,12 @@ export default async function EventsPage() {
             placeholder="Mehndi, Sangeet, Ceremony…"
           />
           <FormField
-            label="Date and time"
+            label="Date"
             name="date"
-            type="datetime-local"
+            type="date"
             required
           />
+          <FormField label="Time" name="time" type="time" required />
           <FormField label="Location (optional)" name="location" />
           <FormField label="Dress code (optional)" name="dress_code" />
           <TextareaField

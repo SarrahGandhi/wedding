@@ -25,6 +25,10 @@ import {
   type FamilyInvitation,
   type EventRsvp,
 } from "./actions";
+import {
+  eventDateTimeSortValue,
+  formatEventDateTime,
+} from "@/app/shared/event-date-time";
 import type { RsvpStatus } from "@/lib/types";
 
 /* Pastel palettes cycled across event cards, mirroring the
@@ -95,7 +99,7 @@ function NameHeading({ names }: { names: string[] }) {
       {names.map((name, i) => (
         <span key={i}>
           {i > 0 && (
-            <span className="text-rose italic font-normal">
+            <span className="font-accent text-rose italic font-normal">
               {i === names.length - 1 ? " & " : ", "}
             </span>
           )}
@@ -258,6 +262,7 @@ function EmailCard({
 interface EventGroup {
   eventName: string;
   eventDate: string;
+  eventTime: string | null;
   eventLocation: string | null;
   eventDressCode: string | null;
   eventDetails: string | null;
@@ -278,10 +283,14 @@ function EventCard({
   onAcceptAll: (rsvpIds: number[]) => void;
 }) {
   const palette = EVENT_PALETTES[index % EVENT_PALETTES.length];
-  const formattedDate = new Date(group.eventDate + "T00:00:00").toLocaleDateString(
-    "en-US",
-    { weekday: "long", month: "long", day: "numeric", year: "numeric" }
-  );
+  const formattedDate = formatEventDateTime(group.eventDate, group.eventTime, {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
   const notAccepted = group.rsvps.filter((r) => r.status !== "ACCEPTED");
   const showAcceptAll = group.rsvps.length > 1 && notAccepted.length > 0;
 
@@ -291,7 +300,7 @@ function EventCard({
     >
       <span
         aria-hidden
-        className={`absolute -top-5 left-7 font-display display-wonk italic text-6xl ${palette.numeral} drop-shadow-[0_2px_0_rgba(255,255,255,0.8)]`}
+        className={`absolute -top-5 left-7 font-accent display-wonk italic text-6xl ${palette.numeral} drop-shadow-[0_2px_0_rgba(255,255,255,0.8)]`}
       >
         {index + 1}
       </span>
@@ -604,6 +613,7 @@ export function InvitationClient() {
             acc[rsvp.eventId] = {
               eventName: rsvp.eventName,
               eventDate: rsvp.eventDate,
+              eventTime: rsvp.eventTime,
               eventLocation: rsvp.eventLocation,
               eventDressCode: rsvp.eventDressCode,
               eventDetails: rsvp.eventDetails,
@@ -619,7 +629,8 @@ export function InvitationClient() {
 
   const sortedGroups = Object.entries(eventGroups).sort(
     ([, a], [, b]) =>
-      new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime()
+      new Date(eventDateTimeSortValue(a.eventDate, a.eventTime)).getTime() -
+      new Date(eventDateTimeSortValue(b.eventDate, b.eventTime)).getTime()
   );
 
   const answered = invitation
@@ -647,7 +658,7 @@ export function InvitationClient() {
             </p>
             <h1 className="font-display display-wonk text-4xl sm:text-6xl md:text-7xl font-light text-foreground leading-tight animate-fade-up delay-100">
               Find your{" "}
-              <span className="italic text-rose font-normal">invitation</span>
+              <span className="font-accent italic text-rose font-normal">invitation</span>
             </h1>
             <p className="mt-6 text-sm md:text-base text-text-secondary leading-relaxed font-body max-w-md mx-auto animate-fade-up delay-300">
               Search your name to see your events and reply for everyone on
@@ -743,7 +754,7 @@ export function InvitationClient() {
                     >
                       <span
                         aria-hidden
-                        className={`flex items-center justify-center w-11 h-11 rounded-full font-display display-wonk italic text-xl shrink-0 border border-white/70 transition-transform duration-300 group-hover:-rotate-6 ${AVATAR_TINTS[i % AVATAR_TINTS.length]}`}
+                        className={`flex items-center justify-center w-11 h-11 rounded-full font-accent display-wonk italic text-xl shrink-0 border border-white/70 transition-transform duration-300 group-hover:-rotate-6 ${AVATAR_TINTS[i % AVATAR_TINTS.length]}`}
                       >
                         {hit.name.charAt(0).toUpperCase()}
                       </span>

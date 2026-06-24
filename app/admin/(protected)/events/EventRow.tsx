@@ -6,23 +6,24 @@ import { FormField, TextareaField } from "@/app/shared/FormField";
 import { Button } from "@/app/shared/Button";
 import { ErrorMessage } from "@/app/shared/ErrorMessage";
 import { useServerAction } from "@/app/shared/useServerAction";
+import {
+  formatEventDateTime,
+  toDateInputValue,
+  toTimeInputValue,
+} from "@/app/shared/event-date-time";
 
 type Event = {
   id: number;
   name: string;
   date: string;
+  time: string | null;
   location: string | null;
   dress_code: string | null;
   details: string | null;
 };
 
-function toDateTimeLocalValue(value: string) {
-  const [date, time = "00:00"] = value.replace(" ", "T").split("T");
-  return `${date}T${time.slice(0, 5)}`;
-}
-
-function formatDateTime(value: string) {
-  return new Date(toDateTimeLocalValue(value)).toLocaleString("en-US", {
+function formatDateTime(date: string, time: string | null) {
+  return formatEventDateTime(date, time, {
     weekday: "long",
     month: "long",
     day: "numeric",
@@ -64,7 +65,7 @@ export function EventRow({ event }: { event: Event }) {
             {event.name}
           </h2>
           <p className="text-[10px] tracking-[0.3em] uppercase text-accent font-body mt-1 tabular-nums">
-            {formatDateTime(event.date)}
+            {formatDateTime(event.date, event.time)}
           </p>
         </div>
         <div className="flex items-center gap-5 text-[10px] tracking-[0.25em] uppercase font-body">
@@ -100,10 +101,17 @@ export function EventRow({ event }: { event: Event }) {
             required
           />
           <FormField
-            label="Date and time"
+            label="Date"
             name="date"
-            type="datetime-local"
-            defaultValue={toDateTimeLocalValue(event.date)}
+            type="date"
+            defaultValue={toDateInputValue(event.date)}
+            required
+          />
+          <FormField
+            label="Time"
+            name="time"
+            type="time"
+            defaultValue={toTimeInputValue(event.time)}
             required
           />
           <FormField

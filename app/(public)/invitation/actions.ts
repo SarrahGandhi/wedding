@@ -15,6 +15,7 @@ export interface EventRsvp {
   eventId: number;
   eventName: string;
   eventDate: string;
+  eventTime: string | null;
   eventLocation: string | null;
   eventDressCode: string | null;
   eventDetails: string | null;
@@ -114,7 +115,7 @@ export async function getFamilyInvitationByFamilyId(
       event_id,
       guest_id,
       rsvp_status,
-      events (id, name, date, location, dress_code, details)
+      events (id, name, date, time, location, dress_code, details)
     `
     )
     .in("guest_id", guestIds)
@@ -125,6 +126,7 @@ export async function getFamilyInvitationByFamilyId(
       id: number;
       name: string;
       date: string;
+      time: string | null;
       location: string | null;
       dress_code: string | null;
       details: string | null;
@@ -134,6 +136,7 @@ export async function getFamilyInvitationByFamilyId(
       eventId: event.id,
       eventName: event.name,
       eventDate: event.date,
+      eventTime: event.time,
       eventLocation: event.location,
       eventDressCode: event.dress_code,
       eventDetails: event.details,

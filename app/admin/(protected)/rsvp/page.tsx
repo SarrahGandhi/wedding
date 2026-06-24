@@ -6,14 +6,10 @@ import { SelectField } from "@/app/shared/FormField";
 import { Button } from "@/app/shared/Button";
 import { PageHeader } from "@/app/shared/PageHeader";
 import { StatusDot } from "@/app/shared/StatusDot";
+import { formatEventDateTime } from "@/app/shared/event-date-time";
 
-function toDateTimeLocalValue(value: string) {
-  const [date, time = "00:00"] = value.replace(" ", "T").split("T");
-  return `${date}T${time.slice(0, 5)}`;
-}
-
-function formatDateTime(value: string) {
-  return new Date(toDateTimeLocalValue(value)).toLocaleString("en-US", {
+function formatDateTime(date: string, time: string | null) {
+  return formatEventDateTime(date, time, {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -34,8 +30,9 @@ export default async function RsvpPage({
     await Promise.all([
       supabase
         .from("events")
-        .select("id, name, date")
-        .order("date", { ascending: true }),
+        .select("id, name, date, time")
+        .order("date", { ascending: true })
+        .order("time", { ascending: true }),
       supabase
         .from("guest_families")
         .select("id, side")
@@ -151,7 +148,7 @@ export default async function RsvpPage({
               >
                 {events.map((e) => (
                   <option key={e.id} value={e.id}>
-                    {e.name} · {formatDateTime(e.date)}
+                    {e.name} · {formatDateTime(e.date, e.time)}
                   </option>
                 ))}
               </SelectField>
@@ -173,7 +170,7 @@ export default async function RsvpPage({
               </span>{" "}
               on{" "}
               <span className="tabular-nums">
-                {formatDateTime(selectedEvent.date)}
+                {formatDateTime(selectedEvent.date, selectedEvent.time)}
               </span>
               .
             </p>

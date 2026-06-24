@@ -56,12 +56,12 @@ Legacy earth tokens (`accent`, `sage`, `cream`, …) still exist for not-yet-red
 
 ## 4. Typography
 
-Two fonts, loaded via `next/font/google` in `app/layout.tsx` and exposed as `font-display` and `font-body`:
+Three fonts, loaded via `next/font/google` in `app/layout.tsx` and exposed as `font-display`, `font-accent`, and `font-body`:
 
 - **Bodoni Moda** (`font-display`) — high-contrast editorial serif for names, headings, big numerals, italic flourishes. Use it large and with restraint so the site feels like a designed wedding invitation rather than a generic landing page.
   - Add the `.display-wonk` class (defined in `globals.css`) on hero-scale headings and decorative numerals to tighten the editorial letter spacing. Use it at large sizes only.
-  - Italic Bodoni Moda in an accent color is the signature flourish: the `&` between names, emphasized words in headings (`<span className="italic text-rose">three</span>`), dates, sign-off lines.
   - Display digits are proportional. For any live-updating number (countdowns, counters), wrap each digit in a fixed-width cell: `<span className="inline-block w-[0.64em] text-center">`.
+- **Cormorant Garamond** (`font-accent`) — softer italic flourishes for dates, emphasized words in headings (`<span className="font-accent italic text-rose">three</span>`), decorative numerals, captions, and sign-off lines.
 - **Instrument Sans** (`font-body`) — clean sans for everything else: body copy, labels, buttons, nav.
 
 Type patterns:

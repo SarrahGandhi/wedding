@@ -52,12 +52,12 @@
   --color-deepblue: var(--deepblue);
   --font-display: var(--font-display-serif);
   --font-body: var(--font-body-sans);
+  --font-accent: var(--font-accent-serif);
 }
 
 body {
   background:
     radial-gradient(circle at 12% 8%, color-mix(in srgb, var(--peach) 18%, transparent) 0 14rem, transparent 32rem),
-    radial-gradient(circle at 92% 18%, color-mix(in srgb, var(--sky) 16%, transparent) 0 16rem, transparent 34rem),
     radial-gradient(circle at 20% 88%, color-mix(in srgb, var(--blush) 14%, transparent) 0 12rem, transparent 30rem),
     linear-gradient(135deg, var(--background) 0%, var(--warm-white) 52%, var(--background) 100%);
   background-attachment: fixed;

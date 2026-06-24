@@ -208,7 +208,7 @@ function ChapterCard({ chapter, index }: { chapter: Chapter; index: number }) {
       >
         <span
           aria-hidden
-          className={`absolute -top-6 left-6 font-display display-wonk italic text-7xl ${style.accent} drop-shadow-[0_2px_0_rgba(255,255,255,0.8)]`}
+          className={`absolute -top-6 left-6 font-accent display-wonk italic text-7xl ${style.accent} drop-shadow-[0_2px_0_rgba(255,255,255,0.8)]`}
         >
           {index + 1}
         </span>
@@ -270,7 +270,7 @@ export function OurStoryClient() {
             {story.subtitle}
           </p>
           <h1 className="font-display display-wonk text-5xl sm:text-7xl md:text-8xl font-light text-foreground leading-tight sm:leading-none animate-fade-up delay-200">
-            Our <span className={`italic font-normal ${theme.accentText}`}>Story</span>
+            Our <span className={`font-accent italic font-normal ${theme.accentText}`}>Story</span>
           </h1>
 
           {/* Narrator toggle */}
