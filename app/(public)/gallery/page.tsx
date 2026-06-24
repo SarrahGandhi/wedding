@@ -45,18 +45,12 @@ const PHOTOS: Photo[] = [
     aspect: "aspect-[4/3]",
     src: "/gallery/firstdate.jpg",
   },
-  {
-    alt: "Costume shopping in Kensington Market",
-    caption: "Kensington Market",
-    year: "Oct 2023",
-    aspect: "aspect-square",
-  },
-  {
-    alt: "New Year's Eve",
-    caption: "Midnight, finally official",
-    year: "NYE 2023",
-    aspect: "aspect-[3/4]",
-  },
+  // {
+  //   alt: "New Year's Eve",
+  //   caption: "Midnight, finally official",
+  //   year: "NYE 2023",
+  //   aspect: "aspect-[3/4]",
+  // },
   {
     alt: "Concerts and park dates",
     caption: "Concert season",
@@ -85,12 +79,12 @@ const PHOTOS: Photo[] = [
     aspect: "aspect-[4/3]",
     src: "/gallery/montreal.jpg",
   },
-  {
-    alt: "Cliff jumping",
-    caption: "The cliff jump",
-    year: "2025",
-    aspect: "aspect-[4/5]",
-  },
+  // {
+  //   alt: "Cliff jumping",
+  //   caption: "The cliff jump",
+  //   year: "2025",
+  //   aspect: "aspect-[4/5]",
+  // },
   {
     alt: "Layover in Hong Kong",
     caption: "Hong Kong layover",
@@ -98,18 +92,18 @@ const PHOTOS: Photo[] = [
     aspect: "aspect-[5/4]",
     src: "/gallery/hongkong.png",
   },
-  {
-    alt: "18 hours on an Indian train",
-    caption: "18 hours by train",
-    year: "2025",
-    aspect: "aspect-square",
-  },
-  {
-    alt: "Wedding shopping in India",
-    caption: "Wedding shopping, x100",
-    year: "2025",
-    aspect: "aspect-[3/4]",
-  },
+  // {
+  //   alt: "18 hours on an Indian train",
+  //   caption: "18 hours by train",
+  //   year: "2025",
+  //   aspect: "aspect-square",
+  // },
+  // {
+  //   alt: "Wedding shopping in India",
+  //   caption: "Wedding shopping, x100",
+  //   year: "2025",
+  //   aspect: "aspect-[3/4]",
+  // },
   {
     alt: "Forever begins",
     caption: "Forever begins",
@@ -330,7 +324,9 @@ export default function GalleryPage() {
           </p>
           <h1 className="font-display display-wonk text-5xl sm:text-7xl md:text-8xl font-light text-foreground leading-tight sm:leading-none animate-fade-up delay-200">
             The{" "}
-            <span className="font-accent italic font-normal text-tangerine">Gallery</span>
+            <span className="font-accent italic font-normal text-tangerine">
+              Gallery
+            </span>
           </h1>
           <p className="mt-10 text-base md:text-lg text-text-secondary leading-relaxed font-body max-w-xl mx-auto animate-fade-up delay-400">
             A few snapshots from along the way — bus stops, borrowed cats, cliff
