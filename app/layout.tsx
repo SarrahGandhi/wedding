@@ -1,17 +1,27 @@
 import type { Metadata } from "next";
-import { Cormorant, Jost } from "next/font/google";
+import { Bodoni_Moda, Cormorant_Garamond, Instrument_Sans } from "next/font/google";
 import "./globals.css";
 
-const cormorant = Cormorant({
-  variable: "--font-cormorant",
+const displaySerif = Bodoni_Moda({
+  variable: "--font-display-serif",
+  subsets: ["latin"],
+  display: "swap",
+  style: ["normal", "italic"],
+  weight: ["400", "500", "600", "700"],
+});
+
+const bodySans = Instrument_Sans({
+  variable: "--font-body-sans",
   subsets: ["latin"],
   display: "swap",
 });
 
-const jost = Jost({
-  variable: "--font-jost",
+const accentSerif = Cormorant_Garamond({
+  variable: "--font-accent-serif",
   subsets: ["latin"],
   display: "swap",
+  style: ["normal", "italic"],
+  weight: ["400", "500", "600"],
 });
 
 export const metadata: Metadata = {
@@ -40,7 +50,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${cormorant.variable} ${jost.variable} h-full antialiased`}
+      className={`${displaySerif.variable} ${bodySans.variable} ${accentSerif.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-body overflow-x-hidden w-full text-foreground relative">
         {children}

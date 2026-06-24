@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 type Narrator = "murtaza" | "sarrah";
@@ -14,8 +15,6 @@ interface Chapter {
 interface StoryData {
   subtitle: string;
   description: string;
-  quote: string;
-  quoteAttribution: string;
   chapters: Chapter[];
   closing: string;
 }
@@ -25,63 +24,57 @@ const stories: Record<Narrator, StoryData> = {
     subtitle: "As told by Murtaza",
     description:
       "From a bus stop pickup in Mississauga to wedding shopping across India — this is how it happened, from my side of things.",
-    quote:
-      "I said chocolate biryani. She said I was insane. Nothing about us was planned. Everything about us was right.",
-    quoteAttribution: "Murtaza",
     chapters: [
       {
         id: "first-meeting",
         year: "Late 2023",
         title: "The Bus Stop Pickup",
-        body: "Mom had invited her over for dinner. She\u2019d just moved to Canada and was staying in North York \u2014 I was out in Mississauga. I picked her up from the bus stop, and what was supposed to be a simple evening turned into hours of talking. Mostly about food. At some point I told her I wanted to try chocolate biryani. She laughed. It became our thing.",
+        body: "Mom had invited her over for dinner. She’d just moved to Canada and was staying in North York — I was out in Mississauga. I picked her up from the bus stop, and what was supposed to be a simple evening turned into hours of talking. Mostly about food. At some point I told her I wanted to try chocolate biryani. She laughed. It became our thing.",
       },
       {
         id: "halloween",
         year: "October 2023",
         title: "Kensington Market",
-        body: 'We met up again right before Halloween for some costume shopping. No real plan \u2014 just walked around Toronto, ended up in Kensington Market, tried on ridiculous outfits, and talked smack about how expensive all these "thrift" stores were. It was one of those perfect, effortless days where time just disappears.',
+        body: 'We met up again right before Halloween for some costume shopping. No real plan — just walked around Toronto, ended up in Kensington Market, tried on ridiculous outfits, and talked smack about how expensive all these "thrift" stores were. It was one of those perfect, effortless days where time just disappears.',
       },
       {
         id: "new-years",
-        year: "New Year\u2019s Eve",
+        year: "New Year’s Eve",
         title: "The Awkward Ask",
-        body: "On New Year\u2019s I asked her to be my girlfriend \u2014 a bit embarrassingly, if I\u2019m honest. And then I immediately dropped her home and drove off to go watch fireworks. She still jokes about how I just left and went to enjoy myself. In my defense, the fireworks were really good.",
+        body: "On New Year’s I asked her to be my girlfriend — a bit embarrassingly, if I’m honest. And then I immediately dropped her home and drove off to go watch fireworks. She still jokes about how I just left and went to enjoy myself. In my defense, the fireworks were really good.",
       },
       {
         id: "growing",
         year: "2024",
         title: "Falling Into It",
-        body: "This was the year we really fell in love. We had some of those hard, honest conversations about life, but talking to her never felt difficult \u2014 and she\u2019d say the same about me. We told our families around Eid in April. I even switched to an iPhone so we could FaceTime. Concerts, park dates, Winter Wonderland, arcades, and more food than I can remember.",
+        body: "This was the year we really fell in love. We had some of those hard, honest conversations about life, but talking to her never felt difficult — and she’d say the same about me. We told our families around Eid in April. I even switched to an iPhone so we could FaceTime. Concerts, park dates, Winter Wonderland, arcades, and more food than I can remember.",
       },
       {
         id: "toronto",
         year: "2025",
         title: "The Toronto Year",
-        body: "I moved to Toronto and suddenly we could see each other all the time. She helped me decorate my apartment. For a brief stretch I was cat-sitting a friend\u2019s cat and she loved Libro more than she loved me \u2014 her words, not mine. We travelled to Montreal for our first festival together. She made me jump off a cliff into water. I was terrified. She was delighted.",
+        body: "I moved to Toronto and suddenly we could see each other all the time. She helped me decorate my apartment. For a brief stretch I was cat-sitting a friend’s cat and she loved Libro more than she loved me — her words, not mine. We travelled to Montreal for our first festival together. She made me jump off a cliff into water. I was terrified. She was delighted.",
       },
       {
         id: "india",
         year: "Late 2025",
         title: "Hong Kong, India & 18 Hours on a Train",
-        body: "She finished her studies, and we celebrated with the trip of a lifetime \u2014 a mini layover in Hong Kong, then on to India where I met her parents and her family. We did the classic 18-hour Indian train ride. We did so much wedding shopping that I now know more about women\u2019s clothing and cut styles than any man probably should. It was chaotic, exhausting, and absolutely perfect.",
+        body: "She finished her studies, and we celebrated with the trip of a lifetime — a mini layover in Hong Kong, then on to India where I met her parents and her family. We did the classic 18-hour Indian train ride. We did so much wedding shopping that I now know more about women’s clothing and cut styles than any man probably should. It was chaotic, exhausting, and absolutely perfect.",
       },
       {
         id: "forever",
         year: "2026",
         title: "Forever Begins",
-        body: "And now here we are. Two people who started with chocolate biryani jokes and thrift store arguments, building a life together. This isn\u2019t the end of the story \u2014 it\u2019s just where the best part starts.",
+        body: "And now here we are. Two people who started with chocolate biryani jokes and thrift store arguments, building a life together. This isn’t the end of the story — it’s just where the best part starts.",
       },
     ],
     closing:
-      "From chocolate biryani to forever \u2014 we cannot wait to celebrate with you.",
+      "From chocolate biryani to forever — we cannot wait to celebrate with you.",
   },
   sarrah: {
     subtitle: "As told by Sarrah",
     description:
-      "My version of events. He\u2019ll say it went differently. He\u2019s wrong.",
-    quote:
-      "Life is short. Dance more. Pet every cat you meet. Marry the one who lets you do both.",
-    quoteAttribution: "Sarrah",
+      "My version of events. He’ll say it went differently. He’s wrong.",
     chapters: [
       {
         id: "first-meeting",
@@ -136,62 +129,101 @@ const stories: Record<Narrator, StoryData> = {
   },
 };
 
-function TimelineEntry({
-  year,
-  title,
-  body,
-  align,
-}: {
-  year: string;
-  title: string;
-  body: string;
-  align: "left" | "right";
-}) {
-  const content = (isLeftAlignNode: boolean) => (
-    <>
-      <p className="text-xs tracking-[0.4em] uppercase text-accent font-body mb-2">
-        {year}
-      </p>
-      <h3 className="font-display text-2xl md:text-3xl font-light text-foreground mb-3 leading-snug">
-        {title}
-      </h3>
-      <p
-        className={`text-sm md:text-base text-text-secondary leading-relaxed font-body max-w-sm ${isLeftAlignNode ? "ml-auto" : ""}`}
-      >
-        {body}
-      </p>
-    </>
+/* Each narrator re-tints the page — Murtaza reads in bluebell, Sarrah in rose */
+const themes: Record<Narrator, { accentText: string; activePill: string }> = {
+  murtaza: {
+    accentText: "text-bluebell",
+    activePill: "bg-bluebell text-warm-white shadow-sm",
+  },
+  sarrah: {
+    accentText: "text-rose",
+    activePill: "bg-rose text-warm-white shadow-sm",
+  },
+};
+
+/* Chapter cards cycle through the same pastel pairings as the home page day cards */
+const CHAPTER_STYLES = [
+  { card: "from-blush to-mint", accent: "text-rose", dot: "bg-rose/70" },
+  { card: "from-sky to-peach", accent: "text-bluebell", dot: "bg-bluebell/70" },
+  { card: "from-peach to-powder", accent: "text-tangerine", dot: "bg-tangerine/70" },
+  { card: "from-mint to-sky", accent: "text-leaf", dot: "bg-leaf/70" },
+  { card: "from-warm-white to-powder", accent: "text-deepblue", dot: "bg-deepblue/60" },
+];
+
+const TILTS = ["md:-rotate-2", "md:rotate-1", "md:-rotate-1", "md:rotate-2"];
+
+/* Full-page atmosphere — positions are % of total page height */
+const BLOBS = [
+  { className: "bg-blush opacity-80", top: "-6rem", right: "-8rem", size: "w-[30rem] h-[30rem]", delay: "0s" },
+  { className: "bg-sky opacity-80", top: "2%", left: "-9rem", size: "w-[32rem] h-[32rem]", delay: "-7s" },
+  { className: "bg-mint opacity-70", top: "24%", right: "-7rem", size: "w-[26rem] h-[26rem]", delay: "-12s" },
+  { className: "bg-peach opacity-70", top: "42%", left: "-8rem", size: "w-[28rem] h-[28rem]", delay: "-4s" },
+  { className: "bg-powder opacity-80", top: "62%", right: "-9rem", size: "w-[30rem] h-[30rem]", delay: "-9s" },
+  { className: "bg-blush opacity-70", top: "80%", left: "-7rem", size: "w-[26rem] h-[26rem]", delay: "-14s" },
+];
+
+const CONFETTI = [
+  { top: "6%", left: "12%", color: "bg-rose/45", delay: "0s", size: "w-2 h-2" },
+  { top: "4%", left: "84%", color: "bg-bluebell/40", delay: "-3s", size: "w-2.5 h-2.5" },
+  { top: "22%", left: "6%", color: "bg-tangerine/40", delay: "-5s", size: "w-2 h-2" },
+  { top: "34%", left: "92%", color: "bg-leaf/40", delay: "-1.5s", size: "w-2 h-2" },
+  { top: "52%", left: "8%", color: "bg-bluebell/35", delay: "-6s", size: "w-2.5 h-2.5" },
+  { top: "66%", left: "90%", color: "bg-rose/35", delay: "-2s", size: "w-2 h-2" },
+  { top: "84%", left: "10%", color: "bg-leaf/35", delay: "-4s", size: "w-2 h-2" },
+  { top: "92%", left: "86%", color: "bg-tangerine/35", delay: "-7s", size: "w-2.5 h-2.5" },
+];
+
+function DottedDivider() {
+  return (
+    <div aria-hidden className="flex justify-center gap-2.5">
+      {["bg-rose/60", "bg-leaf/60", "bg-bluebell/60", "bg-tangerine/60", "bg-deepblue/50"].map(
+        (c, i) => (
+          <span key={i} className={`w-2 h-2 rounded-full ${c}`} />
+        ),
+      )}
+    </div>
   );
+}
+
+function ChapterCard({ chapter, index }: { chapter: Chapter; index: number }) {
+  const style = CHAPTER_STYLES[index % CHAPTER_STYLES.length];
+  const tilt = TILTS[index % TILTS.length];
+  const onLeft = index % 2 === 0;
 
   return (
-    <div className="relative flex gap-4 md:grid md:grid-cols-[1fr_auto_1fr] md:gap-10 items-start mb-10 md:mb-0 group">
-      {/* Mobile Line */}
-      <div className="flex flex-col items-center md:hidden pt-2 shrink-0">
-        <div className="w-2.5 h-2.5 rounded-full bg-accent/60 border-2 border-background ring-2 ring-accent/20" />
-        <div className="w-px flex-1 bg-border/60 min-h-full" />
-      </div>
-
-      {/* Content for left column on desktop */}
-      <div
-        className={`hidden md:block ${align === "left" ? "text-right" : "opacity-0 pointer-events-none"}`}
+    <div
+      className={`relative md:grid md:grid-cols-2 md:gap-20 mb-14 md:mb-0 ${
+        index > 0 ? "md:-mt-8" : ""
+      }`}
+    >
+      {/* Connector dot on the dashed trail */}
+      <span
+        aria-hidden
+        className={`hidden md:block absolute left-1/2 top-16 -translate-x-1/2 w-3.5 h-3.5 rounded-full ${style.dot} border-[3px] border-background shadow-sm`}
+      />
+      <article
+        className={`group relative rounded-3xl bg-linear-to-br ${style.card} ${tilt} ${
+          onLeft ? "" : "md:col-start-2"
+        } p-8 pt-12 border border-white/60 shadow-[0_18px_40px_-20px_rgba(90,80,90,0.35)] transition-transform duration-300 md:hover:rotate-0 hover:-translate-y-1.5 md:mb-16`}
       >
-        {align === "left" && content(true)}
-      </div>
-
-      {/* Center line for desktop */}
-      <div className="hidden md:flex flex-col items-center pt-2 h-full">
-        <div className="w-2.5 h-2.5 shrink-0 rounded-full bg-accent/60 border-2 border-background ring-2 ring-accent/20" />
-        <div className="w-px flex-1 bg-border/60 min-h-[80px]" />
-      </div>
-
-      {/* Content for mobile (always left aligned) AND right column on desktop */}
-      <div
-        className={`pb-8 md:pb-0 ${align === "left" ? "md:opacity-0 md:pointer-events-none" : ""}`}
-      >
-        <div className={align === "left" ? "md:hidden" : ""}>
-          {content(false)}
-        </div>
-      </div>
+        <span
+          aria-hidden
+          className={`absolute -top-6 left-6 font-accent display-wonk italic text-7xl ${style.accent} drop-shadow-[0_2px_0_rgba(255,255,255,0.8)]`}
+        >
+          {index + 1}
+        </span>
+        <p
+          className={`text-[11px] tracking-[0.3em] uppercase font-body ${style.accent} mt-4 mb-3`}
+        >
+          {chapter.year}
+        </p>
+        <h3 className="font-display text-2xl md:text-3xl text-foreground leading-snug mb-3">
+          {chapter.title}
+        </h3>
+        <p className="text-sm md:text-[15px] text-text-secondary font-body leading-relaxed">
+          {chapter.body}
+        </p>
+      </article>
     </div>
   );
 }
@@ -199,28 +231,56 @@ function TimelineEntry({
 export function OurStoryClient() {
   const [narrator, setNarrator] = useState<Narrator>("murtaza");
   const story = stories[narrator];
+  const theme = themes[narrator];
 
   return (
-    <div className="min-h-screen">
-      {/* Hero section */}
-      <section className="relative flex flex-col items-center justify-center py-32 md:py-44 px-6 overflow-hidden">
-        <div className="absolute inset-0 bg-linear-to-b from-cream/50 via-background to-background" />
+    /* -mt-24 cancels the layout's pt-24 so the pastel backdrop runs
+       underneath the floating nav to the top of the viewport */
+    <div className="grain relative -mt-24 overflow-hidden">
+      {/* Soft pastel atmosphere spanning the whole page */}
+      <div aria-hidden className="pointer-events-none absolute inset-0">
+        {BLOBS.map((blob, i) => (
+          <div
+            key={i}
+            className={`absolute rounded-full blur-3xl animate-drift ${blob.className} ${blob.size}`}
+            style={{
+              top: blob.top,
+              left: blob.left,
+              right: blob.right,
+              animationDelay: blob.delay,
+            }}
+          />
+        ))}
+        {CONFETTI.map((dot, i) => (
+          <span
+            key={i}
+            className={`absolute rounded-full ${dot.color} ${dot.size} animate-bob hidden sm:block`}
+            style={{ top: dot.top, left: dot.left, animationDelay: dot.delay }}
+          />
+        ))}
+      </div>
+
+      {/* Hero */}
+      <section className="relative flex flex-col items-center justify-center px-6 pt-40 pb-16">
         <div className="relative z-10 text-center max-w-3xl mx-auto">
-          <p className="text-xs tracking-[0.5em] uppercase text-accent font-body mb-6 animate-fade-in">
+          <p
+            key={`subtitle-${narrator}`}
+            className={`text-xs tracking-[0.5em] uppercase ${theme.accentText} font-body mb-6 animate-fade-in`}
+          >
             {story.subtitle}
           </p>
-          <h1 className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-light text-foreground animate-fade-up delay-100">
-            Our Story
+          <h1 className="font-display display-wonk text-5xl sm:text-7xl md:text-8xl font-light text-foreground leading-tight sm:leading-none animate-fade-up delay-200">
+            Our <span className={`font-accent italic font-normal ${theme.accentText}`}>Story</span>
           </h1>
 
           {/* Narrator toggle */}
-          <div className="mt-8 flex items-center justify-center gap-1 bg-cream/60 p-1 rounded-full w-fit mx-auto">
+          <div className="mt-10 flex items-center justify-center gap-1 bg-warm-white/75 backdrop-blur-xl border border-white/70 shadow-[0_14px_36px_-14px_rgba(90,80,90,0.4)] p-1.5 rounded-full w-fit mx-auto animate-fade-up delay-400">
             <button
               onClick={() => setNarrator("murtaza")}
               className={`px-5 py-2 text-[11px] tracking-[0.25em] uppercase font-body rounded-full transition-all duration-300 cursor-pointer ${
                 narrator === "murtaza"
-                  ? "bg-foreground text-background shadow-sm"
-                  : "text-text-secondary hover:text-foreground"
+                  ? themes.murtaza.activePill
+                  : "text-text-secondary hover:text-bluebell"
               }`}
             >
               Murtaza
@@ -229,70 +289,85 @@ export function OurStoryClient() {
               onClick={() => setNarrator("sarrah")}
               className={`px-5 py-2 text-[11px] tracking-[0.25em] uppercase font-body rounded-full transition-all duration-300 cursor-pointer ${
                 narrator === "sarrah"
-                  ? "bg-foreground text-background shadow-sm"
-                  : "text-text-secondary hover:text-foreground"
+                  ? themes.sarrah.activePill
+                  : "text-text-secondary hover:text-rose"
               }`}
             >
               Sarrah
             </button>
           </div>
 
-          <div className="mt-8 w-24 h-px bg-accent/40 mx-auto" />
-          <p className="mt-8 text-base md:text-lg text-text-secondary leading-relaxed font-body max-w-xl mx-auto">
+          <p
+            key={`description-${narrator}`}
+            className="mt-10 text-base md:text-lg text-text-secondary leading-relaxed font-body max-w-xl mx-auto animate-fade-in"
+          >
             {story.description}
           </p>
         </div>
       </section>
 
-      {/* Opening quote */}
-      <section className="max-w-2xl mx-auto px-6 pb-20">
-        <blockquote className="font-display text-2xl md:text-3xl lg:text-4xl font-light text-foreground leading-snug text-center italic">
-          &ldquo;{story.quote}&rdquo;
-        </blockquote>
-        <p className="text-center text-xs tracking-[0.3em] uppercase text-text-secondary font-body mt-6">
-          &mdash; {story.quoteAttribution}
-        </p>
-      </section>
-
-      {/* Decorative divider */}
-      <div className="flex items-center justify-center gap-4 pb-20">
-        <div className="w-16 h-px bg-border" />
-        <div className="w-1.5 h-1.5 rounded-full bg-accent/40" />
-        <div className="w-16 h-px bg-border" />
+      {/* Playful dotted divider */}
+      <div className="relative pb-16">
+        <DottedDivider />
       </div>
 
-      {/* Timeline */}
-      <section className="max-w-3xl mx-auto px-6 pb-32">
-        <div className="flex flex-col">
+      {/* Chapter trail — tilted cards zigzag down a dashed path */}
+      <section className="relative max-w-4xl mx-auto px-6 pb-20">
+        <div key={`timeline-${narrator}`} className="relative animate-fade-in">
+          {/* Dashed trail behind the cards */}
+          <div
+            aria-hidden
+            className="hidden md:block absolute left-1/2 top-4 bottom-4 -translate-x-1/2 border-l-2 border-dashed border-deepblue/15"
+          />
           {story.chapters.map((chapter, i) => (
-            <TimelineEntry
-              key={chapter.id}
-              year={chapter.year}
-              title={chapter.title}
-              body={chapter.body}
-              align={i % 2 === 0 ? "right" : "left"}
-            />
+            <ChapterCard key={chapter.id} chapter={chapter} index={i} />
           ))}
-          <div className="flex justify-center">
-            <div className="w-4 h-4 rounded-full bg-accent/30 border-2 border-accent/50 flex items-center justify-center">
-              <div className="w-1.5 h-1.5 rounded-full bg-accent" />
-            </div>
+          <div className="relative flex justify-center">
+            <HeartIcon className="w-8 h-8 text-rose/70 bg-background rounded-full p-1" />
           </div>
         </div>
       </section>
 
       {/* Closing section */}
-      <section className="bg-linear-to-b from-background via-cream/30 to-background py-24 px-6">
-        <div className="max-w-2xl mx-auto text-center">
-          <p className="font-display text-3xl md:text-4xl lg:text-5xl font-light text-foreground leading-snug">
+      <section className="relative py-20 px-6">
+        <div className="relative max-w-2xl mx-auto text-center">
+          <div className="mb-12">
+            <DottedDivider />
+          </div>
+          <p
+            key={`closing-${narrator}`}
+            className="font-display display-wonk text-3xl md:text-4xl lg:text-5xl font-light text-foreground leading-snug animate-fade-in"
+          >
             {story.closing}
           </p>
-          <div className="mt-10 w-24 h-px bg-accent/40 mx-auto" />
-          <p className="mt-10 text-sm tracking-[0.3em] uppercase text-accent font-body">
+          <p className={`mt-10 text-sm tracking-[0.3em] uppercase ${theme.accentText} font-body`}>
             October 22, 2026
           </p>
+          <div className="mt-12">
+            <Link
+              href="/invitation"
+              className="inline-block px-8 py-3.5 rounded-full border-2 border-deepblue/30 text-deepblue text-xs tracking-[0.3em] uppercase font-body hover:bg-deepblue hover:text-warm-white transition-colors duration-300"
+            >
+              RSVP — Find Your Invitation
+            </Link>
+          </div>
         </div>
       </section>
     </div>
+  );
+}
+
+function HeartIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 48 48"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M24 41C16 34.5 6.5 27 6.5 17.5 6.5 11.5 11 7 16.5 7c3 0 5.8 1.5 7.5 4 1.7-2.5 4.5-4 7.5-4C37 7 41.5 11.5 41.5 17.5 41.5 27 32 34.5 24 41z" />
+    </svg>
   );
 }

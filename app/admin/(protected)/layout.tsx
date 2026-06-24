@@ -46,12 +46,6 @@ export default async function ProtectedAdminLayout({
       <main className="flex-1 max-w-6xl w-full mx-auto px-6 py-10">
         {children}
       </main>
-
-      <footer className="border-t border-border/40 py-6 text-center">
-        <p className="text-[10px] tracking-[0.3em] uppercase text-muted font-body">
-          Back of house · Private
-        </p>
-      </footer>
     </div>
   );
 }

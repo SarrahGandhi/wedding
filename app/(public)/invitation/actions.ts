@@ -15,6 +15,7 @@ export interface EventRsvp {
   eventId: number;
   eventName: string;
   eventDate: string;
+  eventTime: string | null;
   eventLocation: string | null;
   eventDressCode: string | null;
   eventDetails: string | null;
@@ -30,7 +31,12 @@ export interface FamilyInvitation {
   rsvps: EventRsvp[];
 }
 
-export async function searchGuests(name: string): Promise<GuestResult[]> {
+export interface GuestSearchHit extends GuestResult {
+  /** Names of everyone on the same invitation (including this guest), in id order. */
+  party: string[];
+}
+
+export async function searchGuests(name: string): Promise<GuestSearchHit[]> {
   if (!name || name.trim().length < 2) return [];
 
   const supabase = await createClient();
@@ -41,11 +47,42 @@ export async function searchGuests(name: string): Promise<GuestResult[]> {
     .limit(10);
 
   if (error) throw new Error("Failed to search guests");
-  return (data ?? []).map((g) => ({
+
+  const hits = (data ?? []).map((g) => ({
     id: g.id,
     name: g.name,
     category: g.category,
     familyId: g.family_id,
+  }));
+
+  const familyIds = [
+    ...new Set(
+      hits.map((h) => h.familyId).filter((id): id is number => id !== null)
+    ),
+  ];
+
+  const partyByFamily = new Map<number, string[]>();
+  if (familyIds.length > 0) {
+    const { data: members } = await supabase
+      .from("guests")
+      .select("name, family_id")
+      .in("family_id", familyIds)
+      .order("id");
+
+    for (const member of members ?? []) {
+      if (member.family_id === null) continue;
+      const party = partyByFamily.get(member.family_id) ?? [];
+      party.push(member.name);
+      partyByFamily.set(member.family_id, party);
+    }
+  }
+
+  return hits.map((h) => ({
+    ...h,
+    party:
+      h.familyId !== null
+        ? (partyByFamily.get(h.familyId) ?? [h.name])
+        : [h.name],
   }));
 }
 
@@ -78,7 +115,7 @@ export async function getFamilyInvitationByFamilyId(
       event_id,
       guest_id,
       rsvp_status,
-      events (id, name, date, location, dress_code, details)
+      events (id, name, date, time, location, dress_code, details)
     `
     )
     .in("guest_id", guestIds)
@@ -89,6 +126,7 @@ export async function getFamilyInvitationByFamilyId(
       id: number;
       name: string;
       date: string;
+      time: string | null;
       location: string | null;
       dress_code: string | null;
       details: string | null;
@@ -98,6 +136,7 @@ export async function getFamilyInvitationByFamilyId(
       eventId: event.id,
       eventName: event.name,
       eventDate: event.date,
+      eventTime: event.time,
       eventLocation: event.location,
       eventDressCode: event.dress_code,
       eventDetails: event.details,
@@ -144,6 +183,23 @@ export async function updateRsvpStatus(
     .from("event_guests_rsvp")
     .update({ rsvp_status: status })
     .eq("id", rsvpId);
+
+  if (error) return { success: false, error: error.message };
+  return { success: true };
+}
+
+export async function updateRsvpStatusBulk(
+  rsvpIds: number[],
+  status: RsvpStatus
+): Promise<{ success: boolean; error?: string }> {
+  if (rsvpIds.length === 0) return { success: true };
+
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("event_guests_rsvp")
+    .update({ rsvp_status: status })
+    .in("id", rsvpIds);
 
   if (error) return { success: false, error: error.message };
   return { success: true };

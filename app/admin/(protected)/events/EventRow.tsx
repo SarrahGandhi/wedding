@@ -6,22 +6,37 @@ import { FormField, TextareaField } from "@/app/shared/FormField";
 import { Button } from "@/app/shared/Button";
 import { ErrorMessage } from "@/app/shared/ErrorMessage";
 import { useServerAction } from "@/app/shared/useServerAction";
+import {
+  formatEventDateTime,
+  toDateInputValue,
+  toTimeInputValue,
+} from "@/app/shared/event-date-time";
 
 type Event = {
   id: number;
   name: string;
   date: string;
+  time: string | null;
   location: string | null;
   dress_code: string | null;
   details: string | null;
 };
 
-function formatDate(iso: string) {
-  return new Date(iso + "T00:00:00").toLocaleDateString("en-US", {
+function formatDate(date: string, time: string | null) {
+  return formatEventDateTime(date, time, {
     weekday: "long",
     month: "long",
     day: "numeric",
     year: "numeric",
+  });
+}
+
+function formatTime(date: string, time: string | null) {
+  if (!time) return "Time not set";
+
+  return formatEventDateTime(date, time, {
+    hour: "numeric",
+    minute: "2-digit",
   });
 }
 
@@ -40,7 +55,7 @@ export function EventRow({ event }: { event: Event }) {
     e.preventDefault();
     if (
       !confirm(
-        `Delete event "${event.name}"? All RSVP records for this event will be removed.`
+        `Delete event “${event.name}”? All RSVP records for this event will be removed.`
       )
     )
       return;
@@ -49,21 +64,26 @@ export function EventRow({ event }: { event: Event }) {
 
   return (
     <article
-      className={`border-t border-border/40 py-7 ${pending ? "opacity-60" : ""}`}
+      className={`rounded-[1.75rem] border border-white/70 bg-warm-white/70 p-5 shadow-[0_14px_30px_-18px_rgba(90,80,90,0.35)] transition-opacity sm:p-6 ${
+        pending ? "opacity-60" : ""
+      }`}
     >
-      <div className="flex flex-col md:flex-row md:items-baseline md:justify-between gap-2 mb-4">
-        <div>
-          <h2 className="font-display italic text-3xl text-foreground leading-tight">
+      <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <p className="mb-2 text-[11px] font-body uppercase tracking-[0.22em] text-tangerine tabular-nums">
+            {formatDate(event.date, event.time)}
+          </p>
+          <h2 className="font-display display-wonk text-3xl font-light leading-tight text-foreground sm:text-4xl">
             {event.name}
           </h2>
-          <p className="text-[10px] tracking-[0.3em] uppercase text-accent font-body mt-1 tabular-nums">
-            {formatDate(event.date)}
-          </p>
         </div>
-        <div className="flex items-center gap-5 text-[10px] tracking-[0.25em] uppercase font-body">
-          <span className="text-muted tabular-nums">#{event.id}</span>
+        <div className="flex shrink-0 flex-wrap items-center gap-3 text-[10px] font-body uppercase tracking-[0.22em]">
+          <span className="rounded-full bg-powder px-3 py-2 text-muted tabular-nums">
+            #{event.id}
+          </span>
           <Button
             variant="ghost"
+            className="rounded-full bg-peach/45 px-4 py-2 text-tangerine hover:bg-peach/70"
             onClick={() => {
               setEditing((v) => !v);
               update.setError(null);
@@ -73,7 +93,12 @@ export function EventRow({ event }: { event: Event }) {
           </Button>
           <form onSubmit={onDelete} className="inline">
             <input type="hidden" name="id" value={event.id} />
-            <Button variant="danger" type="submit" disabled={pending}>
+            <Button
+              variant="danger"
+              type="submit"
+              disabled={pending}
+              className="rounded-full bg-blush/45 px-4 py-2 text-rose hover:bg-blush/75"
+            >
               Delete
             </Button>
           </form>
@@ -83,12 +108,13 @@ export function EventRow({ event }: { event: Event }) {
       {editing ? (
         <form
           onSubmit={onSubmit}
-          className="grid grid-cols-1 md:grid-cols-2 gap-3"
+          className="grid grid-cols-1 gap-4 rounded-[1.5rem] border border-white/70 bg-powder/55 p-4 md:grid-cols-2"
         >
           <input type="hidden" name="id" value={event.id} />
           <FormField
             label="Name"
             name="name"
+            size="lg"
             defaultValue={event.name}
             required
           />
@@ -96,56 +122,80 @@ export function EventRow({ event }: { event: Event }) {
             label="Date"
             name="date"
             type="date"
-            defaultValue={event.date}
+            size="lg"
+            defaultValue={toDateInputValue(event.date)}
+            required
+          />
+          <FormField
+            label="Time"
+            name="time"
+            type="time"
+            size="lg"
+            defaultValue={toTimeInputValue(event.time)}
             required
           />
           <FormField
             label="Location"
             name="location"
+            size="lg"
             defaultValue={event.location ?? ""}
           />
           <FormField
             label="Dress code"
             name="dress_code"
+            size="lg"
             defaultValue={event.dress_code ?? ""}
           />
           <TextareaField
             label="Details"
             name="details"
+            size="lg"
             rows={3}
             defaultValue={event.details ?? ""}
             labelClassName="md:col-span-2"
           />
           <div className="md:col-span-2">
-            <Button type="submit" pending={pending}>
+            <Button
+              type="submit"
+              pending={pending}
+              className="rounded-full px-7 py-3"
+            >
               {pending ? "…" : "Save changes"}
             </Button>
           </div>
         </form>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-3 text-sm font-body">
-          <div>
-            <p className="text-[10px] tracking-[0.25em] uppercase text-muted font-body mb-1">
+        <div className="grid grid-cols-1 gap-3 font-body md:grid-cols-3">
+          <div className="rounded-2xl border border-white/70 bg-powder/45 p-4">
+            <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.16em] text-text-secondary">
+              Time
+            </p>
+            <p className="text-base leading-snug text-foreground tabular-nums sm:text-lg">
+              {formatTime(event.date, event.time)}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-white/70 bg-powder/45 p-4">
+            <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.16em] text-text-secondary">
               Location
             </p>
-            <p className="text-foreground">
+            <p className="text-base leading-snug text-foreground sm:text-lg">
               {event.location || (
-                <span className="text-muted italic">Not set</span>
+                <span className="text-muted">Not set</span>
               )}
             </p>
           </div>
-          <div>
-            <p className="text-[10px] tracking-[0.25em] uppercase text-muted font-body mb-1">
+          <div className="rounded-2xl border border-white/70 bg-powder/45 p-4">
+            <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.16em] text-text-secondary">
               Dress code
             </p>
-            <p className="text-foreground italic">
+            <p className="text-base leading-snug text-foreground sm:text-lg">
               {event.dress_code || (
-                <span className="text-muted not-italic">Not set</span>
+                <span className="text-muted">Not set</span>
               )}
             </p>
           </div>
           {event.details && (
-            <div className="md:col-span-2 mt-2 border-l-2 border-accent/30 pl-4 text-text-secondary leading-relaxed">
+            <div className="mt-1 rounded-2xl border border-white/70 bg-powder/60 p-4 text-base leading-relaxed text-text-secondary md:col-span-2">
               {event.details}
             </div>
           )}

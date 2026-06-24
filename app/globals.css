@@ -1,18 +1,30 @@
 @import "tailwindcss";
 
 :root {
-  --background: #faf7f2;
-  --foreground: #2a2a28;
-  --accent: #8b7355;
-  --accent-light: #b49a7a;
-  --sage: #6b705c;
-  --sage-light: #a3a88e;
-  --muted: #b7b7a4;
-  --cream: #f0ead6;
-  --cream-dark: #e6dcc6;
-  --warm-white: #fefcf9;
-  --border: #d4cfc5;
-  --text-secondary: #6e6b64;
+  --background: #f8f1e6;
+  --foreground: #223149;
+  --accent: #9d7443;
+  --accent-light: #ead7b7;
+  --sage: #566f73;
+  --sage-light: #e8ece8;
+  --muted: #a98a5a;
+  --cream: #f4e6cc;
+  --cream-dark: #c59a5b;
+  --warm-white: #fffaf3;
+  --border: #e5cfaa;
+  --text-secondary: #6b625b;
+
+  /* Formal wedding stationery palette. Token names are kept for existing classes. */
+  --blush: #f0dcd4; /* dusty rose wash */
+  --rose: #8f3f48; /* rosewood wax seal accent */
+  --mint: #e9e3d8; /* linen wash */
+  --leaf: #6f634d; /* aged olive-gold ink */
+  --sky: #e5ebef; /* blue-grey envelope lining */
+  --bluebell: #344f73; /* formal ink blue */
+  --peach: #ead7b7; /* champagne gold wash */
+  --tangerine: #9d7443; /* antique gold accent */
+  --powder: #f3eee7; /* vellum paper */
+  --deepblue: #223f63;
 }
 
 @theme inline {
@@ -28,18 +40,43 @@
   --color-warm-white: var(--warm-white);
   --color-border: var(--border);
   --color-text-secondary: var(--text-secondary);
-  --font-display: var(--font-cormorant);
-  --font-body: var(--font-jost);
+  --color-blush: var(--blush);
+  --color-rose: var(--rose);
+  --color-mint: var(--mint);
+  --color-leaf: var(--leaf);
+  --color-sky: var(--sky);
+  --color-bluebell: var(--bluebell);
+  --color-peach: var(--peach);
+  --color-tangerine: var(--tangerine);
+  --color-powder: var(--powder);
+  --color-deepblue: var(--deepblue);
+  --font-display: var(--font-display-serif);
+  --font-body: var(--font-body-sans);
+  --font-accent: var(--font-accent-serif);
 }
 
 body {
-  background: var(--background);
+  background:
+    radial-gradient(circle at 12% 8%, color-mix(in srgb, var(--peach) 18%, transparent) 0 14rem, transparent 32rem),
+    radial-gradient(circle at 20% 88%, color-mix(in srgb, var(--blush) 14%, transparent) 0 12rem, transparent 30rem),
+    linear-gradient(135deg, var(--background) 0%, var(--warm-white) 52%, var(--background) 100%);
+  background-attachment: fixed;
   color: var(--foreground);
 }
 
 ::selection {
-  background: var(--accent-light);
+  background: var(--rose);
   color: var(--warm-white);
+}
+
+:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--rose) 76%, var(--warm-white));
+  outline-offset: 4px;
+}
+
+/* Editorial display setting for the high-contrast wedding serif. */
+.display-wonk {
+  letter-spacing: -0.02em;
 }
 
 @keyframes fade-up {
@@ -89,6 +126,51 @@ body {
 .animate-draw-line {
   animation: draw-line 1s ease-out both;
   transform-origin: left;
+}
+
+@keyframes drift {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(2.5rem, -1.5rem) scale(1.08);
+  }
+}
+
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(var(--bob-tilt, 0deg));
+  }
+  50% {
+    transform: translateY(-12px) rotate(var(--bob-tilt, 0deg));
+  }
+}
+
+.animate-drift {
+  animation: drift 16s ease-in-out infinite;
+}
+
+.animate-bob {
+  animation: bob 7s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-drift,
+  .animate-bob {
+    animation: none;
+  }
+}
+
+/* Subtle paper grain over soft gradients */
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 .delay-100 { animation-delay: 100ms; }
