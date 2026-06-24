@@ -25,14 +25,14 @@ export function FloatingNav() {
 
   return (
     <header
-      className={`fixed top-3 sm:top-4 left-0 right-0 z-50 px-3 transition-all duration-500 ease-out ${
+      className={`fixed top-3 left-0 right-0 z-50 px-3 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] sm:top-4 ${
         hidden
           ? "-translate-y-24 opacity-0 pointer-events-none"
           : "translate-y-0 opacity-100"
       }`}
     >
-      <nav className="w-fit mx-auto rounded-full bg-linear-to-r from-rose/55 via-bluebell/35 to-deepblue/30 p-[1.5px] shadow-[0_18px_48px_-16px_rgba(31,58,85,0.5)]">
-        <div className="flex items-center gap-2 rounded-full border border-white/85 bg-warm-white/95 py-2.5 pl-3.5 pr-2.5 backdrop-blur-xl sm:gap-5 sm:pl-4.5 sm:pr-3">
+      <nav className="mx-auto w-fit rounded-full border border-white/70 bg-warm-white/55 p-1 shadow-[0_16px_38px_-26px_rgba(90,80,90,0.45)] backdrop-blur-xl">
+        <div className="flex items-center gap-2 rounded-full bg-warm-white/35 py-2 pl-3 pr-2 sm:gap-5 sm:pl-4 sm:pr-2.5">
           <Link
             href="/"
             className="shrink-0 transition-transform duration-300 hover:-rotate-6"

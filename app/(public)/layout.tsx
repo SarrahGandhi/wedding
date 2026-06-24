@@ -19,8 +19,14 @@ function WeddingFrame() {
   return (
     <div
       aria-hidden
-      className="pointer-events-none fixed inset-0 z-0 overflow-hidden"
+      className="grain pointer-events-none fixed inset-0 z-0 overflow-hidden"
     >
+      <span className="absolute -left-24 top-24 h-72 w-72 rounded-full bg-blush/45 blur-3xl animate-drift" />
+      <span className="absolute right-[-7rem] top-10 h-96 w-96 rounded-full bg-peach/35 blur-3xl animate-drift delay-300" />
+      <span className="absolute bottom-8 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-sky/35 blur-3xl animate-drift delay-600" />
+      <span className="absolute left-[12%] top-[32%] hidden h-1.5 w-1.5 rounded-full bg-tangerine/35 animate-bob sm:block" />
+      <span className="absolute right-[18%] top-[24%] hidden h-2 w-2 rounded-full bg-rose/25 animate-bob delay-500 sm:block" />
+      <span className="absolute bottom-[22%] right-[12%] hidden h-1 w-1 rounded-full bg-bluebell/30 animate-bob delay-700 sm:block" />
       <div className="absolute inset-x-5 top-5 bottom-5 hidden rounded-[2.5rem] border border-white/50 sm:block" />
       <div className="absolute left-8 top-1/2 hidden h-[42vh] w-px -translate-y-1/2 bg-linear-to-b from-transparent via-rose/25 to-transparent lg:block" />
       <div className="absolute right-8 top-1/2 hidden h-[42vh] w-px -translate-y-1/2 bg-linear-to-b from-transparent via-bluebell/25 to-transparent lg:block" />
