@@ -21,9 +21,9 @@ export function NavLinks() {
           <Link
             key={href}
             href={href}
-            className={`rounded-full px-2.5 sm:px-3.5 py-1.5 text-[11px] sm:text-xs tracking-wider sm:tracking-widest uppercase whitespace-nowrap transition-colors duration-300 ${isActive
-                ? "bg-blush text-rose font-medium"
-                : "text-text-secondary hover:text-rose hover:bg-blush/50"
+            className={`rounded-full px-3 py-2 text-[10px] font-medium sm:px-4 sm:text-[11px] tracking-[0.18em] sm:tracking-[0.28em] uppercase whitespace-nowrap transition-all duration-300 ${isActive
+                ? "bg-deepblue text-warm-white shadow-[0_10px_22px_-14px_var(--deepblue)]"
+                : "text-foreground hover:-translate-y-0.5 hover:bg-peach/75 hover:text-deepblue"
               }`}
           >
             {label}

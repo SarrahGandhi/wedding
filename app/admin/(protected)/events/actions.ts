@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/supabase/admin-auth";
 import {
-  DATE_RE,
+  DATE_TIME_LOCAL_RE,
   parseId,
   parseNullable,
   parseString,
@@ -18,7 +18,9 @@ export async function createEvent(formData: FormData): Promise<void> {
   const details = parseNullable(formData.get("details"));
 
   if (!name) throw new Error("Name is required.");
-  if (!DATE_RE.test(date)) throw new Error("Date must be YYYY-MM-DD.");
+  if (!DATE_TIME_LOCAL_RE.test(date)) {
+    throw new Error("Date and time must be YYYY-MM-DDTHH:mm.");
+  }
 
   const { error } = await supabase
     .from("events")
@@ -40,7 +42,9 @@ export async function updateEvent(formData: FormData) {
 
   if (id === null) return { error: "Invalid id." };
   if (!name) return { error: "Name is required." };
-  if (!DATE_RE.test(date)) return { error: "Date must be YYYY-MM-DD." };
+  if (!DATE_TIME_LOCAL_RE.test(date)) {
+    return { error: "Date and time must be YYYY-MM-DDTHH:mm." };
+  }
 
   const { error } = await supabase
     .from("events")

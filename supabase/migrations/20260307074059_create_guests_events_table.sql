@@ -20,7 +20,7 @@ alter table "public"."event_guests_rsvp" enable row level security;
   create table "public"."events" (
     "id" integer generated always as identity not null,
     "name" text not null,
-    "date" date not null,
+    "date" timestamp without time zone not null,
     "location" text,
     "dress_code" text,
     "details" text,

@@ -21,7 +21,7 @@ create table "guests" (
 create table "events" (
     id integer primary key generated always as identity,
     name text not null,
-    date date not null,
+    date timestamp without time zone not null,
     location text,
     dress_code text,
     details text,

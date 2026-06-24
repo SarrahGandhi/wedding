@@ -16,12 +16,19 @@ type Event = {
   details: string | null;
 };
 
-function formatDate(iso: string) {
-  return new Date(iso + "T00:00:00").toLocaleDateString("en-US", {
+function toDateTimeLocalValue(value: string) {
+  const [date, time = "00:00"] = value.replace(" ", "T").split("T");
+  return `${date}T${time.slice(0, 5)}`;
+}
+
+function formatDateTime(value: string) {
+  return new Date(toDateTimeLocalValue(value)).toLocaleString("en-US", {
     weekday: "long",
     month: "long",
     day: "numeric",
     year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
   });
 }
 
@@ -57,7 +64,7 @@ export function EventRow({ event }: { event: Event }) {
             {event.name}
           </h2>
           <p className="text-[10px] tracking-[0.3em] uppercase text-accent font-body mt-1 tabular-nums">
-            {formatDate(event.date)}
+            {formatDateTime(event.date)}
           </p>
         </div>
         <div className="flex items-center gap-5 text-[10px] tracking-[0.25em] uppercase font-body">
@@ -93,10 +100,10 @@ export function EventRow({ event }: { event: Event }) {
             required
           />
           <FormField
-            label="Date"
+            label="Date and time"
             name="date"
-            type="date"
-            defaultValue={event.date}
+            type="datetime-local"
+            defaultValue={toDateTimeLocalValue(event.date)}
             required
           />
           <FormField

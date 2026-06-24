@@ -31,46 +31,205 @@ interface Photo {
 }
 
 const PHOTOS: Photo[] = [
-  { alt: "The dinner where it all started", caption: "Where it all started", year: "2023", aspect: "aspect-[4/5]" },
-  { alt: "Costume shopping in Kensington Market", caption: "Kensington Market", year: "Oct 2023", aspect: "aspect-square" },
-  { alt: "New Year's Eve", caption: "Midnight, finally official", year: "NYE 2023", aspect: "aspect-[3/4]" },
-  { alt: "Concerts and park dates", caption: "Concert season", year: "2024", aspect: "aspect-[4/5]" },
-  { alt: "Winter Wonderland", caption: "Winter Wonderland", year: "2024", aspect: "aspect-[5/4]" },
-  { alt: "Libro the cat", caption: "Libro (her favourite)", year: "2025", aspect: "aspect-square" },
-  { alt: "First festival together in Montreal", caption: "Montréal, our first festival", year: "2025", aspect: "aspect-[3/4]" },
-  { alt: "Cliff jumping", caption: "The cliff jump", year: "2025", aspect: "aspect-[4/5]" },
-  { alt: "Layover in Hong Kong", caption: "Hong Kong layover", year: "2025", aspect: "aspect-[5/4]" },
-  { alt: "18 hours on an Indian train", caption: "18 hours by train", year: "2025", aspect: "aspect-square" },
-  { alt: "Wedding shopping in India", caption: "Wedding shopping, x100", year: "2025", aspect: "aspect-[3/4]" },
-  { alt: "Forever begins", caption: "Forever begins", year: "2026", aspect: "aspect-[4/5]" },
+  {
+    alt: "The dinner where it all started",
+    caption: "Where it all started",
+    year: "2023",
+    aspect: "aspect-[4/3]",
+    src: "/gallery/firstdinner.JPG",
+  },
+  {
+    alt: "Our first date",
+    caption: "First date",
+    year: "2023",
+    aspect: "aspect-[4/3]",
+    src: "/gallery/firstdate.jpg",
+  },
+  {
+    alt: "Costume shopping in Kensington Market",
+    caption: "Kensington Market",
+    year: "Oct 2023",
+    aspect: "aspect-square",
+  },
+  {
+    alt: "New Year's Eve",
+    caption: "Midnight, finally official",
+    year: "NYE 2023",
+    aspect: "aspect-[3/4]",
+  },
+  {
+    alt: "Concerts and park dates",
+    caption: "Concert season",
+    year: "2024",
+    aspect: "aspect-[4/5]",
+    src: "/gallery/dayonthepark.jpg",
+  },
+  {
+    alt: "Winter Wonderland",
+    caption: "Winter Wonderland",
+    year: "2024",
+    aspect: "aspect-[5/4]",
+    src: "/gallery/winter-wonderland.jpg",
+  },
+  {
+    alt: "Libro the cat",
+    caption: "Libro (her favourite)",
+    year: "2025",
+    aspect: "aspect-[3/4]",
+    src: "/gallery/libro.png",
+  },
+  {
+    alt: "First Trip to Montreal",
+    caption: "Montréal, our first trip together",
+    year: "2025",
+    aspect: "aspect-[4/3]",
+    src: "/gallery/montreal.jpg",
+  },
+  {
+    alt: "Cliff jumping",
+    caption: "The cliff jump",
+    year: "2025",
+    aspect: "aspect-[4/5]",
+  },
+  {
+    alt: "Layover in Hong Kong",
+    caption: "Hong Kong layover",
+    year: "2025",
+    aspect: "aspect-[5/4]",
+    src: "/gallery/hongkong.png",
+  },
+  {
+    alt: "18 hours on an Indian train",
+    caption: "18 hours by train",
+    year: "2025",
+    aspect: "aspect-square",
+  },
+  {
+    alt: "Wedding shopping in India",
+    caption: "Wedding shopping, x100",
+    year: "2025",
+    aspect: "aspect-[3/4]",
+  },
+  {
+    alt: "Forever begins",
+    caption: "Forever begins",
+    year: "2026",
+    aspect: "aspect-[4/3]",
+    src: "/gallery/IMG_5230.jpg",
+  },
 ];
 
 /* Placeholder + caption tints cycle through the home page day-card pairings */
 const CARD_STYLES = [
   { fill: "from-blush to-mint", accent: "text-rose", icon: "text-rose/30" },
-  { fill: "from-sky to-peach", accent: "text-bluebell", icon: "text-bluebell/30" },
-  { fill: "from-peach to-powder", accent: "text-tangerine", icon: "text-tangerine/30" },
+  {
+    fill: "from-sky to-peach",
+    accent: "text-bluebell",
+    icon: "text-bluebell/30",
+  },
+  {
+    fill: "from-peach to-powder",
+    accent: "text-tangerine",
+    icon: "text-tangerine/30",
+  },
   { fill: "from-mint to-sky", accent: "text-leaf", icon: "text-leaf/30" },
-  { fill: "from-powder to-blush", accent: "text-deepblue", icon: "text-deepblue/25" },
+  {
+    fill: "from-powder to-blush",
+    accent: "text-deepblue",
+    icon: "text-deepblue/25",
+  },
 ];
 
-const TILTS = ["-rotate-2", "rotate-1", "-rotate-1", "rotate-2", "rotate-[1.5deg]", "-rotate-[1.5deg]"];
+const TILTS = [
+  "-rotate-2",
+  "rotate-1",
+  "-rotate-1",
+  "rotate-2",
+  "rotate-[1.5deg]",
+  "-rotate-[1.5deg]",
+];
 
 const BLOBS = [
-  { className: "bg-peach opacity-80", top: "-6rem", left: "-8rem", size: "w-[30rem] h-[30rem]", delay: "0s" },
-  { className: "bg-sky opacity-80", top: "4%", right: "-9rem", size: "w-[32rem] h-[32rem]", delay: "-6s" },
-  { className: "bg-blush opacity-70", top: "30%", left: "-7rem", size: "w-[26rem] h-[26rem]", delay: "-11s" },
-  { className: "bg-mint opacity-70", top: "52%", right: "-8rem", size: "w-[28rem] h-[28rem]", delay: "-3s" },
-  { className: "bg-powder opacity-80", top: "74%", left: "-9rem", size: "w-[30rem] h-[30rem]", delay: "-9s" },
+  {
+    className: "bg-peach opacity-80",
+    top: "-6rem",
+    left: "-8rem",
+    size: "w-[30rem] h-[30rem]",
+    delay: "0s",
+  },
+  {
+    className: "bg-sky opacity-80",
+    top: "4%",
+    right: "-9rem",
+    size: "w-[32rem] h-[32rem]",
+    delay: "-6s",
+  },
+  {
+    className: "bg-blush opacity-70",
+    top: "30%",
+    left: "-7rem",
+    size: "w-[26rem] h-[26rem]",
+    delay: "-11s",
+  },
+  {
+    className: "bg-mint opacity-70",
+    top: "52%",
+    right: "-8rem",
+    size: "w-[28rem] h-[28rem]",
+    delay: "-3s",
+  },
+  {
+    className: "bg-powder opacity-80",
+    top: "74%",
+    left: "-9rem",
+    size: "w-[30rem] h-[30rem]",
+    delay: "-9s",
+  },
 ];
 
 const CONFETTI = [
-  { top: "5%", left: "10%", color: "bg-tangerine/40", delay: "0s", size: "w-2 h-2" },
-  { top: "8%", left: "88%", color: "bg-rose/40", delay: "-3s", size: "w-2.5 h-2.5" },
-  { top: "28%", left: "94%", color: "bg-leaf/40", delay: "-5s", size: "w-2 h-2" },
-  { top: "44%", left: "5%", color: "bg-bluebell/40", delay: "-1.5s", size: "w-2.5 h-2.5" },
-  { top: "68%", left: "92%", color: "bg-tangerine/35", delay: "-6s", size: "w-2 h-2" },
-  { top: "86%", left: "8%", color: "bg-rose/35", delay: "-2s", size: "w-2 h-2" },
+  {
+    top: "5%",
+    left: "10%",
+    color: "bg-tangerine/40",
+    delay: "0s",
+    size: "w-2 h-2",
+  },
+  {
+    top: "8%",
+    left: "88%",
+    color: "bg-rose/40",
+    delay: "-3s",
+    size: "w-2.5 h-2.5",
+  },
+  {
+    top: "28%",
+    left: "94%",
+    color: "bg-leaf/40",
+    delay: "-5s",
+    size: "w-2 h-2",
+  },
+  {
+    top: "44%",
+    left: "5%",
+    color: "bg-bluebell/40",
+    delay: "-1.5s",
+    size: "w-2.5 h-2.5",
+  },
+  {
+    top: "68%",
+    left: "92%",
+    color: "bg-tangerine/35",
+    delay: "-6s",
+    size: "w-2 h-2",
+  },
+  {
+    top: "86%",
+    left: "8%",
+    color: "bg-rose/35",
+    delay: "-2s",
+    size: "w-2 h-2",
+  },
 ];
 
 function CameraIcon({ className }: { className?: string }) {
@@ -170,11 +329,12 @@ export default function GalleryPage() {
             Moments we&rsquo;ve collected
           </p>
           <h1 className="font-display display-wonk text-5xl sm:text-7xl md:text-8xl font-light text-foreground leading-tight sm:leading-none animate-fade-up delay-200">
-            The <span className="italic font-normal text-tangerine">Gallery</span>
+            The{" "}
+            <span className="italic font-normal text-tangerine">Gallery</span>
           </h1>
           <p className="mt-10 text-base md:text-lg text-text-secondary leading-relaxed font-body max-w-xl mx-auto animate-fade-up delay-400">
-            A few snapshots from along the way — bus stops, borrowed cats,
-            cliff jumps, and eighteen hours on a train.
+            A few snapshots from along the way — bus stops, borrowed cats, cliff
+            jumps, and eighteen hours on a train.
           </p>
         </div>
       </section>

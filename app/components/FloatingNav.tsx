@@ -31,14 +31,21 @@ export function FloatingNav() {
           : "translate-y-0 opacity-100"
       }`}
     >
-      <nav className="w-fit mx-auto flex items-center gap-2 sm:gap-5 rounded-full bg-warm-white/75 backdrop-blur-xl border border-white/70 shadow-[0_14px_36px_-14px_rgba(90,80,90,0.4)] pl-3 pr-2 sm:pl-4 sm:pr-2.5 py-2">
-        <Link
-          href="/"
-          className="shrink-0 transition-transform duration-300 hover:-rotate-6"
-        >
-          <Image src={logo} alt="Logo" className="h-8 sm:h-9 w-auto" priority />
-        </Link>
-        <NavLinks />
+      <nav className="w-fit mx-auto rounded-full bg-linear-to-r from-rose/55 via-bluebell/35 to-deepblue/30 p-[1.5px] shadow-[0_18px_48px_-16px_rgba(31,58,85,0.5)]">
+        <div className="flex items-center gap-2 rounded-full border border-white/85 bg-warm-white/95 py-2.5 pl-3.5 pr-2.5 backdrop-blur-xl sm:gap-5 sm:pl-4.5 sm:pr-3">
+          <Link
+            href="/"
+            className="shrink-0 transition-transform duration-300 hover:-rotate-6"
+          >
+            <Image
+              src={logo}
+              alt="Murtaza and Sarrah"
+              className="h-9 w-auto sm:h-10"
+              priority
+            />
+          </Link>
+          <NavLinks />
+        </div>
       </nav>
     </header>
   );

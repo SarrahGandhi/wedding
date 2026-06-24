@@ -4,51 +4,53 @@ This is the visual language for all guest-facing (public) UI. Follow it when bui
 
 ## 1. Direction
 
-**Elegant, but playful.** A pastel garden-party feel: soft washes of pale color, refined serif typography with a wonky twist, rounded shapes that tilt slightly off-axis, and gentle motion. Think hand-lettered stationery that doesn't take itself too seriously.
+**Elegant wedding stationery.** A formal ivory, champagne, dusty rose, antique gold, and ink-blue palette with a rosewood accent: luminous paper surfaces, restrained metallic warmth, refined serif typography, rounded stationery shapes that tilt slightly off-axis, and gentle motion. Think hand-lettered invitation suite, wax seals, envelope liners, and candlelit gold; never a children's party.
 
-- Elegance comes from: generous whitespace, letterspaced uppercase labels, the Fraunces serif, soft shadows, muted ink tones.
-- Playfulness comes from: pastel color tiles, slight rotations (±1–2°), the Fraunces "wonk" axis, floating confetti dots, hover micro-interactions (straighten, lift, tilt).
-- Never: harsh borders, pure black, saturated/neon color, sharp corners on interactive elements, purple gradients, generic fonts.
+- Elegance comes from: generous whitespace, letterspaced uppercase labels, the display serif, soft shadows, ivory surfaces, deep ink blue, champagne gold, dusty rose, and restrained rosewood accents.
+- Warmth comes from: slight rotations (±1–2°), italic flourishes, low-contrast paper washes, tiny metallic flecks, and subtle hover micro-interactions (straighten, lift, tilt).
+- Never: harsh borders, pure black, neon color, candy pastels, saturated party blue, bright orange, confetti-heavy decoration, sharp corners on interactive elements, purple gradients, generic fonts.
 
 ## 2. The three-day color story
 
-The wedding spans three days (Oct 20–22, 2026), each with its own palette. Day-specific UI must use its day's pair; general UI may mix freely from the whole pastel set.
+The wedding spans three days (Oct 20–22, 2026), each with its own restrained stationery pairing. Day-specific UI must use its day's pair; general UI may mix freely from the full wedding set.
 
 | Day | Date | Theme | Pale (backgrounds) | Deep (text/accents) |
 |---|---|---|---|---|
-| Day 1 — celebrations begin | Tue, Oct 20 | light pink + light green | `blush`, `mint` | `rose`, `leaf` |
-| Day 2 — the farmhouse | Wed, Oct 21 | light blue + light orange | `sky`, `peach` | `bluebell`, `tangerine` |
-| Day 3 — the main event | Thu, Oct 22 | white + blue | `warm-white`, `powder` | `deepblue` |
+| Day 1 — celebrations begin | Tue, Oct 20 | dusty rose + champagne | `blush`, `peach` | `rose`, `tangerine` |
+| Day 2 — the farmhouse | Wed, Oct 21 | vellum + ink blue | `powder`, `sky` | `bluebell`, `deepblue` |
+| Day 3 — the main event | Thu, Oct 22 | ivory + antique gold | `warm-white`, `peach` | `deepblue`, `tangerine` |
 
 ## 3. Color tokens
 
 All tokens are defined in `app/globals.css` (`:root` + `@theme inline`) and available as Tailwind v4 utilities (`bg-blush`, `text-rose`, `border-bluebell/30`, …). Never hardcode hex values in components — add a token first if one is missing.
 
-Pastel celebration palette:
+Wedding stationery palette:
 
 | Token | Hex | Role |
 |---|---|---|
-| `blush` | `#ffe7ee` | pale pink surface |
-| `rose` | `#c2647f` | pink accent text, active states, links |
-| `mint` | `#e2f1e3` | pale green surface |
-| `leaf` | `#5f8f68` | green accent text |
-| `sky` | `#deecfa` | pale blue surface |
-| `bluebell` | `#5b82b5` | blue accent text |
-| `peach` | `#ffe9d8` | pale orange surface |
-| `tangerine` | `#c97c3f` | orange accent text |
-| `powder` | `#e9f1fa` | white-blue surface (day 3) |
-| `deepblue` | `#44679a` | primary CTA color, day-3 accent |
+| `blush` | `#f0dcd4` | dusty rose paper wash |
+| `rose` | `#8f3f48` | rosewood wax-seal accent, flourishes, active states, links |
+| `mint` | `#e9e3d8` | linen wash, kept under the legacy token name |
+| `leaf` | `#6f634d` | aged olive-gold ink |
+| `sky` | `#e5ebef` | muted blue-grey envelope lining |
+| `bluebell` | `#344f73` | formal ink-blue accent |
+| `peach` | `#ead7b7` | champagne gold wash |
+| `tangerine` | `#9d7443` | antique gold accent text |
+| `powder` | `#f3eee7` | vellum paper surface |
+| `deepblue` | `#223f63` | primary CTA color, formal ink accent |
 
 Neutrals:
 
 | Token | Hex | Role |
 |---|---|---|
-| `background` | `#fdfaf6` | page background (warm off-white) |
-| `warm-white` | `#fefcf9` | card/nav surfaces, text on dark fills |
-| `foreground` | `#2a2a28` | headings, primary text (never pure black) |
-| `text-secondary` | `#6e6b64` | body copy, labels, captions |
+| `background` | `#f8f1e6` | luminous ivory page background |
+| `warm-white` | `#fffaf3` | card/nav surfaces, text on dark fills |
+| `foreground` | `#223149` | deep ink headings and primary text; never black |
+| `text-secondary` | `#6b625b` | warm grey body copy, labels, captions |
+| `border` | `#e5cfaa` | soft champagne border for legacy shared controls |
+| `muted` | `#a98a5a` | muted gold placeholder/caption color |
 
-Pairing rule: pale surfaces take their matching deep accent for text (`bg-blush` → `text-rose`, `bg-mint` → `text-leaf`, `bg-sky` → `text-bluebell`, `bg-peach` → `text-tangerine`, `bg-powder` → `text-deepblue`). Deep accents are for large/short text and labels only — long body copy stays `text-foreground` / `text-text-secondary`.
+Pairing rule: pale surfaces take their matching deep accent for text (`bg-blush` -> `text-rose`, `bg-mint` -> `text-leaf`, `bg-sky` -> `text-bluebell`, `bg-peach` -> `text-tangerine`, `bg-powder` -> `text-deepblue`). Deep accents are for large/short text and labels only; long body copy stays `text-foreground` / `text-text-secondary`.
 
 Legacy earth tokens (`accent`, `sage`, `cream`, …) still exist for not-yet-redesigned pages; do not use them in new work.
 
@@ -56,11 +58,11 @@ Legacy earth tokens (`accent`, `sage`, `cream`, …) still exist for not-yet-red
 
 Two fonts, loaded via `next/font/google` in `app/layout.tsx` and exposed as `font-display` and `font-body`:
 
-- **Fraunces** (`font-display`) — display serif for names, headings, big numerals, italic flourishes. Loaded with `SOFT`, `WONK`, and `opsz` axes plus true italics.
-  - Add the `.display-wonk` class (defined in `globals.css`) on hero-scale headings and decorative numerals to engage the soft/wonky letterforms. Use it at large sizes only.
-  - Italic Fraunces in an accent color is the signature flourish: the `&` between names, emphasized words in headings (`<span className="italic text-rose">three</span>`), dates, sign-off lines.
-  - Fraunces digits are proportional. For any live-updating number (countdowns, counters), wrap each digit in a fixed-width cell: `<span className="inline-block w-[0.64em] text-center">` — `tabular-nums` does NOT work with this font.
-- **Jost** (`font-body`) — geometric sans for everything else: body copy, labels, buttons, nav.
+- **Bodoni Moda** (`font-display`) — high-contrast editorial serif for names, headings, big numerals, italic flourishes. Use it large and with restraint so the site feels like a designed wedding invitation rather than a generic landing page.
+  - Add the `.display-wonk` class (defined in `globals.css`) on hero-scale headings and decorative numerals to tighten the editorial letter spacing. Use it at large sizes only.
+  - Italic Bodoni Moda in an accent color is the signature flourish: the `&` between names, emphasized words in headings (`<span className="italic text-rose">three</span>`), dates, sign-off lines.
+  - Display digits are proportional. For any live-updating number (countdowns, counters), wrap each digit in a fixed-width cell: `<span className="inline-block w-[0.64em] text-center">`.
+- **Instrument Sans** (`font-body`) — clean sans for everything else: body copy, labels, buttons, nav.
 
 Type patterns:
 
@@ -78,10 +80,10 @@ Type patterns:
 
 ## 6. Backgrounds & texture
 
-- Atmosphere = large blurred pastel circles ("blobs"): absolutely positioned, `rounded-full blur-3xl`, opacity 60–80%, animated with `.animate-drift` at staggered negative `animationDelay`s. Wrap them in `<div aria-hidden className="pointer-events-none absolute inset-0">`.
-- Confetti: a few tiny dots (`w-2 h-2 rounded-full`) in deep-accent colors at 35–50% opacity, scattered absolutely, animated with `.animate-bob`, `hidden sm:block`.
+- Atmosphere = large blurred paper-wash circles ("blobs"): absolutely positioned, `rounded-full blur-3xl`, opacity 18–35%, animated with `.animate-drift` at staggered negative `animationDelay`s. Wrap them in `<div aria-hidden className="pointer-events-none absolute inset-0">`.
+- Metallic flecks: a few tiny dots (`w-1 h-1` to `w-2 h-2 rounded-full`) in gold, rosewood, or ink at 20–30% opacity, scattered sparingly and animated with `.animate-bob`, `hidden sm:block`. Avoid anything that reads as party confetti.
 - Grain: add the `.grain` class (defined in `globals.css`) to hero-scale sections with gradient backgrounds — a subtle SVG-noise overlay at 4% opacity. The element needs `relative` and `overflow-hidden`.
-- Card surfaces use two-color pastel gradients: `bg-linear-to-br from-blush to-mint` (Tailwind v4 syntax).
+- Card surfaces use low-contrast paper gradients: `bg-linear-to-br from-warm-white via-blush/55 to-peach/55` (Tailwind v4 syntax).
 - Full-bleed hero sections under the floating nav: cancel the layout's `pt-24` with `-mt-24 min-h-screen pt-28` so the backdrop reaches the viewport top.
 
 ## 7. Motion
@@ -100,8 +102,8 @@ All keyframes and utilities live in `app/globals.css`. Prefer CSS-only animation
   `px-8 py-3.5 rounded-full border-2 border-deepblue/30 text-deepblue text-xs tracking-[0.3em] uppercase hover:bg-deepblue hover:text-warm-white transition-colors duration-300`
 - **Tertiary link**: letterspaced uppercase text, `text-text-secondary hover:text-rose transition-colors`.
 - **Floating nav** (`app/components/FloatingNav.tsx`): centered frosted pill — `w-fit mx-auto rounded-full bg-warm-white/75 backdrop-blur-xl border border-white/70` + house shadow. Hides on scroll-down past ~96px, reappears on any scroll-up. Active nav link is a chip: `rounded-full bg-blush text-rose`; inactive links `hover:bg-blush/50 hover:text-rose`.
-- **Pastel stat tile** (see `app/components/Countdown.tsx`): pale surface + matching deep text, `rounded-2xl sm:rounded-3xl`, white hairline border, tilted, `font-display display-wonk`, fixed-width digit cells.
-- **Day card** (see `DAYS` in `app/(public)/page.tsx`): tilted `rounded-3xl` pastel gradient card with an oversized italic Fraunces numeral overflowing the top edge, a small stroke-based line icon (`stroke-width 2.5`, `currentColor` at ~60–70% opacity) in the corner, an uppercase date label in the day's accent, and a Fraunces title.
+- **Stat tile** (see `app/components/Countdown.tsx`): pale surface + matching deep text, `rounded-2xl sm:rounded-3xl`, white hairline border, tilted, `font-display display-wonk`, fixed-width digit cells.
+- **Day card** (see `DAYS` in `app/(public)/page.tsx`): tilted `rounded-3xl` low-contrast paper gradient card with an italic numeral medallion, a restrained date label in the day's accent, and a Bodoni Moda title.
 - **Section divider**: a centered row of five 2px dots cycling through the deep accents at ~50–60% opacity.
 - **Icons**: hand-drawn-feeling inline SVG line icons (48×48 viewBox, `fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"`). No icon libraries, no filled/emoji icons.
 

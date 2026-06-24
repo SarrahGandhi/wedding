@@ -63,25 +63,25 @@ function Digit({
   hideOnMobile?: boolean;
 }) {
   return (
-    <div
-      className={`${hideOnMobile ? "hidden sm:flex" : "flex"} flex-col items-center gap-2 sm:gap-3`}
-    >
+    <div className={`${hideOnMobile ? "hidden sm:flex" : "flex"} min-w-0`}>
       <span
-        className={`${tile} ${tilt} font-display display-wonk rounded-2xl sm:rounded-3xl px-3.5 py-2.5 sm:px-6 sm:py-4 text-4xl sm:text-6xl md:text-7xl leading-none border border-white/70 shadow-[0_12px_28px_-14px_rgba(90,80,90,0.4)] transition-transform duration-300 hover:rotate-0 hover:scale-105`}
+        className={`${tile} ${tilt} inline-flex items-baseline gap-2 rounded-2xl border border-white/70 px-3 py-2.5 shadow-[0_12px_28px_-14px_rgba(90,80,90,0.4)] transition-transform duration-300 hover:rotate-0 hover:scale-105 sm:rounded-3xl sm:px-4 sm:py-3`}
       >
-        {/* Fraunces digits are proportional; fixed-width cells keep the tile
-            from resizing as the numbers tick over. */}
-        {String(value)
-          .padStart(2, "0")
-          .split("")
-          .map((digit, i) => (
-            <span key={i} className="inline-block w-[0.64em] text-center">
-              {digit}
-            </span>
-          ))}
-      </span>
-      <span className="text-[10px] sm:text-xs tracking-[0.2em] sm:tracking-[0.3em] uppercase text-text-secondary font-body text-center">
-        {label}
+        <span className="font-display display-wonk text-3xl leading-none sm:text-4xl">
+          {/* Fraunces digits are proportional; fixed-width cells keep the tile
+              from resizing as the numbers tick over. */}
+          {String(value)
+            .padStart(2, "0")
+            .split("")
+            .map((digit, i) => (
+              <span key={i} className="inline-block w-[0.64em] text-center">
+                {digit}
+              </span>
+            ))}
+        </span>
+        <span className="text-[9px] uppercase tracking-[0.18em] font-body sm:text-[10px] sm:tracking-[0.22em]">
+          {label}
+        </span>
       </span>
     </div>
   );
@@ -101,7 +101,7 @@ export function Countdown() {
   const values = [time.days, time.hours, time.minutes, time.seconds];
 
   return (
-    <div className="flex items-start gap-3 sm:gap-5 md:gap-7">
+    <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
       {TILES.map((t, i) => (
         <Digit key={t.label} value={values[i]} {...t} />
       ))}

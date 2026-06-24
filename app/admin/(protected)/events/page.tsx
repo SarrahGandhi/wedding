@@ -35,7 +35,12 @@ export default async function EventsPage() {
             required
             placeholder="Mehndi, Sangeet, Ceremony…"
           />
-          <FormField label="Date" name="date" type="date" required />
+          <FormField
+            label="Date and time"
+            name="date"
+            type="datetime-local"
+            required
+          />
           <FormField label="Location (optional)" name="location" />
           <FormField label="Dress code (optional)" name="dress_code" />
           <TextareaField

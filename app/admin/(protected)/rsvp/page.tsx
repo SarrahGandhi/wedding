@@ -7,11 +7,18 @@ import { Button } from "@/app/shared/Button";
 import { PageHeader } from "@/app/shared/PageHeader";
 import { StatusDot } from "@/app/shared/StatusDot";
 
-function formatDate(iso: string) {
-  return new Date(iso + "T00:00:00").toLocaleDateString("en-US", {
+function toDateTimeLocalValue(value: string) {
+  const [date, time = "00:00"] = value.replace(" ", "T").split("T");
+  return `${date}T${time.slice(0, 5)}`;
+}
+
+function formatDateTime(value: string) {
+  return new Date(toDateTimeLocalValue(value)).toLocaleString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
   });
 }
 
@@ -144,7 +151,7 @@ export default async function RsvpPage({
               >
                 {events.map((e) => (
                   <option key={e.id} value={e.id}>
-                    {e.name} · {formatDate(e.date)}
+                    {e.name} · {formatDateTime(e.date)}
                   </option>
                 ))}
               </SelectField>
@@ -166,7 +173,7 @@ export default async function RsvpPage({
               </span>{" "}
               on{" "}
               <span className="tabular-nums">
-                {formatDate(selectedEvent.date)}
+                {formatDateTime(selectedEvent.date)}
               </span>
               .
             </p>

@@ -1,30 +1,30 @@
 @import "tailwindcss";
 
 :root {
-  --background: #fdfaf6;
-  --foreground: #2a2a28;
-  --accent: #8b7355;
-  --accent-light: #b49a7a;
-  --sage: #6b705c;
-  --sage-light: #a3a88e;
-  --muted: #b7b7a4;
-  --cream: #f0ead6;
-  --cream-dark: #e6dcc6;
-  --warm-white: #fefcf9;
-  --border: #d4cfc5;
-  --text-secondary: #6e6b64;
+  --background: #f8f1e6;
+  --foreground: #223149;
+  --accent: #9d7443;
+  --accent-light: #ead7b7;
+  --sage: #566f73;
+  --sage-light: #e8ece8;
+  --muted: #a98a5a;
+  --cream: #f4e6cc;
+  --cream-dark: #c59a5b;
+  --warm-white: #fffaf3;
+  --border: #e5cfaa;
+  --text-secondary: #6b625b;
 
-  /* Pastel celebration palette */
-  --blush: #ffe7ee; /* day one — light pink */
-  --rose: #c2647f;
-  --mint: #e2f1e3; /* day one — light green */
-  --leaf: #5f8f68;
-  --sky: #deecfa; /* day two — light blue */
-  --bluebell: #5b82b5;
-  --peach: #ffe9d8; /* day two — light orange */
-  --tangerine: #c97c3f;
-  --powder: #e9f1fa; /* day three — white & blue */
-  --deepblue: #44679a;
+  /* Formal wedding stationery palette. Token names are kept for existing classes. */
+  --blush: #f0dcd4; /* dusty rose wash */
+  --rose: #8f3f48; /* rosewood wax seal accent */
+  --mint: #e9e3d8; /* linen wash */
+  --leaf: #6f634d; /* aged olive-gold ink */
+  --sky: #e5ebef; /* blue-grey envelope lining */
+  --bluebell: #344f73; /* formal ink blue */
+  --peach: #ead7b7; /* champagne gold wash */
+  --tangerine: #9d7443; /* antique gold accent */
+  --powder: #f3eee7; /* vellum paper */
+  --deepblue: #223f63;
 }
 
 @theme inline {
@@ -50,12 +50,17 @@
   --color-tangerine: var(--tangerine);
   --color-powder: var(--powder);
   --color-deepblue: var(--deepblue);
-  --font-display: var(--font-fraunces);
-  --font-body: var(--font-jost);
+  --font-display: var(--font-display-serif);
+  --font-body: var(--font-body-sans);
 }
 
 body {
-  background: var(--background);
+  background:
+    radial-gradient(circle at 12% 8%, color-mix(in srgb, var(--peach) 18%, transparent) 0 14rem, transparent 32rem),
+    radial-gradient(circle at 92% 18%, color-mix(in srgb, var(--sky) 16%, transparent) 0 16rem, transparent 34rem),
+    radial-gradient(circle at 20% 88%, color-mix(in srgb, var(--blush) 14%, transparent) 0 12rem, transparent 30rem),
+    linear-gradient(135deg, var(--background) 0%, var(--warm-white) 52%, var(--background) 100%);
+  background-attachment: fixed;
   color: var(--foreground);
 }
 
@@ -64,11 +69,14 @@ body {
   color: var(--warm-white);
 }
 
-/* Fraunces playful axes — soft, slightly wonky letterforms at display sizes */
+:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--rose) 76%, var(--warm-white));
+  outline-offset: 4px;
+}
+
+/* Editorial display setting for the high-contrast wedding serif. */
 .display-wonk {
-  font-variation-settings:
-    "SOFT" 70,
-    "WONK" 1;
+  letter-spacing: -0.02em;
 }
 
 @keyframes fade-up {
