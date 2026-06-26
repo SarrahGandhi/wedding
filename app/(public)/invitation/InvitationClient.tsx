@@ -150,7 +150,7 @@ function RsvpProgress({ answered, total }: { answered: number; total: number }) 
 
   if (answered === total) {
     return (
-      <div className="flex items-center justify-center gap-3 rounded-full bg-mint border border-white/70 shadow-[0_14px_30px_-18px_rgba(90,80,90,0.35)] px-6 py-3.5 animate-scale-in">
+      <div className="flex items-center justify-center gap-3 rounded-2xl bg-mint border border-white/70 shadow-[0_14px_30px_-18px_rgba(90,80,90,0.35)] px-6 py-4 animate-scale-in">
         <PartyPopper className="w-4 h-4 text-leaf shrink-0" strokeWidth={1.5} />
         <p className="text-[11px] tracking-[0.2em] uppercase font-body text-leaf">
           All replies in — we can&apos;t wait to celebrate with you
@@ -160,7 +160,7 @@ function RsvpProgress({ answered, total }: { answered: number; total: number }) 
   }
 
   return (
-    <div className="flex items-center gap-4 rounded-full bg-warm-white/80 border border-white/70 shadow-[0_14px_30px_-18px_rgba(90,80,90,0.35)] px-5 py-3">
+    <div className="flex items-center gap-4 rounded-2xl bg-warm-white/80 border border-white/70 shadow-[0_14px_30px_-18px_rgba(90,80,90,0.35)] px-5 py-3.5">
       <span className="text-[11px] tracking-[0.2em] uppercase text-text-secondary font-body whitespace-nowrap">
         {answered} of {total} replies in
       </span>
