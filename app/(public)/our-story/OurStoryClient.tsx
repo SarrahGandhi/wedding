@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { Heart } from "lucide-react";
 
 type Narrator = "murtaza" | "sarrah";
 
@@ -323,7 +324,10 @@ export function OurStoryClient() {
             <ChapterCard key={chapter.id} chapter={chapter} index={i} />
           ))}
           <div className="relative flex justify-center">
-            <HeartIcon className="w-8 h-8 text-rose/70 bg-background rounded-full p-1" />
+            <Heart
+              className="w-8 h-8 text-rose/70 bg-background rounded-full p-1"
+              strokeWidth={2.5}
+            />
           </div>
         </div>
       </section>
@@ -354,20 +358,5 @@ export function OurStoryClient() {
         </div>
       </section>
     </div>
-  );
-}
-
-function HeartIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 48 48"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <path d="M24 41C16 34.5 6.5 27 6.5 17.5 6.5 11.5 11 7 16.5 7c3 0 5.8 1.5 7.5 4 1.7-2.5 4.5-4 7.5-4C37 7 41.5 11.5 41.5 17.5 41.5 27 32 34.5 24 41z" />
-    </svg>
   );
 }
