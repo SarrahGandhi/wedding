@@ -79,7 +79,7 @@ function PageBackdrop() {
         style={{ animationDelay: "-11s" }}
       />
       <div
-        className="absolute -bottom-28 right-[15%] w-[24rem] h-[24rem] rounded-full bg-peach opacity-70 blur-3xl animate-drift"
+        className="absolute -bottom-28 right-[15%] w-96 h-96 rounded-full bg-peach opacity-70 blur-3xl animate-drift"
         style={{ animationDelay: "-3s" }}
       />
       {CONFETTI.map((dot, i) => (
@@ -137,7 +137,7 @@ function RsvpPill({
       onClick={onClick}
       disabled={disabled}
       aria-pressed={active}
-      className={`inline-flex items-center gap-1.5 text-[10px] tracking-[0.2em] uppercase font-body px-4 py-2 rounded-full border transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-default ${styles}`}
+      className={`inline-flex items-center gap-1.5 text-xs tracking-[0.2em] uppercase font-body px-4 py-2 rounded-full border transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-default ${styles}`}
     >
       {active && <Check className="w-3 h-3" strokeWidth={2.5} />}
       {label}
@@ -152,7 +152,7 @@ function RsvpProgress({ answered, total }: { answered: number; total: number }) 
     return (
       <div className="flex items-center justify-center gap-3 rounded-2xl bg-mint border border-white/70 shadow-[0_14px_30px_-18px_rgba(90,80,90,0.35)] px-6 py-4 animate-scale-in">
         <PartyPopper className="w-4 h-4 text-leaf shrink-0" strokeWidth={1.5} />
-        <p className="text-[11px] tracking-[0.2em] uppercase font-body text-leaf">
+        <p className="text-xs tracking-[0.2em] uppercase font-body text-leaf">
           All replies in — we can&apos;t wait to celebrate with you
         </p>
       </div>
@@ -161,7 +161,7 @@ function RsvpProgress({ answered, total }: { answered: number; total: number }) 
 
   return (
     <div className="flex items-center gap-4 rounded-2xl bg-warm-white/80 border border-white/70 shadow-[0_14px_30px_-18px_rgba(90,80,90,0.35)] px-5 py-3.5">
-      <span className="text-[11px] tracking-[0.2em] uppercase text-text-secondary font-body whitespace-nowrap">
+      <span className="text-xs tracking-[0.2em] uppercase text-text-secondary font-body whitespace-nowrap">
         {answered} of {total} replies in
       </span>
       <div className="flex-1 h-2 rounded-full bg-powder overflow-hidden">
@@ -234,7 +234,7 @@ function EmailCard({
         <button
           onClick={handleAdd}
           disabled={adding || !email.trim()}
-          className="px-5 py-3 rounded-full bg-deepblue text-warm-white text-[10px] tracking-[0.25em] uppercase font-body hover:bg-rose transition-colors disabled:opacity-40 cursor-pointer disabled:cursor-default shrink-0"
+          className="px-5 py-3 rounded-full bg-deepblue text-warm-white text-xs tracking-[0.25em] uppercase font-body hover:bg-rose transition-colors disabled:opacity-40 cursor-pointer disabled:cursor-default shrink-0"
         >
           {adding ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Add"}
         </button>
@@ -305,7 +305,7 @@ function EventCard({
         {index + 1}
       </span>
 
-      <p className={`text-[11px] tracking-[0.3em] uppercase font-body ${palette.accent} mt-4 mb-2`}>
+      <p className={`text-xs tracking-[0.3em] uppercase font-body ${palette.accent} mt-4 mb-2`}>
         {formattedDate}
       </p>
       <h3 className="font-display text-3xl text-foreground leading-snug">
@@ -337,14 +337,14 @@ function EventCard({
 
       <div className="mt-6">
         <div className="flex items-center justify-between gap-3 mb-1">
-          <p className="text-[10px] tracking-[0.25em] uppercase text-text-secondary font-body">
+          <p className="text-xs tracking-[0.25em] uppercase text-text-secondary font-body">
             Who&apos;s coming
           </p>
           {showAcceptAll && (
             <button
               onClick={() => onAcceptAll(notAccepted.map((r) => r.rsvpId))}
               disabled={notAccepted.some((r) => pendingIds.has(r.rsvpId))}
-              className="inline-flex items-center gap-1.5 text-[10px] tracking-[0.2em] uppercase font-body text-leaf bg-white/50 border border-leaf/40 rounded-full px-3.5 py-1.5 hover:bg-leaf hover:text-warm-white transition-colors duration-200 cursor-pointer disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 text-xs tracking-[0.2em] uppercase font-body text-leaf bg-white/50 border border-leaf/40 rounded-full px-3.5 py-1.5 hover:bg-leaf hover:text-warm-white transition-colors duration-200 cursor-pointer disabled:opacity-50"
             >
               <Check className="w-3 h-3" strokeWidth={2.5} />
               Everyone&apos;s coming
@@ -667,7 +667,7 @@ export function InvitationClient() {
 
             <div className="mt-10 animate-scale-in delay-400">
               {/* Gradient ring around the search pill; brightens on focus */}
-              <div className="max-w-md mx-auto rounded-full p-[2px] bg-linear-to-r from-rose/45 via-bluebell/40 to-leaf/40 shadow-[0_20px_45px_-18px_rgba(90,80,90,0.5)] focus-within:from-rose/80 focus-within:via-bluebell/70 focus-within:to-leaf/70 focus-within:shadow-[0_20px_45px_-14px_rgba(194,100,127,0.45)] transition-all duration-300">
+              <div className="max-w-md mx-auto rounded-full p-0.5 bg-linear-to-r from-rose/45 via-bluebell/40 to-leaf/40 shadow-[0_20px_45px_-18px_rgba(90,80,90,0.5)] focus-within:from-rose/80 focus-within:via-bluebell/70 focus-within:to-leaf/70 focus-within:shadow-[0_20px_45px_-14px_rgba(194,100,127,0.45)] transition-all duration-300">
                 <div className="relative rounded-full bg-warm-white">
                   <span className="absolute left-2.5 top-1/2 -translate-y-1/2 flex items-center justify-center w-10 h-10 rounded-full bg-blush pointer-events-none">
                     <Search
@@ -738,7 +738,7 @@ export function InvitationClient() {
               </div>
             ) : (
               <div className="space-y-3">
-                <p className="text-center text-[11px] tracking-[0.3em] uppercase text-text-secondary font-body mb-5">
+                <p className="text-center text-xs tracking-[0.3em] uppercase text-text-secondary font-body mb-5">
                   Select your name
                 </p>
                 {results.map((hit, i) => {
@@ -808,7 +808,7 @@ export function InvitationClient() {
               </p>
               <Link
                 href={backToSearchHref}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-deepblue text-warm-white text-[10px] tracking-[0.25em] uppercase font-body hover:bg-rose transition-colors"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-deepblue text-warm-white text-xs tracking-[0.25em] uppercase font-body hover:bg-rose transition-colors"
               >
                 <ArrowLeft className="w-3.5 h-3.5" strokeWidth={2} />
                 Back to search
@@ -871,7 +871,7 @@ export function InvitationClient() {
           className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-fade-up"
         >
           <span
-            className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-[11px] tracking-[0.2em] uppercase font-body text-warm-white shadow-[0_14px_36px_-14px_rgba(90,80,90,0.6)] ${
+            className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs tracking-[0.2em] uppercase font-body text-warm-white shadow-[0_14px_36px_-14px_rgba(90,80,90,0.6)] ${
               toast.kind === "success" ? "bg-leaf" : "bg-rose"
             }`}
           >

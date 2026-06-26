@@ -39,7 +39,7 @@ function WeddingFrame() {
 function PublicFooter() {
   return (
     <footer className="relative z-10 px-6 pb-6">
-      <div className="mx-auto flex w-fit items-center gap-3 text-[10px] uppercase tracking-[0.35em] text-text-secondary">
+      <div className="mx-auto flex w-fit items-center gap-3 text-xs uppercase tracking-[0.35em] text-text-secondary">
         <span>October 22, 2026</span>
         <span className="h-1.5 w-1.5 rounded-full bg-rose/45" />
         <span>Murtaza & Sarrah</span>

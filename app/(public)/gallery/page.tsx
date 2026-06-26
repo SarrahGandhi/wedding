@@ -254,7 +254,7 @@ function PhotoCard({ photo, index }: { photo: Photo; index: number }) {
               strokeWidth={2.5}
             />
             <span
-              className={`text-[10px] tracking-[0.3em] uppercase font-body ${style.accent} opacity-60`}
+              className={`text-xs tracking-[0.3em] uppercase font-body ${style.accent} opacity-60`}
             >
               Photo coming soon
             </span>
@@ -266,7 +266,7 @@ function PhotoCard({ photo, index }: { photo: Photo; index: number }) {
           {photo.caption}
         </span>
         <span
-          className={`shrink-0 text-[10px] tracking-[0.25em] uppercase font-body ${style.accent}`}
+          className={`shrink-0 text-xs tracking-[0.25em] uppercase font-body ${style.accent}`}
         >
           {photo.year}
         </span>

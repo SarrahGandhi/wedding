@@ -214,14 +214,14 @@ function ChapterCard({ chapter, index }: { chapter: Chapter; index: number }) {
           {index + 1}
         </span>
         <p
-          className={`text-[11px] tracking-[0.3em] uppercase font-body ${style.accent} mt-4 mb-3`}
+          className={`text-xs tracking-[0.3em] uppercase font-body ${style.accent} mt-4 mb-3`}
         >
           {chapter.year}
         </p>
         <h3 className="font-display text-2xl md:text-3xl text-foreground leading-snug mb-3">
           {chapter.title}
         </h3>
-        <p className="text-sm md:text-[15px] text-text-secondary font-body leading-relaxed">
+        <p className="text-sm md:text-base text-text-secondary font-body leading-relaxed">
           {chapter.body}
         </p>
       </article>
@@ -278,7 +278,7 @@ export function OurStoryClient() {
           <div className="mt-10 flex items-center justify-center gap-1 bg-warm-white/75 backdrop-blur-xl border border-white/70 shadow-[0_14px_36px_-14px_rgba(90,80,90,0.4)] p-1.5 rounded-full w-fit mx-auto animate-fade-up delay-400">
             <button
               onClick={() => setNarrator("murtaza")}
-              className={`px-5 py-2 text-[11px] tracking-[0.25em] uppercase font-body rounded-full transition-all duration-300 cursor-pointer ${
+              className={`px-5 py-2 text-xs tracking-[0.25em] uppercase font-body rounded-full transition-all duration-300 cursor-pointer ${
                 narrator === "murtaza"
                   ? themes.murtaza.activePill
                   : "text-text-secondary hover:text-bluebell"
@@ -288,7 +288,7 @@ export function OurStoryClient() {
             </button>
             <button
               onClick={() => setNarrator("sarrah")}
-              className={`px-5 py-2 text-[11px] tracking-[0.25em] uppercase font-body rounded-full transition-all duration-300 cursor-pointer ${
+              className={`px-5 py-2 text-xs tracking-[0.25em] uppercase font-body rounded-full transition-all duration-300 cursor-pointer ${
                 narrator === "sarrah"
                   ? themes.sarrah.activePill
                   : "text-text-secondary hover:text-rose"

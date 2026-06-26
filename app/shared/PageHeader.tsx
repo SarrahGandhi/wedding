@@ -13,7 +13,7 @@ export function PageHeader({
     <header className="mb-10 flex items-end justify-between flex-wrap gap-4">
       <div>
         {chapter && (
-          <p className="text-[10px] tracking-[0.4em] uppercase text-accent font-body mb-2">
+          <p className="text-xs tracking-[0.4em] uppercase text-accent font-body mb-2">
             {chapter}
           </p>
         )}
@@ -22,7 +22,7 @@ export function PageHeader({
         </h1>
       </div>
       {meta && (
-        <div className="text-[10px] tracking-[0.25em] uppercase text-text-secondary font-body tabular-nums">
+        <div className="text-xs tracking-[0.25em] uppercase text-text-secondary font-body tabular-nums">
           {meta}
         </div>
       )}

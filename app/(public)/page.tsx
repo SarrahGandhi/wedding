@@ -8,7 +8,7 @@ export default function Home() {
       <section className="relative -mt-24 min-h-[100dvh] overflow-hidden px-5 pb-20 pt-32 sm:px-6 lg:pt-28">
         <div className="relative z-10 mx-auto grid min-h-[calc(100dvh-8rem)] w-full max-w-6xl items-center gap-12 lg:grid-cols-[0.92fr_1.08fr]">
           <div className="max-w-xl animate-fade-up delay-200">
-            <h1 className="font-display display-wonk text-[3.75rem] font-light leading-[0.92] text-foreground sm:text-7xl lg:text-[6.25rem]">
+            <h1 className="font-display display-wonk text-6xl font-light leading-[0.92] text-foreground sm:text-7xl lg:text-8xl">
               <span className="block">Murtaza</span>
               <span className="my-2 block font-accent text-3xl italic leading-none text-rose sm:text-4xl lg:text-5xl">
                 &
@@ -33,7 +33,7 @@ export default function Home() {
               </Link>
               <Link
                 href="/our-story"
-                className="text-center text-[11px] uppercase tracking-[0.3em] text-text-secondary transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-rose sm:text-left"
+                className="text-center text-xs uppercase tracking-[0.3em] text-text-secondary transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-rose sm:text-left"
               >
                 Read our story
               </Link>
@@ -43,11 +43,11 @@ export default function Home() {
           <div className="relative mx-auto w-full max-w-lg animate-scale-in delay-400">
             <span
               aria-hidden
-              className="absolute -left-5 top-8 h-full w-full -rotate-6 rounded-[2rem] border border-white/60 bg-peach/55 shadow-[0_18px_44px_-28px_rgba(90,80,90,0.45)]"
+              className="absolute -left-5 top-8 h-full w-full -rotate-6 rounded-4xl border border-white/60 bg-peach/55 shadow-[0_18px_44px_-28px_rgba(90,80,90,0.45)]"
             />
             <span
               aria-hidden
-              className="absolute -right-5 top-4 h-full w-full rotate-3 rounded-[2rem] border border-white/60 bg-blush/45 shadow-[0_18px_44px_-28px_rgba(90,80,90,0.45)]"
+              className="absolute -right-5 top-4 h-full w-full rotate-3 rounded-4xl border border-white/60 bg-blush/45 shadow-[0_18px_44px_-28px_rgba(90,80,90,0.45)]"
             />
             <article className="relative overflow-hidden rounded-[2.25rem] border border-white/70 bg-warm-white/90 p-7 shadow-[0_24px_70px_-28px_rgba(90,80,90,0.45)] sm:p-9 md:rotate-1">
               <span
@@ -59,7 +59,7 @@ export default function Home() {
                 className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-peach/55 blur-2xl"
               />
               <div className="relative">
-                <p className="text-[11px] uppercase tracking-[0.4em] text-text-secondary font-body">
+                <p className="text-xs uppercase tracking-[0.4em] text-text-secondary font-body">
                   Countdown
                 </p>
                 <h2 className="mt-3 font-display display-wonk text-4xl font-light leading-none text-foreground sm:text-5xl">
