@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
 import { Countdown } from "../components/Countdown";
 
 export default function Home() {
@@ -7,9 +8,6 @@ export default function Home() {
       <section className="relative -mt-24 min-h-[100dvh] overflow-hidden px-5 pb-20 pt-32 sm:px-6 lg:pt-28">
         <div className="relative z-10 mx-auto grid min-h-[calc(100dvh-8rem)] w-full max-w-6xl items-center gap-12 lg:grid-cols-[0.92fr_1.08fr]">
           <div className="max-w-xl animate-fade-up delay-200">
-            <p className="mb-6 inline-flex rounded-full border border-white/70 bg-warm-white/70 px-4 py-2 text-[10px] uppercase tracking-[0.38em] text-text-secondary shadow-[0_12px_28px_-18px_rgba(90,80,90,0.35)] font-body">
-              The wedding of
-            </p>
             <h1 className="font-display display-wonk text-[3.75rem] font-light leading-[0.92] text-foreground sm:text-7xl lg:text-[6.25rem]">
               <span className="block">Murtaza</span>
               <span className="my-2 block font-accent text-3xl italic leading-none text-rose sm:text-4xl lg:text-5xl">
@@ -28,9 +26,9 @@ export default function Home() {
                 <span>Find your invitation</span>
                 <span
                   aria-hidden
-                  className="flex h-9 w-9 items-center justify-center rounded-full bg-warm-white/15 text-sm transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:-translate-y-0.5 group-hover:translate-x-1"
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-warm-white/15 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:-translate-y-0.5 group-hover:translate-x-1"
                 >
-                  ↗
+                  <ArrowUpRight className="h-4 w-4" strokeWidth={2} />
                 </span>
               </Link>
               <Link
@@ -69,24 +67,10 @@ export default function Home() {
                 </h2>
               </div>
 
-              <div className="relative mt-9 rounded-[1.75rem] border border-white/75 bg-linear-to-br from-powder via-warm-white to-peach/45 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_16px_34px_-26px_rgba(90,80,90,0.45)] sm:p-5">
-                <span
-                  aria-hidden
-                  className="absolute left-5 right-5 top-4 border-t border-dashed border-white/80"
-                />
-                <div className="relative pt-5">
-                  <Countdown />
-                </div>
+              <div className="relative mt-9">
+                <Countdown />
               </div>
 
-              <div className="relative mt-6 flex flex-wrap gap-2">
-                <span className="rounded-full bg-peach/70 px-4 py-2 text-[10px] uppercase tracking-[0.25em] text-tangerine font-body">
-                  October 22, 2026
-                </span>
-                <span className="rounded-full bg-sky/70 px-4 py-2 text-[10px] uppercase tracking-[0.25em] text-bluebell font-body">
-                  The main event
-                </span>
-              </div>
               <p className="relative mt-6 max-w-sm text-sm leading-relaxed text-text-secondary font-body">
                 Use your invitation to see the events and timing planned for you.
               </p>
