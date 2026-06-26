@@ -1,3 +1,4 @@
+import { BackgroundMusic } from "../components/BackgroundMusic";
 import { FloatingNav } from "../components/FloatingNav";
 
 export default function PublicLayout({
@@ -9,6 +10,7 @@ export default function PublicLayout({
     <>
       <WeddingFrame />
       <FloatingNav />
+      <BackgroundMusic />
       <main className="relative z-10 flex flex-1 flex-col pt-24">{children}</main>
       <PublicFooter />
     </>
