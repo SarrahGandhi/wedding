@@ -79,7 +79,7 @@ function Digit({
               </span>
             ))}
         </span>
-        <span className="text-[9px] uppercase tracking-[0.18em] font-body sm:text-[10px] sm:tracking-[0.22em]">
+        <span className="text-xs uppercase tracking-[0.18em] font-body sm:tracking-[0.22em]">
           {label}
         </span>
       </span>

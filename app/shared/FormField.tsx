@@ -34,7 +34,7 @@ export function FieldLabel({
   return (
     <label className={`block ${className ?? ""}`.trimEnd()}>
       <span
-        className={`text-[10px] tracking-[0.25em] uppercase ${LABEL_TONE[tone]} font-body`}
+        className={`text-xs tracking-[0.25em] uppercase ${LABEL_TONE[tone]} font-body`}
       >
         {label}
       </span>

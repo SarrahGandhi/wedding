@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { Camera } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Gallery — Murtaza & Sarrah",
@@ -226,23 +227,6 @@ const CONFETTI = [
   },
 ];
 
-function CameraIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 48 48"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <path d="M8 15h7l3-5h12l3 5h7a2 2 0 0 1 2 2v20a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V17a2 2 0 0 1 2-2z" />
-      <circle cx="24" cy="26" r="7" />
-    </svg>
-  );
-}
-
 function PhotoCard({ photo, index }: { photo: Photo; index: number }) {
   const style = CARD_STYLES[index % CARD_STYLES.length];
   const tilt = TILTS[index % TILTS.length];
@@ -265,9 +249,12 @@ function PhotoCard({ photo, index }: { photo: Photo; index: number }) {
           />
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-            <CameraIcon className={`w-12 h-12 ${style.icon}`} />
+            <Camera
+              className={`w-12 h-12 ${style.icon}`}
+              strokeWidth={2.5}
+            />
             <span
-              className={`text-[10px] tracking-[0.3em] uppercase font-body ${style.accent} opacity-60`}
+              className={`text-xs tracking-[0.3em] uppercase font-body ${style.accent} opacity-60`}
             >
               Photo coming soon
             </span>
@@ -279,7 +266,7 @@ function PhotoCard({ photo, index }: { photo: Photo; index: number }) {
           {photo.caption}
         </span>
         <span
-          className={`shrink-0 text-[10px] tracking-[0.25em] uppercase font-body ${style.accent}`}
+          className={`shrink-0 text-xs tracking-[0.25em] uppercase font-body ${style.accent}`}
         >
           {photo.year}
         </span>

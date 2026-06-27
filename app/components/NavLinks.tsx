@@ -21,7 +21,7 @@ export function NavLinks() {
           <Link
             key={href}
             href={href}
-            className={`rounded-full px-3 py-2 text-[10px] font-medium sm:px-4 sm:text-[11px] tracking-[0.18em] sm:tracking-[0.28em] uppercase whitespace-nowrap transition-all duration-300 ${isActive
+            className={`rounded-full px-3 py-2 text-xs font-medium sm:px-4 tracking-[0.18em] sm:tracking-[0.28em] uppercase whitespace-nowrap transition-all duration-300 ${isActive
                 ? "bg-deepblue text-warm-white shadow-[0_10px_22px_-14px_var(--deepblue)]"
                 : "text-foreground hover:-translate-y-0.5 hover:bg-peach/75 hover:text-deepblue"
               }`}

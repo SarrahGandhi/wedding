@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 const VARIANT = {
   banner: "text-xs text-red-500 font-body border-l-2 border-red-300 pl-3 py-1",
   inline: "text-xs text-red-500 font-body",
-  badge: "text-[10px] font-body text-red-500",
+  badge: "text-xs font-body text-red-500",
 } as const;
 
 type Variant = keyof typeof VARIANT;

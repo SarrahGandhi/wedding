@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
 import { Countdown } from "../components/Countdown";
 
 export default function Home() {
@@ -7,10 +8,7 @@ export default function Home() {
       <section className="relative -mt-24 min-h-[100dvh] overflow-hidden px-5 pb-20 pt-32 sm:px-6 lg:pt-28">
         <div className="relative z-10 mx-auto grid min-h-[calc(100dvh-8rem)] w-full max-w-6xl items-center gap-12 lg:grid-cols-[0.92fr_1.08fr]">
           <div className="max-w-xl animate-fade-up delay-200">
-            <p className="mb-6 inline-flex rounded-full border border-white/70 bg-warm-white/70 px-4 py-2 text-[10px] uppercase tracking-[0.38em] text-text-secondary shadow-[0_12px_28px_-18px_rgba(90,80,90,0.35)] font-body">
-              The wedding of
-            </p>
-            <h1 className="font-display display-wonk text-[3.75rem] font-light leading-[0.92] text-foreground sm:text-7xl lg:text-[6.25rem]">
+            <h1 className="font-display display-wonk text-6xl font-light leading-[0.92] text-foreground sm:text-7xl lg:text-8xl">
               <span className="block">Murtaza</span>
               <span className="my-2 block font-accent text-3xl italic leading-none text-rose sm:text-4xl lg:text-5xl">
                 &
@@ -28,14 +26,14 @@ export default function Home() {
                 <span>Find your invitation</span>
                 <span
                   aria-hidden
-                  className="flex h-9 w-9 items-center justify-center rounded-full bg-warm-white/15 text-sm transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:-translate-y-0.5 group-hover:translate-x-1"
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-warm-white/15 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:-translate-y-0.5 group-hover:translate-x-1"
                 >
-                  ↗
+                  <ArrowUpRight className="h-4 w-4" strokeWidth={2} />
                 </span>
               </Link>
               <Link
                 href="/our-story"
-                className="text-center text-[11px] uppercase tracking-[0.3em] text-text-secondary transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-rose sm:text-left"
+                className="text-center text-xs uppercase tracking-[0.3em] text-text-secondary transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-rose sm:text-left"
               >
                 Read our story
               </Link>
@@ -45,11 +43,11 @@ export default function Home() {
           <div className="relative mx-auto w-full max-w-lg animate-scale-in delay-400">
             <span
               aria-hidden
-              className="absolute -left-5 top-8 h-full w-full -rotate-6 rounded-[2rem] border border-white/60 bg-peach/55 shadow-[0_18px_44px_-28px_rgba(90,80,90,0.45)]"
+              className="absolute -left-5 top-8 h-full w-full -rotate-6 rounded-4xl border border-white/60 bg-peach/55 shadow-[0_18px_44px_-28px_rgba(90,80,90,0.45)]"
             />
             <span
               aria-hidden
-              className="absolute -right-5 top-4 h-full w-full rotate-3 rounded-[2rem] border border-white/60 bg-blush/45 shadow-[0_18px_44px_-28px_rgba(90,80,90,0.45)]"
+              className="absolute -right-5 top-4 h-full w-full rotate-3 rounded-4xl border border-white/60 bg-blush/45 shadow-[0_18px_44px_-28px_rgba(90,80,90,0.45)]"
             />
             <article className="relative overflow-hidden rounded-[2.25rem] border border-white/70 bg-warm-white/90 p-7 shadow-[0_24px_70px_-28px_rgba(90,80,90,0.45)] sm:p-9 md:rotate-1">
               <span
@@ -61,7 +59,7 @@ export default function Home() {
                 className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-peach/55 blur-2xl"
               />
               <div className="relative">
-                <p className="text-[11px] uppercase tracking-[0.4em] text-text-secondary font-body">
+                <p className="text-xs uppercase tracking-[0.4em] text-text-secondary font-body">
                   Countdown
                 </p>
                 <h2 className="mt-3 font-display display-wonk text-4xl font-light leading-none text-foreground sm:text-5xl">
@@ -69,24 +67,10 @@ export default function Home() {
                 </h2>
               </div>
 
-              <div className="relative mt-9 rounded-[1.75rem] border border-white/75 bg-linear-to-br from-powder via-warm-white to-peach/45 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_16px_34px_-26px_rgba(90,80,90,0.45)] sm:p-5">
-                <span
-                  aria-hidden
-                  className="absolute left-5 right-5 top-4 border-t border-dashed border-white/80"
-                />
-                <div className="relative pt-5">
-                  <Countdown />
-                </div>
+              <div className="relative mt-9">
+                <Countdown />
               </div>
 
-              <div className="relative mt-6 flex flex-wrap gap-2">
-                <span className="rounded-full bg-peach/70 px-4 py-2 text-[10px] uppercase tracking-[0.25em] text-tangerine font-body">
-                  October 22, 2026
-                </span>
-                <span className="rounded-full bg-sky/70 px-4 py-2 text-[10px] uppercase tracking-[0.25em] text-bluebell font-body">
-                  The main event
-                </span>
-              </div>
               <p className="relative mt-6 max-w-sm text-sm leading-relaxed text-text-secondary font-body">
                 Use your invitation to see the events and timing planned for you.
               </p>
