@@ -1,29 +1,20 @@
-import "@supabase/functions-js/edge-runtime.d.ts"
+import "@supabase/functions-js/edge-runtime.d.ts";
+import { sendEmail } from "../_shared/email.ts";
 
-console.log("Hello from Email Functions!")
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-
+console.log("Hello from Email Functions!");
 
 Deno.serve(async (req) => {
   const { to, subject, html } = await req.json();
 
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${RESEND_API_KEY}`,
-    },
-    body: JSON.stringify({
-      from: "Sarrah & The Dumb Kid Wedding <onboarding@resend.dev>",
-      to,
-      subject,
-      html,
-    }),
-  });
-
-  const data = await res.json();
-
-  return new Response(JSON.stringify(data), {
-    headers: { "Content-Type": "application/json" },
-  });
-})
+  try {
+    const data = await sendEmail({ to, subject, html });
+    return new Response(JSON.stringify(data), {
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (err) {
+    return new Response(JSON.stringify({ error: String(err) }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+});
