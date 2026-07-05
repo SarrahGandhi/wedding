@@ -32,10 +32,14 @@ export function FamilySection({
   family,
   guests,
   label,
+  expanded,
+  onExpandedChange,
 }: {
   family: Family;
   guests: Guest[];
   label: string;
+  expanded: boolean;
+  onExpandedChange: (expanded: boolean) => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [appendEmail, setAppendEmail] = useState("");
@@ -92,13 +96,23 @@ export function FamilySection({
           </span>
           <Button
             variant="ghost"
-            onClick={() => {
-              setEditing((v) => !v);
-              update.setError(null);
-            }}
+            aria-expanded={expanded}
+            aria-controls={`family-${family.id}-details`}
+            onClick={() => onExpandedChange(!expanded)}
           >
-            {editing ? "Cancel" : "Edit family"}
+            {expanded ? "Hide details" : "Show details"}
           </Button>
+          {expanded && (
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setEditing((v) => !v);
+                update.setError(null);
+              }}
+            >
+              {editing ? "Cancel" : "Edit family"}
+            </Button>
+          )}
           <form onSubmit={onDeleteFamily} className="inline">
             <input type="hidden" name="id" value={family.id} />
             <Button variant="danger" type="submit" disabled={pending}>
@@ -108,164 +122,168 @@ export function FamilySection({
         </div>
       </header>
 
-      {/* Family details (edit OR view) */}
-      {editing ? (
-        <form
-          onSubmit={onUpdateFamily}
-          className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3 items-end mb-6"
-        >
-          <input type="hidden" name="id" value={family.id} />
-          <FormField
-            label="Emails (comma separated · replaces all)"
-            name="emails"
-            defaultValue={family.email.join(", ")}
-            placeholder="alice@example.com, bob@example.com"
-            labelClassName="md:col-span-2"
-          />
-          <SelectField
-            label="Side"
-            name="side"
-            defaultValue={family.side}
-          >
-            <option value="BRIDE">Bride</option>
-            <option value="GROOM">Groom</option>
-          </SelectField>
-          <FormField
-            label="Phone (optional)"
-            name="phone"
-            defaultValue={family.phone ?? ""}
-            placeholder="+1 555 0100"
-            labelClassName="md:col-span-2"
-          />
-          <Button type="submit" pending={pending} className="self-end">
-            {pending ? "…" : "Save"}
-          </Button>
-        </form>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_auto] gap-x-8 gap-y-3 items-start mb-6">
-          <div>
-            <p className="text-[10px] tracking-[0.25em] uppercase text-muted font-body mb-2">
-              Emails on file
-            </p>
-            {family.email.length === 0 ? (
-              <p className="text-sm text-muted italic font-body">
-                None — guests will provide these themselves
-              </p>
-            ) : (
-              <ul className="space-y-1">
-                {family.email.map((e) => (
-                  <li
-                    key={e}
-                    className="text-sm font-body text-foreground tabular-nums"
-                  >
-                    {e}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-          <div>
-            <p className="text-[10px] tracking-[0.25em] uppercase text-muted font-body mb-2">
-              Phone
-            </p>
-            <p className="text-sm font-body text-foreground tabular-nums">
-              {family.phone || (
-                <span className="text-muted italic">Not on file</span>
-              )}
-            </p>
-          </div>
-          <form
-            onSubmit={onAppendEmail}
-            className="flex items-end gap-2 self-end justify-self-end"
-          >
-            <input type="hidden" name="id" value={family.id} />
-            <FormField
-              label="Append email"
-              name="email"
-              type="email"
-              value={appendEmail}
-              onChange={(e) => setAppendEmail(e.target.value)}
-              placeholder="new@example.com"
-              labelTone="muted"
-              className="w-auto"
-            />
-            <Button
-              variant="secondary"
-              type="submit"
-              disabled={pending || !appendEmail.trim()}
-              className="px-3"
+      {expanded && (
+        <div id={`family-${family.id}-details`}>
+          {/* Family details (edit OR view) */}
+          {editing ? (
+            <form
+              onSubmit={onUpdateFamily}
+              className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3 items-end mb-6"
             >
-              + Add
+              <input type="hidden" name="id" value={family.id} />
+              <FormField
+                label="Emails (comma separated · replaces all)"
+                name="emails"
+                defaultValue={family.email.join(", ")}
+                placeholder="alice@example.com, bob@example.com"
+                labelClassName="md:col-span-2"
+              />
+              <SelectField
+                label="Side"
+                name="side"
+                defaultValue={family.side}
+              >
+                <option value="BRIDE">Bride</option>
+                <option value="GROOM">Groom</option>
+              </SelectField>
+              <FormField
+                label="Phone (optional)"
+                name="phone"
+                defaultValue={family.phone ?? ""}
+                placeholder="+1 555 0100"
+                labelClassName="md:col-span-2"
+              />
+              <Button type="submit" pending={pending} className="self-end">
+                {pending ? "…" : "Save"}
+              </Button>
+            </form>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_auto] gap-x-8 gap-y-3 items-start mb-6">
+              <div>
+                <p className="text-[10px] tracking-[0.25em] uppercase text-muted font-body mb-2">
+                  Emails on file
+                </p>
+                {family.email.length === 0 ? (
+                  <p className="text-sm text-muted italic font-body">
+                    None — guests will provide these themselves
+                  </p>
+                ) : (
+                  <ul className="space-y-1">
+                    {family.email.map((e) => (
+                      <li
+                        key={e}
+                        className="text-sm font-body text-foreground tabular-nums"
+                      >
+                        {e}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <div>
+                <p className="text-[10px] tracking-[0.25em] uppercase text-muted font-body mb-2">
+                  Phone
+                </p>
+                <p className="text-sm font-body text-foreground tabular-nums">
+                  {family.phone || (
+                    <span className="text-muted italic">Not on file</span>
+                  )}
+                </p>
+              </div>
+              <form
+                onSubmit={onAppendEmail}
+                className="flex items-end gap-2 self-end justify-self-end"
+              >
+                <input type="hidden" name="id" value={family.id} />
+                <FormField
+                  label="Append email"
+                  name="email"
+                  type="email"
+                  value={appendEmail}
+                  onChange={(e) => setAppendEmail(e.target.value)}
+                  placeholder="new@example.com"
+                  labelTone="muted"
+                  className="w-auto"
+                />
+                <Button
+                  variant="secondary"
+                  type="submit"
+                  disabled={pending || !appendEmail.trim()}
+                  className="px-3"
+                >
+                  + Add
+                </Button>
+              </form>
+            </div>
+          )}
+
+          {/* Guests in this family */}
+          {guests.length === 0 ? (
+            <p className="text-sm text-muted italic font-body mb-4">
+              No guests yet in this family — add the first one below.
+            </p>
+          ) : (
+            <table className="w-full border-collapse mb-4">
+              <thead>
+                <tr className="border-b border-border/40">
+                  <th className="text-left py-2 px-2 text-[10px] tracking-[0.3em] uppercase font-body text-text-secondary font-normal">
+                    Name
+                  </th>
+                  <th className="text-left py-2 px-2 text-[10px] tracking-[0.3em] uppercase font-body text-text-secondary font-normal">
+                    Category
+                  </th>
+                  <th className="text-left py-2 px-2 text-[10px] tracking-[0.3em] uppercase font-body text-text-secondary font-normal">
+                    ID
+                  </th>
+                  <th className="text-right py-2 px-2 text-[10px] tracking-[0.3em] uppercase font-body text-text-secondary font-normal">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {guests
+                  .sort((a, b) => a.id - b.id)
+                  .map((g) => (
+                    <GuestRow key={g.id} guest={g} />
+                  ))}
+              </tbody>
+            </table>
+          )}
+
+          {/* Add a guest to this family */}
+          <form
+            action={createGuest}
+            className="grid grid-cols-1 md:grid-cols-[2fr_1fr_auto] gap-3 pt-2"
+          >
+            <input type="hidden" name="family_id" value={family.id} />
+            <FormField
+              label="Add guest · Name"
+              name="name"
+              required
+              placeholder="Full name"
+              labelTone="muted"
+            />
+            <SelectField
+              label="Category"
+              name="category"
+              defaultValue="FEMALE"
+              labelTone="muted"
+            >
+              <option value="MALE">Male</option>
+              <option value="FEMALE">Female</option>
+              <option value="CHILD">Child</option>
+            </SelectField>
+            <Button variant="secondary" type="submit" className="self-end">
+              + Add guest
             </Button>
           </form>
+
+          {error && (
+            <ErrorMessage variant="inline" className="mt-3">
+              {error}
+            </ErrorMessage>
+          )}
         </div>
-      )}
-
-      {/* Guests in this family */}
-      {guests.length === 0 ? (
-        <p className="text-sm text-muted italic font-body mb-4">
-          No guests yet in this family — add the first one below.
-        </p>
-      ) : (
-        <table className="w-full border-collapse mb-4">
-          <thead>
-            <tr className="border-b border-border/40">
-              <th className="text-left py-2 px-2 text-[10px] tracking-[0.3em] uppercase font-body text-text-secondary font-normal">
-                Name
-              </th>
-              <th className="text-left py-2 px-2 text-[10px] tracking-[0.3em] uppercase font-body text-text-secondary font-normal">
-                Category
-              </th>
-              <th className="text-left py-2 px-2 text-[10px] tracking-[0.3em] uppercase font-body text-text-secondary font-normal">
-                ID
-              </th>
-              <th className="text-right py-2 px-2 text-[10px] tracking-[0.3em] uppercase font-body text-text-secondary font-normal">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {guests
-              .sort((a, b) => a.id - b.id)
-              .map((g) => (
-                <GuestRow key={g.id} guest={g} />
-              ))}
-          </tbody>
-        </table>
-      )}
-
-      {/* Add a guest to this family */}
-      <form
-        action={createGuest}
-        className="grid grid-cols-1 md:grid-cols-[2fr_1fr_auto] gap-3 pt-2"
-      >
-        <input type="hidden" name="family_id" value={family.id} />
-        <FormField
-          label="Add guest · Name"
-          name="name"
-          required
-          placeholder="Full name"
-          labelTone="muted"
-        />
-        <SelectField
-          label="Category"
-          name="category"
-          defaultValue="FEMALE"
-          labelTone="muted"
-        >
-          <option value="MALE">Male</option>
-          <option value="FEMALE">Female</option>
-          <option value="CHILD">Child</option>
-        </SelectField>
-        <Button variant="secondary" type="submit" className="self-end">
-          + Add guest
-        </Button>
-      </form>
-
-      {error && (
-        <ErrorMessage variant="inline" className="mt-3">
-          {error}
-        </ErrorMessage>
       )}
     </article>
   );
