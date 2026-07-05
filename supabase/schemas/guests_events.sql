@@ -225,3 +225,49 @@ $$;
 
 grant execute on function public.append_family_email(int, text) to anon;
 grant execute on function public.append_family_email(int, text) to authenticated;
+
+-- Debounce state for RSVP confirmation emails (see migration
+-- 20260705000000_rsvp_email_queue.sql). One row per family: a status change
+-- marks the family dirty; the dispatch-rsvp-emails edge function (run by
+-- pg_cron) waits for a quiet window then sends one email with the latest state.
+create table "rsvp_email_queue" (
+    family_id integer primary key references "guest_families"(id) on delete cascade,
+    dirty boolean not null default true,
+    batch_started_at timestamptz not null default now(),
+    last_change_at timestamptz not null default now(),
+    last_sent_at timestamptz
+);
+
+alter table "rsvp_email_queue" enable row level security;
+
+create or replace function public.enqueue_rsvp_email()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+    fam_id integer;
+begin
+    select family_id into fam_id from public.guests where id = NEW.guest_id;
+    if fam_id is null then
+        return NEW;
+    end if;
+
+    insert into public.rsvp_email_queue as q
+        (family_id, dirty, batch_started_at, last_change_at)
+    values (fam_id, true, now(), now())
+    on conflict (family_id) do update
+    set last_change_at = now(),
+        batch_started_at = case when q.dirty then q.batch_started_at else now() end,
+        dirty = true;
+
+    return NEW;
+end;
+$$;
+
+create trigger "trg_enqueue_rsvp_email"
+after update of rsvp_status on "event_guests_rsvp"
+for each row
+when (OLD.rsvp_status is distinct from NEW.rsvp_status)
+execute function public.enqueue_rsvp_email();
