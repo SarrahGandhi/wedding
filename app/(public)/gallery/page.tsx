@@ -33,31 +33,32 @@ interface Photo {
 
 const PHOTOS: Photo[] = [
   {
-    alt: "The dinner where it all started",
-    caption: "Where it all started",
-    year: "2023",
-    aspect: "aspect-[4/3]",
-    src: "/gallery/firstdinner.JPG",
-  },
-  {
     alt: "Our first date",
     caption: "First date",
     year: "2023",
     aspect: "aspect-[4/3]",
     src: "/gallery/firstdate.jpg",
   },
-  // {
-  //   alt: "New Year's Eve",
-  //   caption: "Midnight, finally official",
-  //   year: "NYE 2023",
-  //   aspect: "aspect-[3/4]",
-  // },
   {
-    alt: "Concerts and park dates",
-    caption: "Concert season",
+    alt: "Park dates",
+    caption: "Park season 1",
     year: "2024",
     aspect: "aspect-[4/5]",
     src: "/gallery/dayonthepark.jpg",
+  },
+  {
+    alt: "Park dates",
+    caption: "Park season 2",
+    year: "2024",
+    aspect: "aspect-[4/4]",
+    src: "/gallery/highpark.png",
+  },
+  {
+    alt: "Ceremony part 1",
+    caption: "Watching the ceremony",
+    year: "2024",
+    aspect: "aspect-[5/6]",
+    src: "/gallery/watch.png",
   },
   {
     alt: "Winter Wonderland",
@@ -80,12 +81,6 @@ const PHOTOS: Photo[] = [
     aspect: "aspect-[4/3]",
     src: "/gallery/montreal.jpg",
   },
-  // {
-  //   alt: "Cliff jumping",
-  //   caption: "The cliff jump",
-  //   year: "2025",
-  //   aspect: "aspect-[4/5]",
-  // },
   {
     alt: "Layover in Hong Kong",
     caption: "Hong Kong layover",
@@ -93,23 +88,11 @@ const PHOTOS: Photo[] = [
     aspect: "aspect-[5/4]",
     src: "/gallery/hongkong.png",
   },
-  // {
-  //   alt: "18 hours on an Indian train",
-  //   caption: "18 hours by train",
-  //   year: "2025",
-  //   aspect: "aspect-square",
-  // },
-  // {
-  //   alt: "Wedding shopping in India",
-  //   caption: "Wedding shopping, x100",
-  //   year: "2025",
-  //   aspect: "aspect-[3/4]",
-  // },
   {
     alt: "Forever begins",
     caption: "Forever begins",
     year: "2026",
-    aspect: "aspect-[4/3]",
+    aspect: "aspect-[4/6]",
     src: "/gallery/IMG_5230.jpg",
   },
 ];
@@ -249,10 +232,7 @@ function PhotoCard({ photo, index }: { photo: Photo; index: number }) {
           />
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-            <Camera
-              className={`w-12 h-12 ${style.icon}`}
-              strokeWidth={2.5}
-            />
+            <Camera className={`w-12 h-12 ${style.icon}`} strokeWidth={2.5} />
             <span
               className={`text-xs tracking-[0.3em] uppercase font-body ${style.accent} opacity-60`}
             >
