@@ -1,31 +1,49 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { RSVP_STATUSES } from "@/lib/types";
+import { StatusDot } from "@/app/shared/StatusDot";
 
 async function getCount(
   supabase: Awaited<ReturnType<typeof createClient>>,
-  table: "guests" | "guest_families" | "events" | "event_guests_rsvp",
-  filter?: { column: string; value: string }
+  table: "guests" | "guest_families" | "events"
 ) {
-  let query = supabase.from(table).select("id", { count: "exact", head: true });
-  if (filter) {
-    query = query.eq(filter.column, filter.value);
-  }
-  const { count } = await query;
+  const { count } = await supabase
+    .from(table)
+    .select("id", { count: "exact", head: true });
   return count ?? 0;
 }
 
+type EventTally = {
+  invited: number;
+  pending: number;
+  accepted: number;
+  declined: number;
+};
+
 export default async function DashboardPage() {
   const supabase = await createClient();
-  const [guests, families, events, pending] = await Promise.all([
-    getCount(supabase, "guests"),
-    getCount(supabase, "guest_families"),
-    getCount(supabase, "events"),
-    getCount(supabase, "event_guests_rsvp", {
-      column: "rsvp_status",
-      value: RSVP_STATUSES[0],
-    }),
-  ]);
+  const [guests, families, { data: events }, { data: rsvps }] =
+    await Promise.all([
+      getCount(supabase, "guests"),
+      getCount(supabase, "guest_families"),
+      supabase
+        .from("events")
+        .select("id, name, date, time")
+        .order("date", { ascending: true })
+        .order("time", { ascending: true }),
+      supabase.from("event_guests_rsvp").select("event_id, rsvp_status"),
+    ]);
+
+  const tallyByEvent = new Map<number, EventTally>();
+  for (const r of rsvps ?? []) {
+    const tally =
+      tallyByEvent.get(r.event_id) ??
+      ({ invited: 0, pending: 0, accepted: 0, declined: 0 } satisfies EventTally);
+    tally.invited += 1;
+    if (r.rsvp_status === "PENDING") tally.pending += 1;
+    else if (r.rsvp_status === "ACCEPTED") tally.accepted += 1;
+    else if (r.rsvp_status === "DECLINED") tally.declined += 1;
+    tallyByEvent.set(r.event_id, tally);
+  }
 
   const cards = [
     {
@@ -37,18 +55,10 @@ export default async function DashboardPage() {
     },
     {
       label: "Events",
-      count: events,
+      count: events?.length ?? 0,
       sub: null,
       href: "/admin/events",
       roman: "II",
-    },
-    {
-      label: "Pending RSVP",
-      count: pending,
-      sub: null,
-      href: "/admin/rsvp",
-      roman: "III",
-      emphasise: pending > 0,
     },
   ];
 
@@ -64,7 +74,7 @@ export default async function DashboardPage() {
         <div className="mt-5 w-12 h-px bg-accent/40" />
       </header>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-border/40 border border-border/40">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-border/40 border border-border/40">
         {cards.map((card, i) => (
           <Link
             key={card.href}
@@ -81,11 +91,7 @@ export default async function DashboardPage() {
             </div>
             <div className="flex items-end justify-between">
               <div className="flex flex-col">
-                <span
-                  className={`font-display text-6xl font-light leading-none tabular-nums ${
-                    card.emphasise ? "text-accent" : "text-foreground"
-                  }`}
-                >
+                <span className="font-display text-6xl font-light leading-none tabular-nums text-foreground">
                   {card.count}
                 </span>
                 {card.sub && (
@@ -101,6 +107,73 @@ export default async function DashboardPage() {
           </Link>
         ))}
       </div>
+
+      <section className="mt-12 animate-fade-up delay-300">
+        <div className="flex items-baseline justify-between mb-4">
+          <div className="flex items-baseline gap-3">
+            <span className="font-display italic text-sm text-text-secondary">
+              III.
+            </span>
+            <span className="text-[10px] tracking-[0.3em] uppercase text-text-secondary font-body">
+              Replies by event
+            </span>
+          </div>
+          <Link
+            href="/admin/rsvp"
+            className="text-[10px] tracking-[0.25em] uppercase font-body text-text-secondary hover:text-accent transition-colors"
+          >
+            Manage &rarr;
+          </Link>
+        </div>
+
+        {!events || events.length === 0 ? (
+          <p className="text-sm text-text-secondary font-body italic">
+            No events yet — add one from the Events chapter to begin sending
+            invitations.
+          </p>
+        ) : (
+          <div className="border border-border/40 bg-border/40 flex flex-col gap-px">
+            {events.map((event) => {
+              const tally = tallyByEvent.get(event.id) ?? {
+                invited: 0,
+                pending: 0,
+                accepted: 0,
+                declined: 0,
+              };
+              return (
+                <Link
+                  key={event.id}
+                  href="/admin/rsvp"
+                  className="group bg-warm-white px-7 py-5 flex flex-col sm:flex-row sm:items-baseline gap-3 sm:gap-6 hover:bg-cream/40 transition-colors"
+                >
+                  <div className="flex-1 min-w-0">
+                    <span className="font-display italic text-lg text-foreground">
+                      {event.name}
+                    </span>
+                    <span className="ml-3 text-[10px] tracking-[0.25em] uppercase font-body text-muted tabular-nums">
+                      {tally.invited} invited
+                    </span>
+                  </div>
+                  <div className="flex items-baseline gap-5 text-[10px] tracking-[0.25em] uppercase font-body text-text-secondary tabular-nums">
+                    <span>
+                      <StatusDot status="ACCEPTED" className="mr-2" />
+                      {tally.accepted} accepted
+                    </span>
+                    <span className={tally.pending > 0 ? "text-accent" : ""}>
+                      <StatusDot status="PENDING" className="mr-2" />
+                      {tally.pending} pending
+                    </span>
+                    <span>
+                      <StatusDot status="DECLINED" className="mr-2" />
+                      {tally.declined} declined
+                    </span>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </section>
 
       <p className="mt-12 text-xs text-text-secondary font-body italic max-w-prose leading-relaxed">
         A working notebook for the days ahead. Use the chapters above to mind
