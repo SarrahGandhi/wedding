@@ -25,6 +25,54 @@ export async function inviteGuestToEvent(formData: FormData) {
   return { success: true };
 }
 
+export async function inviteFamilyToAllEvents(formData: FormData) {
+  const { supabase } = await requireAdmin();
+  const familyId = parseId(formData.get("family_id"));
+
+  if (familyId === null) return { error: "Invalid family id." };
+
+  const [{ data: guests, error: guestsError }, { data: events, error: eventsError }] =
+    await Promise.all([
+      supabase.from("guests").select("id").eq("family_id", familyId),
+      supabase.from("events").select("id"),
+    ]);
+
+  if (guestsError) return { error: guestsError.message };
+  if (eventsError) return { error: eventsError.message };
+
+  const invitations = (guests ?? []).flatMap((guest) =>
+    (events ?? []).map((event) => ({
+      event_id: event.id,
+      guest_id: guest.id,
+      rsvp_status: "PENDING" as const,
+    })),
+  );
+
+  if (invitations.length === 0) return { success: true };
+
+  const { error } = await supabase.from("event_guests_rsvp").upsert(invitations, {
+    onConflict: "event_id,guest_id",
+    ignoreDuplicates: true,
+  });
+  if (error) return { error: error.message };
+
+  const guestIds = (guests ?? []).map((guest) => guest.id);
+  const eventIds = (events ?? []).map((event) => event.id);
+  const { count, error: verificationError } = await supabase
+    .from("event_guests_rsvp")
+    .select("id", { count: "exact", head: true })
+    .in("guest_id", guestIds)
+    .in("event_id", eventIds);
+
+  if (verificationError) return { error: verificationError.message };
+  if (count !== invitations.length) {
+    return { error: "Not every invitation was saved. Please try again." };
+  }
+
+  revalidatePath("/admin/rsvp");
+  return { success: true };
+}
+
 export async function setRsvpStatus(formData: FormData) {
   const { supabase } = await requireAdmin();
   const event_id = parseId(formData.get("event_id"));

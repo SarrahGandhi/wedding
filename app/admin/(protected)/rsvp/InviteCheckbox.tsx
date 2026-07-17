@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   inviteGuestToEvent,
   uninviteGuestFromEvent,
@@ -22,12 +23,15 @@ export function InviteCheckbox({
   eventId,
   eventName,
   status: initialStatus,
+  inviteAllSignal = 0,
 }: {
   guestId: number;
   eventId: number;
   eventName: string;
   status: RsvpStatus | null;
+  inviteAllSignal?: number;
 }) {
+  const router = useRouter();
   const invite = useServerAction(inviteGuestToEvent);
   const uninvite = useServerAction(uninviteGuestFromEvent);
   const updateStatus = useServerAction(setRsvpStatus);
@@ -36,6 +40,16 @@ export function InviteCheckbox({
   const invited = status !== null;
   const pending = invite.pending || uninvite.pending || updateStatus.pending;
   const error = invite.error || uninvite.error || updateStatus.error;
+
+  useEffect(() => {
+    setStatus(initialStatus);
+  }, [initialStatus]);
+
+  useEffect(() => {
+    if (inviteAllSignal > 0) {
+      setStatus((current) => current ?? "PENDING");
+    }
+  }, [inviteAllSignal]);
 
   function makeFormData(extra?: Record<string, string>) {
     const formData = new FormData();
@@ -52,6 +66,7 @@ export function InviteCheckbox({
     setMenuOpen(false);
     const action = next ? invite : uninvite;
     action.run(makeFormData(), {
+      onSuccess: () => router.refresh(),
       onError: () => setStatus(previous),
     });
   }
@@ -62,6 +77,7 @@ export function InviteCheckbox({
     const previous = status;
     setStatus(next);
     updateStatus.run(makeFormData({ status: next }), {
+      onSuccess: () => router.refresh(),
       onError: () => setStatus(previous),
     });
   }

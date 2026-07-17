@@ -5,6 +5,7 @@ import type { IFuseOptions } from "fuse.js";
 import type { GuestSide, RsvpStatus } from "@/lib/types";
 import { useFuzzyFilter } from "@/lib/useFuzzyFilter";
 import { InviteCheckbox } from "./InviteCheckbox";
+import { InviteFamilyButton } from "./InviteFamilyButton";
 import {
   DEFAULT_FUZZINESS,
   FuzzinessControl,
@@ -44,19 +45,36 @@ function FamilyBlock({
   family: RosterFamily;
   events: RosterEvent[];
 }) {
+  const [inviteAllSignal, setInviteAllSignal] = useState(0);
+  const allInvitedFromServer =
+    family.guests.length > 0 &&
+    family.guests.every((guest) =>
+      events.every((event) => guest.statusByEvent[event.id] !== undefined),
+    );
+  const allInvited = allInvitedFromServer || inviteAllSignal > 0;
+
   return (
     <article className="border-t border-border/40 py-6">
-      <header className="flex items-baseline gap-3 flex-wrap mb-4">
-        <h2 className="font-display italic text-2xl text-foreground leading-tight">
-          {family.label}
-        </h2>
-        <span className="text-[10px] tracking-[0.25em] uppercase font-body text-text-secondary tabular-nums">
-          {family.guests.length}{" "}
-          {family.guests.length === 1 ? "guest" : "guests"}
-        </span>
-        <span className="text-[10px] tracking-[0.3em] uppercase text-muted font-body tabular-nums">
-          #{family.id}
-        </span>
+      <header className="flex flex-col gap-3 mb-4 sm:flex-row sm:items-baseline sm:justify-between">
+        <div className="flex items-baseline gap-3 flex-wrap">
+          <h2 className="font-display italic text-2xl text-foreground leading-tight">
+            {family.label}
+          </h2>
+          <span className="text-[10px] tracking-[0.25em] uppercase font-body text-text-secondary tabular-nums">
+            {family.guests.length}{" "}
+            {family.guests.length === 1 ? "guest" : "guests"}
+          </span>
+          <span className="text-[10px] tracking-[0.3em] uppercase text-muted font-body tabular-nums">
+            #{family.id}
+          </span>
+        </div>
+        {family.guests.length > 0 && (
+          <InviteFamilyButton
+            familyId={family.id}
+            allInvited={allInvited}
+            onInvitedAll={() => setInviteAllSignal((signal) => signal + 1)}
+          />
+        )}
       </header>
 
       {family.guests.length === 0 ? (
@@ -93,6 +111,7 @@ function FamilyBlock({
                         eventId={e.id}
                         eventName={e.name}
                         status={g.statusByEvent[e.id] ?? null}
+                        inviteAllSignal={inviteAllSignal}
                       />
                     ))}
                   </div>
