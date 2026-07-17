@@ -1,9 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import type { IFuseOptions } from "fuse.js";
 import { FamilySection } from "./FamilySection";
 import type { GuestCategory, GuestSide } from "@/lib/types";
+import { useFuzzyFilter } from "@/lib/useFuzzyFilter";
 import { Button } from "@/app/shared/Button";
+import {
+  DEFAULT_FUZZINESS,
+  FuzzinessControl,
+} from "@/app/shared/FuzzinessControl";
 
 type Family = {
   id: number;
@@ -31,14 +37,16 @@ function guestCountFor(families: FamilyWithGuests[]): number {
   return families.reduce((total, entry) => total + entry.guests.length, 0);
 }
 
-function matchesSearch(entry: FamilyWithGuests, query: string): boolean {
-  const q = query.toLowerCase();
-  if (entry.label.toLowerCase().includes(q)) return true;
-  if (String(entry.family.id).includes(q)) return true;
-  if (entry.family.phone?.toLowerCase().includes(q)) return true;
-  if (entry.family.email.some((e) => e.toLowerCase().includes(q))) return true;
-  return false;
-}
+const searchOptions: IFuseOptions<FamilyWithGuests> = {
+  ignoreLocation: true,
+  keys: [
+    { name: "label", weight: 2 },
+    { name: "guestNames", getFn: (entry) => entry.guests.map((g) => g.name) },
+    { name: "familyId", getFn: (entry) => String(entry.family.id) },
+    { name: "phone", getFn: (entry) => entry.family.phone ?? "" },
+    { name: "family.email" },
+  ],
+};
 
 export function GuestRoster({
   brideFamilies,
@@ -48,17 +56,24 @@ export function GuestRoster({
   groomFamilies: FamilyWithGuests[];
 }) {
   const [search, setSearch] = useState("");
+  const [fuzziness, setFuzziness] = useState(DEFAULT_FUZZINESS);
   const [sideFilter, setSideFilter] = useState<SideFilter>("ALL");
   const [openFamilyIds, setOpenFamilyIds] = useState<Set<number>>(new Set());
   const brideGuestCount = guestCountFor(brideFamilies);
   const groomGuestCount = guestCountFor(groomFamilies);
 
-  const filteredBride = search
-    ? brideFamilies.filter((f) => matchesSearch(f, search))
-    : brideFamilies;
-  const filteredGroom = search
-    ? groomFamilies.filter((f) => matchesSearch(f, search))
-    : groomFamilies;
+  const filteredBride = useFuzzyFilter(
+    brideFamilies,
+    search,
+    searchOptions,
+    fuzziness,
+  );
+  const filteredGroom = useFuzzyFilter(
+    groomFamilies,
+    search,
+    searchOptions,
+    fuzziness,
+  );
   const visibleBride = sideFilter === "GROOM" ? [] : filteredBride;
   const visibleGroom = sideFilter === "BRIDE" ? [] : filteredGroom;
   const visibleFamilies = [...visibleBride, ...visibleGroom];
@@ -142,6 +157,7 @@ export function GuestRoster({
             className="w-full max-w-md bg-warm-white border border-border/60 px-4 py-2.5 font-body text-sm focus:outline-none focus:border-accent/60 transition-colors placeholder:text-muted/60"
           />
         </label>
+        <FuzzinessControl value={fuzziness} onChange={setFuzziness} />
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-[10px] tracking-[0.3em] uppercase text-text-secondary font-body mb-2">

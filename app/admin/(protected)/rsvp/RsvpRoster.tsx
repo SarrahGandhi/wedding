@@ -1,8 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import type { IFuseOptions } from "fuse.js";
 import type { GuestSide, RsvpStatus } from "@/lib/types";
+import { useFuzzyFilter } from "@/lib/useFuzzyFilter";
 import { InviteCheckbox } from "./InviteCheckbox";
+import {
+  DEFAULT_FUZZINESS,
+  FuzzinessControl,
+} from "@/app/shared/FuzzinessControl";
 
 export type RosterEvent = {
   id: number;
@@ -22,24 +28,14 @@ export type RosterFamily = {
   guests: RosterGuest[];
 };
 
-function fuzzyMatch(text: string, query: string): boolean {
-  const t = text.toLowerCase();
-  const q = query.toLowerCase().replace(/\s+/g, "");
-  if (q.length === 0) return true;
-  if (t.includes(query.toLowerCase().trim())) return true;
-  // Subsequence match: every query character appears in order.
-  let i = 0;
-  for (const ch of t) {
-    if (ch === q[i]) i += 1;
-    if (i === q.length) return true;
-  }
-  return false;
-}
-
-function matchesSearch(family: RosterFamily, query: string): boolean {
-  if (fuzzyMatch(family.label, query)) return true;
-  return family.guests.some((g) => fuzzyMatch(g.name, query));
-}
+const searchOptions: IFuseOptions<RosterFamily> = {
+  ignoreLocation: true,
+  keys: [
+    { name: "label", weight: 2 },
+    { name: "guests.name" },
+    { name: "familyId", getFn: (family) => String(family.id) },
+  ],
+};
 
 function FamilyBlock({
   family,
@@ -120,18 +116,25 @@ export function RsvpRoster({
   events: RosterEvent[];
 }) {
   const [search, setSearch] = useState("");
+  const [fuzziness, setFuzziness] = useState(DEFAULT_FUZZINESS);
 
-  const visibleBride = search
-    ? brideFamilies.filter((f) => matchesSearch(f, search))
-    : brideFamilies;
-  const visibleGroom = search
-    ? groomFamilies.filter((f) => matchesSearch(f, search))
-    : groomFamilies;
+  const visibleBride = useFuzzyFilter(
+    brideFamilies,
+    search,
+    searchOptions,
+    fuzziness,
+  );
+  const visibleGroom = useFuzzyFilter(
+    groomFamilies,
+    search,
+    searchOptions,
+    fuzziness,
+  );
   const noResults = visibleBride.length === 0 && visibleGroom.length === 0;
 
   return (
     <>
-      <div className="mb-10">
+      <div className="mb-10 space-y-5">
         <label className="block">
           <span className="text-[10px] tracking-[0.3em] uppercase text-text-secondary font-body mb-1 block">
             Search guests
@@ -144,6 +147,7 @@ export function RsvpRoster({
             className="w-full max-w-md bg-warm-white border border-border/60 px-4 py-2.5 font-body text-sm focus:outline-none focus:border-accent/60 transition-colors placeholder:text-muted/60"
           />
         </label>
+        <FuzzinessControl value={fuzziness} onChange={setFuzziness} />
       </div>
 
       {noResults ? (
