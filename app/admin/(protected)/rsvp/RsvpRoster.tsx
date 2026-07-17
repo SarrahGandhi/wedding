@@ -106,7 +106,7 @@ function FamilyBlock({
                   <div className="flex flex-wrap gap-x-6 gap-y-2">
                     {events.map((e) => (
                       <InviteCheckbox
-                        key={`${g.id}-${e.id}`}
+                        key={`${g.id}-${e.id}-${g.statusByEvent[e.id] ?? "uninvited"}-${inviteAllSignal}`}
                         guestId={g.id}
                         eventId={e.id}
                         eventName={e.name}

@@ -21,6 +21,18 @@ export async function inviteGuestToEvent(formData: FormData) {
     );
   if (error) return { error: error.message };
 
+  const { data: savedInvitation, error: verificationError } = await supabase
+    .from("event_guests_rsvp")
+    .select("id")
+    .eq("event_id", event_id)
+    .eq("guest_id", guest_id)
+    .maybeSingle();
+
+  if (verificationError) return { error: verificationError.message };
+  if (!savedInvitation) {
+    return { error: "The invitation was not saved. Please try again." };
+  }
+
   revalidatePath("/admin/rsvp");
   return { success: true };
 }
@@ -83,12 +95,17 @@ export async function setRsvpStatus(formData: FormData) {
   if (guest_id === null) return { error: "Invalid guest id." };
   if (!status) return { error: "Invalid status." };
 
-  const { error } = await supabase
+  const { data: updatedInvitation, error } = await supabase
     .from("event_guests_rsvp")
     .update({ rsvp_status: status })
     .eq("event_id", event_id)
-    .eq("guest_id", guest_id);
+    .eq("guest_id", guest_id)
+    .select("id")
+    .maybeSingle();
   if (error) return { error: error.message };
+  if (!updatedInvitation) {
+    return { error: "The RSVP status was not saved. Please try again." };
+  }
 
   revalidatePath("/admin/rsvp");
   return { success: true };
@@ -108,6 +125,18 @@ export async function uninviteGuestFromEvent(formData: FormData) {
     .eq("event_id", event_id)
     .eq("guest_id", guest_id);
   if (error) return { error: error.message };
+
+  const { data: remainingInvitation, error: verificationError } = await supabase
+    .from("event_guests_rsvp")
+    .select("id")
+    .eq("event_id", event_id)
+    .eq("guest_id", guest_id)
+    .maybeSingle();
+
+  if (verificationError) return { error: verificationError.message };
+  if (remainingInvitation) {
+    return { error: "The invitation was not removed. Please try again." };
+  }
 
   revalidatePath("/admin/rsvp");
   return { success: true };

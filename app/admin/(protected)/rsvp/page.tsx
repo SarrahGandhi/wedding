@@ -11,7 +11,30 @@ import {
 export default async function RsvpPage() {
   const supabase = await createClient();
 
-  const [{ data: events }, { data: families }, { data: guests }, { data: rsvps }] =
+  async function getAllRsvps() {
+    const pageSize = 1000;
+    const allRsvps: {
+      event_id: number;
+      guest_id: number;
+      rsvp_status: RsvpStatus;
+    }[] = [];
+
+    for (let from = 0; ; from += pageSize) {
+      const { data, error } = await supabase
+        .from("event_guests_rsvp")
+        .select("event_id, guest_id, rsvp_status")
+        .order("id", { ascending: true })
+        .range(from, from + pageSize - 1);
+
+      if (error) throw error;
+      allRsvps.push(...(data as typeof allRsvps));
+      if (data.length < pageSize) break;
+    }
+
+    return allRsvps;
+  }
+
+  const [{ data: events }, { data: families }, { data: guests }, rsvps] =
     await Promise.all([
       supabase
         .from("events")
@@ -26,15 +49,13 @@ export default async function RsvpPage() {
         .from("guests")
         .select("id, name, family_id")
         .order("id", { ascending: true }),
-      supabase
-        .from("event_guests_rsvp")
-        .select("event_id, guest_id, rsvp_status"),
+      getAllRsvps(),
     ]);
 
   // Per-guest map of event id → rsvp status.
   const statusByGuest = new Map<number, Record<number, RsvpStatus>>();
   const totals = { pending: 0, accepted: 0, declined: 0 };
-  for (const r of rsvps ?? []) {
+  for (const r of rsvps) {
     const record = statusByGuest.get(r.guest_id) ?? {};
     record[r.event_id] = r.rsvp_status as RsvpStatus;
     statusByGuest.set(r.guest_id, record);

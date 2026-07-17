@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   inviteGuestToEvent,
@@ -35,21 +35,13 @@ export function InviteCheckbox({
   const invite = useServerAction(inviteGuestToEvent);
   const uninvite = useServerAction(uninviteGuestFromEvent);
   const updateStatus = useServerAction(setRsvpStatus);
-  const [status, setStatus] = useState<RsvpStatus | null>(initialStatus);
+  const [status, setStatus] = useState<RsvpStatus | null>(
+    initialStatus ?? (inviteAllSignal > 0 ? "PENDING" : null),
+  );
   const [menuOpen, setMenuOpen] = useState(false);
   const invited = status !== null;
   const pending = invite.pending || uninvite.pending || updateStatus.pending;
   const error = invite.error || uninvite.error || updateStatus.error;
-
-  useEffect(() => {
-    setStatus(initialStatus);
-  }, [initialStatus]);
-
-  useEffect(() => {
-    if (inviteAllSignal > 0) {
-      setStatus((current) => current ?? "PENDING");
-    }
-  }, [inviteAllSignal]);
 
   function makeFormData(extra?: Record<string, string>) {
     const formData = new FormData();
