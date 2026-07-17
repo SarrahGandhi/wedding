@@ -45,13 +45,11 @@ function FamilyBlock({
   family: RosterFamily;
   events: RosterEvent[];
 }) {
-  const [inviteAllSignal, setInviteAllSignal] = useState(0);
-  const allInvitedFromServer =
+  const allInvited =
     family.guests.length > 0 &&
     family.guests.every((guest) =>
       events.every((event) => guest.statusByEvent[event.id] !== undefined),
     );
-  const allInvited = allInvitedFromServer || inviteAllSignal > 0;
 
   return (
     <article className="border-t border-border/40 py-6">
@@ -72,7 +70,6 @@ function FamilyBlock({
           <InviteFamilyButton
             familyId={family.id}
             allInvited={allInvited}
-            onInvitedAll={() => setInviteAllSignal((signal) => signal + 1)}
           />
         )}
       </header>
@@ -106,12 +103,11 @@ function FamilyBlock({
                   <div className="flex flex-wrap gap-x-6 gap-y-2">
                     {events.map((e) => (
                       <InviteCheckbox
-                        key={`${g.id}-${e.id}-${g.statusByEvent[e.id] ?? "uninvited"}-${inviteAllSignal}`}
+                        key={`${g.id}-${e.id}-${g.statusByEvent[e.id] ?? "uninvited"}`}
                         guestId={g.id}
                         eventId={e.id}
                         eventName={e.name}
                         status={g.statusByEvent[e.id] ?? null}
-                        inviteAllSignal={inviteAllSignal}
                       />
                     ))}
                   </div>

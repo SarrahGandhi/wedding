@@ -23,21 +23,17 @@ export function InviteCheckbox({
   eventId,
   eventName,
   status: initialStatus,
-  inviteAllSignal = 0,
 }: {
   guestId: number;
   eventId: number;
   eventName: string;
   status: RsvpStatus | null;
-  inviteAllSignal?: number;
 }) {
   const router = useRouter();
   const invite = useServerAction(inviteGuestToEvent);
   const uninvite = useServerAction(uninviteGuestFromEvent);
   const updateStatus = useServerAction(setRsvpStatus);
-  const [status, setStatus] = useState<RsvpStatus | null>(
-    initialStatus ?? (inviteAllSignal > 0 ? "PENDING" : null),
-  );
+  const [status, setStatus] = useState<RsvpStatus | null>(initialStatus);
   const [menuOpen, setMenuOpen] = useState(false);
   const invited = status !== null;
   const pending = invite.pending || uninvite.pending || updateStatus.pending;

@@ -9,11 +9,9 @@ import { inviteFamilyToAllEvents } from "./actions";
 export function InviteFamilyButton({
   familyId,
   allInvited,
-  onInvitedAll,
 }: {
   familyId: number;
   allInvited: boolean;
-  onInvitedAll: () => void;
 }) {
   const router = useRouter();
   const inviteAll = useServerAction(inviteFamilyToAllEvents);
@@ -22,10 +20,7 @@ export function InviteFamilyButton({
     const formData = new FormData();
     formData.append("family_id", String(familyId));
     inviteAll.run(formData, {
-      onSuccess: () => {
-        onInvitedAll();
-        router.refresh();
-      },
+      onSuccess: () => router.refresh(),
     });
   }
 
