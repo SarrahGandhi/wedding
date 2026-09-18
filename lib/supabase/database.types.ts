@@ -34,6 +34,69 @@ export type Database = {
   }
   public: {
     Tables: {
+      accommodations: {
+        Row: {
+          created_at: string
+          id: number
+          kind: string
+          name: string
+          room_number: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: never
+          kind: string
+          name: string
+          room_number?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: never
+          kind?: string
+          name?: string
+          room_number?: string | null
+        }
+        Relationships: []
+      }
+      family_logistics: {
+        Row: {
+          accommodation_id: number | null
+          arrival_date: string | null
+          family_id: number
+          travel_details: string | null
+          travel_mode: string | null
+        }
+        Insert: {
+          accommodation_id?: number | null
+          arrival_date?: string | null
+          family_id: number
+          travel_details?: string | null
+          travel_mode?: string | null
+        }
+        Update: {
+          accommodation_id?: number | null
+          arrival_date?: string | null
+          family_id?: number
+          travel_details?: string | null
+          travel_mode?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "family_logistics_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: true
+            referencedRelation: "guest_families"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "family_logistics_accommodation_id_fkey"
+            columns: ["accommodation_id"]
+            isOneToOne: false
+            referencedRelation: "accommodations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_guests_rsvp: {
         Row: {
           created_at: string
@@ -167,6 +230,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      save_family_logistics: {
+        Args: {
+          p_family_id: number
+          p_travel_mode: string | null
+          p_travel_details: string | null
+          p_arrival_date: string | null
+          p_accommodation_id: number | null
+          p_new_kind: string | null
+          p_new_name: string | null
+          p_new_room_number: string | null
+        }
+        Returns: undefined
+      }
       append_family_email: {
         Args: { family_row_id: number; new_email: string }
         Returns: undefined
@@ -312,4 +388,3 @@ export const Constants = {
     },
   },
 } as const
-
