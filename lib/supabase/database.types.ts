@@ -34,6 +34,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      budget_categories: {
+        Row: {
+          id: number
+          name: string
+          vendor: string | null
+          notes: string | null
+          split_type: Database["public"]["Enums"]["budget_split_type"]
+          total_paise: number
+          bride_share_paise: number
+          groom_share_paise: number
+          bride_paid_paise: number
+          groom_paid_paise: number
+          revision: number
+          created_at: string
+        }
+        Insert: {
+          id?: never
+          name: string
+          vendor?: string | null
+          notes?: string | null
+          split_type?: Database["public"]["Enums"]["budget_split_type"]
+          total_paise: number
+          bride_share_paise: number
+          groom_share_paise: number
+          bride_paid_paise?: number
+          groom_paid_paise?: number
+          revision?: number
+          created_at?: string
+        }
+        Update: {
+          id?: never
+          name?: string
+          vendor?: string | null
+          notes?: string | null
+          split_type?: Database["public"]["Enums"]["budget_split_type"]
+          total_paise?: number
+          bride_share_paise?: number
+          groom_share_paise?: number
+          bride_paid_paise?: number
+          groom_paid_paise?: number
+          revision?: number
+          created_at?: string
+        }
+        Relationships: []
+      }
       accommodations: {
         Row: {
           created_at: string
@@ -272,6 +317,7 @@ export type Database = {
       }
     }
     Enums: {
+      budget_split_type: "GROOM" | "BRIDE" | "EQUAL" | "CUSTOM"
       event_rsvp_status: "PENDING" | "ACCEPTED" | "DECLINED"
       guest_category: "MALE" | "FEMALE" | "CHILD"
       guest_side: "BRIDE" | "GROOM"
@@ -405,6 +451,7 @@ export const Constants = {
   },
   public: {
     Enums: {
+      budget_split_type: ["GROOM", "BRIDE", "EQUAL", "CUSTOM"],
       event_rsvp_status: ["PENDING", "ACCEPTED", "DECLINED"],
       guest_category: ["MALE", "FEMALE", "CHILD"],
       guest_side: ["BRIDE", "GROOM"],

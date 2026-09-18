@@ -8,6 +8,7 @@ const links = [
   { href: "/admin/guests", label: "Roster" },
   { href: "/admin/events", label: "Events" },
   { href: "/admin/rsvp", label: "RSVP" },
+  { href: "/admin/budgeting", label: "Budgeting" },
   { href: "/admin/logistics", label: "Logistics" },
   { href: "/admin/accommodation", label: "Accommodation" },
 ];
