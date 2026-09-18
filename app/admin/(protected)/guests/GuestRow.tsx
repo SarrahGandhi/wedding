@@ -14,6 +14,7 @@ type Guest = {
   name: string;
   category: GuestCategory;
   family_id: number;
+  added_by_family: boolean;
 };
 
 const categoryGlyph: Record<Guest["category"], React.ReactNode> = {
@@ -106,6 +107,11 @@ export function GuestRow({ guest }: { guest: Guest }) {
           {categoryGlyph[guest.category]}
         </span>
         {guest.category.charAt(0) + guest.category.slice(1).toLowerCase()}
+        {guest.added_by_family && (
+          <span className="ml-2 text-[10px] tracking-[0.12em] uppercase text-accent">
+            Added by family
+          </span>
+        )}
       </td>
       <td className="py-4 px-2 text-[10px] tracking-[0.25em] uppercase font-body text-text-secondary tabular-nums">
         #{guest.id}

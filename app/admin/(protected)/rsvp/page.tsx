@@ -7,6 +7,7 @@ import {
   type RosterFamily,
   type RosterGuest,
 } from "./RsvpRoster";
+import { familyLabel } from "../guests/family-label";
 
 export default async function RsvpPage() {
   const supabase = await createClient();
@@ -43,7 +44,7 @@ export default async function RsvpPage() {
         .order("time", { ascending: true }),
       supabase
         .from("guest_families")
-        .select("id, side")
+        .select("id, side, family_name")
         .order("id", { ascending: true }),
       supabase
         .from("guests")
@@ -76,15 +77,20 @@ export default async function RsvpPage() {
     guestsByFamily.set(g.family_id, list);
   }
 
-  const toEntry = (f: { id: number; side: string }): RosterFamily => {
+  const toEntry = (f: {
+    id: number;
+    side: string;
+    family_name: string | null;
+  }): RosterFamily => {
     const familyGuests = guestsByFamily.get(f.id) ?? [];
     return {
       id: f.id,
       side: f.side as GuestSide,
-      label:
-        familyGuests.length === 0
-          ? `Empty family · #${f.id}`
-          : familyGuests.map((g) => g.name).join(", "),
+      label: familyLabel(
+        familyGuests.map((guest) => guest.name),
+        f.id,
+        f.family_name,
+      ),
       guests: familyGuests,
     };
   };

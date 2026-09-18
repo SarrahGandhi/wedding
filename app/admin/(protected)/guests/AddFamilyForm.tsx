@@ -28,8 +28,12 @@ export function AddFamilyForm({
 }) {
   const firstFieldRef = useRef<HTMLSelectElement>(null);
   const [side, setSide] = useState<GuestSide>("BRIDE");
+  const [familyName, setFamilyName] = useState("");
   const [emails, setEmails] = useState("");
   const [phone, setPhone] = useState("");
+  const [maleGuestSlots, setMaleGuestSlots] = useState("");
+  const [femaleGuestSlots, setFemaleGuestSlots] = useState("");
+  const [allowAllGuests, setAllowAllGuests] = useState(false);
   const [rows, setRows] = useState<GuestRow[]>(() => [blankRow()]);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -64,8 +68,12 @@ export function AddFamilyForm({
       onCreated({ id: result.id, label: result.label, side: result.side });
       // `side` intentionally persists — families are usually entered in batches
       // for one side at a time.
+      setFamilyName("");
       setEmails("");
       setPhone("");
+      setMaleGuestSlots("");
+      setFemaleGuestSlots("");
+      setAllowAllGuests(false);
       setRows([blankRow()]);
       firstFieldRef.current?.focus({ preventScroll: true });
     });
@@ -74,7 +82,7 @@ export function AddFamilyForm({
   return (
     <div className={open ? "" : "hidden"}>
       <form onSubmit={onSubmit} className={pending ? "opacity-60" : ""}>
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_2fr] gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <SelectField
             label="Side"
             name="side"
@@ -85,6 +93,14 @@ export function AddFamilyForm({
             <option value="BRIDE">Bride</option>
             <option value="GROOM">Groom</option>
           </SelectField>
+          <FormField
+            label="Family name (optional)"
+            name="family_name"
+            value={familyName}
+            onChange={(e) => setFamilyName(e.target.value)}
+            placeholder="The Rahman family"
+            maxLength={100}
+          />
           <FormField
             label="Phone (optional)"
             name="phone"
@@ -99,6 +115,71 @@ export function AddFamilyForm({
             onChange={(e) => setEmails(e.target.value)}
             placeholder="alice@example.com, bob@example.com"
           />
+        </div>
+
+        <div className="mt-6 border border-border/50 bg-warm-white/60 p-4 md:p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-[10px] tracking-[0.3em] uppercase text-text-secondary font-body mb-1">
+                Guest-added names (optional)
+              </p>
+              <p className="max-w-[65ch] text-xs text-muted font-body leading-relaxed">
+                Use fixed spots when you know the number of men and women, or
+                choose All so the family can add any number of people.
+              </p>
+            </div>
+            <Button
+              variant={allowAllGuests ? "primary" : "secondary"}
+              aria-pressed={allowAllGuests}
+              onClick={() => setAllowAllGuests((current) => !current)}
+              className="shrink-0"
+            >
+              All
+            </Button>
+          </div>
+
+          <input
+            type="hidden"
+            name="allow_all_guests"
+            value={String(allowAllGuests)}
+          />
+
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <FormField
+              label="Men"
+              name="male_guest_slots"
+              type="number"
+              inputMode="numeric"
+              min={0}
+              max={20}
+              step={1}
+              value={allowAllGuests ? "" : maleGuestSlots}
+              onChange={(e) => setMaleGuestSlots(e.target.value)}
+              placeholder={allowAllGuests ? "Unlimited" : "0"}
+              disabled={allowAllGuests}
+              labelTone="muted"
+            />
+            <FormField
+              label="Women"
+              name="female_guest_slots"
+              type="number"
+              inputMode="numeric"
+              min={0}
+              max={20}
+              step={1}
+              value={allowAllGuests ? "" : femaleGuestSlots}
+              onChange={(e) => setFemaleGuestSlots(e.target.value)}
+              placeholder={allowAllGuests ? "Unlimited" : "0"}
+              disabled={allowAllGuests}
+              labelTone="muted"
+            />
+          </div>
+
+          {(allowAllGuests || maleGuestSlots || femaleGuestSlots) && (
+            <p className="mt-3 text-xs text-text-secondary font-body leading-relaxed">
+              Add a family name above so guests can find this invitation.
+            </p>
+          )}
         </div>
 
         <div className="mt-6">

@@ -14,6 +14,13 @@ import {
   parseEmailList,
 } from "@/app/shared/action-helpers";
 
+function parseGuestSlots(value: FormDataEntryValue | null): number | null {
+  const raw = String(value ?? "").trim();
+  if (raw === "") return 0;
+  const slots = Number(raw);
+  return Number.isInteger(slots) && slots >= 0 && slots <= 20 ? slots : null;
+}
+
 // ---------------------------------------------------------------------------
 // Guest CRUD
 // ---------------------------------------------------------------------------
@@ -79,10 +86,37 @@ export async function createFamily(formData: FormData) {
   const side = parseEnum(formData.get("side"), GUEST_SIDES);
   const { emails, invalid } = parseEmailList(formData.get("emails"));
   const phone = parseNullable(formData.get("phone"));
+  const familyName = parseNullable(formData.get("family_name"));
+  const maleGuestSlots = parseGuestSlots(formData.get("male_guest_slots"));
+  const femaleGuestSlots = parseGuestSlots(formData.get("female_guest_slots"));
+  const allowAllGuests = formData.get("allow_all_guests") === "true";
 
   if (!side) return { success: false as const, error: "Pick a side." };
   if (invalid)
     return { success: false as const, error: `Invalid email: ${invalid}` };
+  if (familyName && familyName.length > 100)
+    return {
+      success: false as const,
+      error: "Family name must be 100 characters or fewer.",
+    };
+  if (maleGuestSlots === null || femaleGuestSlots === null)
+    return {
+      success: false as const,
+      error: "Guest spots must be whole numbers from 0 to 20.",
+    };
+  if (!allowAllGuests && maleGuestSlots + femaleGuestSlots > 20)
+    return {
+      success: false as const,
+      error: "A family can have up to 20 fixed guest spots.",
+    };
+  if (
+    !familyName &&
+    (allowAllGuests || maleGuestSlots > 0 || femaleGuestSlots > 0)
+  )
+    return {
+      success: false as const,
+      error: "Add a family name so guests can find their invitation.",
+    };
 
   // Rows are paired by index; blank names are treated as unused rows.
   const names = formData.getAll("guest_name");
@@ -102,7 +136,15 @@ export async function createFamily(formData: FormData) {
 
   const { data, error } = await supabase
     .from("guest_families")
-    .insert({ side, email: emails, phone })
+    .insert({
+      side,
+      email: emails,
+      phone,
+      family_name: familyName,
+      male_guest_slots: allowAllGuests ? 0 : maleGuestSlots,
+      female_guest_slots: allowAllGuests ? 0 : femaleGuestSlots,
+      allow_all_guests: allowAllGuests,
+    })
     .select("id")
     .single();
   if (error) return { success: false as const, error: error.message };
@@ -131,6 +173,7 @@ export async function createFamily(formData: FormData) {
     label: familyLabel(
       guests.map((g) => g.name),
       familyId,
+      familyName,
     ),
   };
 }
@@ -141,14 +184,37 @@ export async function updateFamily(formData: FormData) {
   const side = parseEnum(formData.get("side"), GUEST_SIDES);
   const { emails, invalid } = parseEmailList(formData.get("emails"));
   const phone = parseNullable(formData.get("phone"));
+  const familyName = parseNullable(formData.get("family_name"));
+  const maleGuestSlots = parseGuestSlots(formData.get("male_guest_slots"));
+  const femaleGuestSlots = parseGuestSlots(formData.get("female_guest_slots"));
+  const allowAllGuests = formData.get("allow_all_guests") === "true";
 
   if (id === null) return { error: "Invalid id." };
   if (!side) return { error: "Pick a side." };
   if (invalid) return { error: `Invalid email: ${invalid}` };
+  if (familyName && familyName.length > 100)
+    return { error: "Family name must be 100 characters or fewer." };
+  if (maleGuestSlots === null || femaleGuestSlots === null)
+    return { error: "Guest spots must be whole numbers from 0 to 20." };
+  if (!allowAllGuests && maleGuestSlots + femaleGuestSlots > 20)
+    return { error: "A family can have up to 20 fixed guest spots." };
+  if (
+    !familyName &&
+    (allowAllGuests || maleGuestSlots > 0 || femaleGuestSlots > 0)
+  )
+    return { error: "Add a family name so guests can find their invitation." };
 
   const { error } = await supabase
     .from("guest_families")
-    .update({ side, email: emails, phone })
+    .update({
+      side,
+      email: emails,
+      phone,
+      family_name: familyName,
+      male_guest_slots: allowAllGuests ? 0 : maleGuestSlots,
+      female_guest_slots: allowAllGuests ? 0 : femaleGuestSlots,
+      allow_all_guests: allowAllGuests,
+    })
     .eq("id", id);
   if (error) return { error: error.message };
 

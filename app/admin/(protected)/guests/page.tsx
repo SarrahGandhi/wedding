@@ -9,12 +9,18 @@ type Guest = {
   name: string;
   category: GuestCategory;
   family_id: number;
+  added_by_family: boolean;
 };
 
-function familyLabelFromGuests(guests: Guest[], familyId: number): string {
+function familyLabelFromGuests(
+  guests: Guest[],
+  familyId: number,
+  familyName: string | null,
+): string {
   return familyLabel(
     [...guests].sort((a, b) => a.id - b.id).map((g) => g.name),
     familyId,
+    familyName,
   );
 }
 
@@ -24,11 +30,13 @@ export default async function GuestsPage() {
   const [{ data: families }, { data: guestRows }] = await Promise.all([
     supabase
       .from("guest_families")
-      .select("id, side, email, phone")
+      .select(
+        "id, side, email, phone, family_name, male_guest_slots, female_guest_slots, allow_all_guests",
+      )
       .order("id", { ascending: true }),
     supabase
       .from("guests")
-      .select("id, name, category, family_id")
+      .select("id, name, category, family_id, added_by_family")
       .order("id", { ascending: true }),
   ]);
 
@@ -43,10 +51,17 @@ export default async function GuestsPage() {
     guestsByFamily.set(g.family_id, list);
   }
 
-  const toEntry = (f: { id: number; side: string; email: string[]; phone: string | null }) => ({
-    family: f as { id: number; side: "BRIDE" | "GROOM"; email: string[]; phone: string | null },
+  const toEntry = (f: (typeof families extends (infer T)[] | null ? T : never)) => ({
+    family: {
+      ...f,
+      side: f.side as "BRIDE" | "GROOM",
+    },
     guests: guestsByFamily.get(f.id) ?? [],
-    label: familyLabelFromGuests(guestsByFamily.get(f.id) ?? [], f.id),
+    label: familyLabelFromGuests(
+      guestsByFamily.get(f.id) ?? [],
+      f.id,
+      f.family_name,
+    ),
   });
 
   const brideFamilies = (families ?? []).filter((f) => f.side === "BRIDE").map(toEntry);

@@ -4,6 +4,9 @@ export type RsvpStatus = Enums<"event_rsvp_status">;
 export type GuestSide = Enums<"guest_side">;
 export type GuestCategory = Enums<"guest_category">;
 
+// "ALL" plus the sides — the shape of the roster side-filter toggles.
+export type SideFilter = "ALL" | GuestSide;
+
 export const RSVP_STATUSES = [
   "PENDING",
   "ACCEPTED",

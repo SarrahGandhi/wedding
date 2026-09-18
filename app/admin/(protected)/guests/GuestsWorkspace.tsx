@@ -8,11 +8,8 @@ import {
   CreatedFamilyLinks,
   type CreatedFamily,
 } from "./AddFamilyForm";
-import {
-  GuestRoster,
-  type FamilyWithGuests,
-  type SideFilter,
-} from "./GuestRoster";
+import { GuestRoster, type FamilyWithGuests } from "./GuestRoster";
+import type { SideFilter } from "@/lib/types";
 import { Button } from "@/app/shared/Button";
 
 export function GuestsWorkspace({

@@ -21,7 +21,8 @@ import {
   updateRsvpStatus,
   updateRsvpStatusBulk,
   addFamilyEmail,
-  type GuestSearchHit,
+  addFamilyGuests,
+  type FamilySearchHit,
   type FamilyInvitation,
   type EventRsvp,
 } from "./actions";
@@ -29,7 +30,7 @@ import {
   eventDateTimeSortValue,
   formatEventDateTime,
 } from "@/app/shared/event-date-time";
-import type { RsvpStatus } from "@/lib/types";
+import type { GuestCategory, RsvpStatus } from "@/lib/types";
 
 /* Pastel palettes cycled across event cards, mirroring the
    three-day cards on the home page. */
@@ -259,6 +260,201 @@ function EmailCard({
   );
 }
 
+type GuestDraft = {
+  key: number;
+  name: string;
+  category: GuestCategory;
+};
+
+let nextGuestDraftKey = 0;
+
+function guestDraft(category: GuestCategory): GuestDraft {
+  return { key: nextGuestDraftKey++, name: "", category };
+}
+
+function initialGuestDrafts(invitation: FamilyInvitation): GuestDraft[] {
+  if (invitation.allowAllGuests) return [guestDraft("FEMALE")];
+  return [
+    ...Array.from({ length: invitation.remainingMaleSlots }, () =>
+      guestDraft("MALE"),
+    ),
+    ...Array.from({ length: invitation.remainingFemaleSlots }, () =>
+      guestDraft("FEMALE"),
+    ),
+  ];
+}
+
+function GuestEntryCard({
+  invitation,
+  onAdded,
+}: {
+  invitation: FamilyInvitation;
+  onAdded: (count: number) => Promise<void>;
+}) {
+  const [drafts, setDrafts] = useState<GuestDraft[]>(() =>
+    initialGuestDrafts(invitation),
+  );
+  const [adding, setAdding] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const hasAllowance =
+    invitation.allowAllGuests ||
+    invitation.remainingMaleSlots > 0 ||
+    invitation.remainingFemaleSlots > 0;
+
+  if (!hasAllowance) return null;
+
+  function updateDraft(key: number, patch: Partial<GuestDraft>) {
+    setDrafts((current) =>
+      current.map((draft) =>
+        draft.key === key ? { ...draft, ...patch } : draft,
+      ),
+    );
+  }
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const guests = drafts
+      .map((draft) => ({ ...draft, name: draft.name.trim() }))
+      .filter((draft) => draft.name);
+
+    if (guests.length === 0) {
+      setError("Add at least one guest name.");
+      return;
+    }
+
+    setError(null);
+    setAdding(true);
+    const result = await addFamilyGuests(
+      invitation.familyId,
+      guests.map(({ name, category }) => ({ name, category })),
+    );
+    if (!result.success) {
+      setAdding(false);
+      setError(result.error ?? "The guest names could not be added.");
+      return;
+    }
+
+    await onAdded(guests.length);
+    setAdding(false);
+  }
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="rounded-3xl bg-warm-white/85 border border-white/70 shadow-[0_18px_40px_-20px_rgba(90,80,90,0.35)] p-7 md:p-8"
+    >
+      <div className="mb-5">
+        <p className="text-xs tracking-[0.3em] uppercase text-rose font-body mb-2">
+          Your family
+        </p>
+        <h3 className="font-display text-3xl font-light text-foreground">
+          Add your guest names
+        </h3>
+        <p className="mt-2 max-w-[65ch] text-sm text-text-secondary font-body leading-relaxed">
+          {invitation.allowAllGuests
+            ? "Add everyone included in your family. You can add more names later."
+            : `Your invitation has ${invitation.remainingMaleSlots} ${invitation.remainingMaleSlots === 1 ? "male spot" : "male spots"} and ${invitation.remainingFemaleSlots} ${invitation.remainingFemaleSlots === 1 ? "female spot" : "female spots"} remaining.`}
+        </p>
+      </div>
+
+      <div className="space-y-3">
+        {drafts.map((draft, index) => (
+          <div
+            key={draft.key}
+            className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_9rem_auto] sm:items-end"
+          >
+            <label className="block">
+              <span className="mb-1 block text-xs tracking-[0.16em] uppercase text-text-secondary font-body">
+                Guest {index + 1} · Name
+              </span>
+              <input
+                type="text"
+                value={draft.name}
+                onChange={(e) => {
+                  updateDraft(draft.key, { name: e.target.value });
+                  setError(null);
+                }}
+                maxLength={100}
+                placeholder="Full name"
+                className="w-full rounded-full bg-white/75 border border-white px-5 py-3 text-base sm:text-sm font-body text-foreground placeholder:text-muted focus:outline-none focus:border-rose/40 transition-colors"
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-xs tracking-[0.16em] uppercase text-text-secondary font-body">
+                Category
+              </span>
+              {invitation.allowAllGuests ? (
+                <select
+                  value={draft.category}
+                  onChange={(e) =>
+                    updateDraft(draft.key, {
+                      category: e.target.value as GuestCategory,
+                    })
+                  }
+                  className="w-full rounded-full bg-white/75 border border-white px-4 py-3 text-base sm:text-sm font-body text-foreground focus:outline-none focus:border-rose/40 transition-colors"
+                >
+                  <option value="MALE">Male</option>
+                  <option value="FEMALE">Female</option>
+                  <option value="CHILD">Child</option>
+                </select>
+              ) : (
+                <span className="flex min-h-11 items-center rounded-full bg-white/55 border border-white px-4 text-sm text-text-secondary font-body">
+                  {draft.category === "MALE" ? "Male" : "Female"}
+                </span>
+              )}
+            </label>
+            {invitation.allowAllGuests && drafts.length > 1 ? (
+              <button
+                type="button"
+                onClick={() =>
+                  setDrafts((current) =>
+                    current.filter((row) => row.key !== draft.key),
+                  )
+                }
+                className="px-2 py-3 text-xs tracking-[0.16em] uppercase text-text-secondary hover:text-rose font-body transition-colors cursor-pointer"
+              >
+                Remove
+              </button>
+            ) : (
+              <span />
+            )}
+          </div>
+        ))}
+      </div>
+
+      {invitation.allowAllGuests && drafts.length < 20 && (
+        <button
+          type="button"
+          onClick={() =>
+            setDrafts((current) => [...current, guestDraft("FEMALE")])
+          }
+          className="mt-4 text-xs tracking-[0.2em] uppercase text-text-secondary hover:text-rose font-body transition-colors cursor-pointer"
+        >
+          + Add another guest
+        </button>
+      )}
+
+      {error && (
+        <p className="mt-4 text-sm text-rose font-body" role="alert">
+          {error}
+        </p>
+      )}
+
+      <button
+        type="submit"
+        disabled={adding}
+        className="mt-5 inline-flex items-center justify-center rounded-full bg-deepblue px-6 py-3 text-xs tracking-[0.25em] uppercase text-warm-white font-body hover:bg-rose transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-default"
+      >
+        {adding ? (
+          <Loader2 className="w-4 h-4 animate-spin" aria-label="Adding guests" />
+        ) : (
+          "Add names to invitation"
+        )}
+      </button>
+    </form>
+  );
+}
+
 interface EventGroup {
   eventName: string;
   eventDate: string;
@@ -405,10 +601,10 @@ export function InvitationClient() {
   const familyParam = searchParams.get("family");
 
   const [query, setQuery] = useState(queryParam ?? "");
-  const [results, setResults] = useState<GuestSearchHit[] | null>(null);
+  const [results, setResults] = useState<FamilySearchHit[] | null>(null);
   const [searching, setSearching] = useState(false);
   const [invitation, setInvitation] = useState<FamilyInvitation | null>(null);
-  const [loadingFamily, setLoadingFamily] = useState(false);
+  const [loadedFamilyParam, setLoadedFamilyParam] = useState<string | null>(null);
   const [familyNotFound, setFamilyNotFound] = useState(false);
   const [pendingIds, setPendingIds] = useState<Set<number>>(new Set());
   const [toast, setToast] = useState<{
@@ -452,8 +648,6 @@ export function InvitationClient() {
 
     const trimmed = query.trim();
     if (trimmed.length < 2) {
-      setResults(null);
-      setSearching(false);
       return;
     }
 
@@ -486,19 +680,10 @@ export function InvitationClient() {
   }, [query, familyParam]);
 
   useEffect(() => {
-    if (!familyParam) {
-      setInvitation(null);
-      setFamilyNotFound(false);
-      return;
-    }
+    if (!familyParam) return;
     const familyId = parseInt(familyParam, 10);
-    if (isNaN(familyId)) {
-      setFamilyNotFound(true);
-      return;
-    }
+    if (isNaN(familyId)) return;
     let cancelled = false;
-    setLoadingFamily(true);
-    setFamilyNotFound(false);
     getFamilyInvitationByFamilyId(familyId)
       .then((data) => {
         if (cancelled) return;
@@ -509,7 +694,7 @@ export function InvitationClient() {
         if (!cancelled) setFamilyNotFound(true);
       })
       .finally(() => {
-        if (!cancelled) setLoadingFamily(false);
+        if (!cancelled) setLoadedFamilyParam(familyParam);
       });
     return () => {
       cancelled = true;
@@ -520,11 +705,20 @@ export function InvitationClient() {
     ? `/invitation?q=${encodeURIComponent(queryParam)}`
     : "/invitation";
 
-  function handleSelectGuest(hit: GuestSearchHit) {
-    if (hit.familyId === null) return;
+  function handleSelectGuest(hit: FamilySearchHit) {
     const q = query.trim();
     router.push(
       `/invitation?family=${hit.familyId}${q ? `&q=${encodeURIComponent(q)}` : ""}`
+    );
+  }
+
+  async function handleGuestsAdded(count: number) {
+    if (!invitation) return;
+    const refreshed = await getFamilyInvitationByFamilyId(invitation.familyId);
+    if (refreshed) setInvitation(refreshed);
+    showToast(
+      "success",
+      `${count} ${count === 1 ? "guest was" : "guests were"} added`,
     );
   }
 
@@ -639,6 +833,13 @@ export function InvitationClient() {
   const totalRsvps = invitation ? invitation.rsvps.length : 0;
 
   const inFamilyView = Boolean(familyParam);
+  const invalidFamilyParam = Boolean(
+    familyParam && Number.isNaN(parseInt(familyParam, 10)),
+  );
+  const loadingFamily = Boolean(
+    familyParam && !invalidFamilyParam && loadedFamilyParam !== familyParam,
+  );
+  const showFamilyNotFound = invalidFamilyParam || familyNotFound;
 
   return (
     <div className="relative">
@@ -661,8 +862,8 @@ export function InvitationClient() {
               <span className="font-accent italic text-rose font-normal">invitation</span>
             </h1>
             <p className="mt-6 text-sm md:text-base text-text-secondary leading-relaxed font-body max-w-md mx-auto animate-fade-up delay-300">
-              Search your name to see your events and reply for everyone on
-              your invitation.
+              Search your name or family name to see your events and reply for
+              everyone on your invitation.
             </p>
 
             <div className="mt-10 animate-scale-in delay-400">
@@ -678,9 +879,16 @@ export function InvitationClient() {
                   <input
                     type="text"
                     value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Type your name…"
-                    aria-label="Search for your name"
+                    onChange={(e) => {
+                      const nextQuery = e.target.value;
+                      setQuery(nextQuery);
+                      if (nextQuery.trim().length < 2) {
+                        setResults(null);
+                        setSearching(false);
+                      }
+                    }}
+                    placeholder="Type your name or family name…"
+                    aria-label="Search for your name or family name"
                     className="w-full rounded-full bg-transparent pl-16 pr-14 py-4.5 font-display text-xl text-foreground placeholder:text-muted focus:outline-none"
                   />
                   {searching && (
@@ -690,7 +898,7 @@ export function InvitationClient() {
               </div>
             </div>
             <p className="mt-4 text-xs text-text-secondary/80 font-body animate-fade-in delay-500">
-              We&apos;ll search as you type — a first name is enough.
+              We’ll search as you type — a first or family name is enough.
             </p>
           </div>
         ) : (
@@ -702,9 +910,13 @@ export function InvitationClient() {
             </p>
             <h1 className="font-display display-wonk text-4xl sm:text-5xl md:text-6xl font-light text-foreground leading-tight animate-fade-up delay-100">
               {invitation ? (
-                <NameHeading
-                  names={invitation.guests.map((g) => firstName(g.name))}
-                />
+                invitation.guests.length > 0 ? (
+                  <NameHeading
+                    names={invitation.guests.map((g) => firstName(g.name))}
+                  />
+                ) : (
+                  invitation.familyName ?? "Your invitation"
+                )
               ) : (
                 "Your invitation"
               )}
@@ -732,50 +944,45 @@ export function InvitationClient() {
                   We couldn&apos;t find that name
                 </p>
                 <p className="text-sm text-text-secondary font-body leading-relaxed max-w-sm mx-auto">
-                  Try just a first name or a different spelling. Still no luck?
-                  Reach out to us and we&apos;ll sort it out.
+                  Try a first name, family name, or a different spelling. Still
+                  no luck? Reach out to us and we’ll sort it out.
                 </p>
               </div>
             ) : (
               <div className="space-y-3">
                 <p className="text-center text-xs tracking-[0.3em] uppercase text-text-secondary font-body mb-5">
-                  Select your name
+                  Select your invitation
                 </p>
                 {results.map((hit, i) => {
-                  const others = hit.party.filter((n) => n !== hit.name);
-                  const clickable = hit.familyId !== null;
+                  const resultName =
+                    hit.familyName ?? hit.matchedGuestName ?? "Family invitation";
                   return (
                     <button
-                      key={hit.id}
+                      key={hit.familyId}
                       onClick={() => handleSelectGuest(hit)}
-                      disabled={!clickable}
-                      className="group w-full text-left rounded-3xl bg-warm-white/90 border border-white/70 shadow-[0_14px_30px_-18px_rgba(90,80,90,0.35)] px-5 py-4 flex items-center gap-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-rose/30 hover:shadow-[0_18px_36px_-16px_rgba(194,100,127,0.35)] cursor-pointer disabled:opacity-60 disabled:hover:translate-y-0 disabled:cursor-default animate-fade-up"
+                      className="group w-full text-left rounded-3xl bg-warm-white/90 border border-white/70 shadow-[0_14px_30px_-18px_rgba(90,80,90,0.35)] px-5 py-4 flex items-center gap-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-rose/30 hover:shadow-[0_18px_36px_-16px_rgba(194,100,127,0.35)] cursor-pointer animate-fade-up"
                       style={{ animationDelay: `${i * 60}ms` }}
                     >
                       <span
                         aria-hidden
                         className={`flex items-center justify-center w-11 h-11 rounded-full font-accent display-wonk italic text-xl shrink-0 border border-white/70 transition-transform duration-300 group-hover:-rotate-6 ${AVATAR_TINTS[i % AVATAR_TINTS.length]}`}
                       >
-                        {hit.name.charAt(0).toUpperCase()}
+                        {resultName.charAt(0).toUpperCase()}
                       </span>
                       <div className="min-w-0 flex-1">
                         <span className="font-display text-2xl text-foreground group-hover:text-rose transition-colors">
-                          {hit.name}
+                          {resultName}
                         </span>
                         <p className="text-xs text-text-secondary font-body mt-0.5">
-                          {!clickable
-                            ? "We're still preparing this invitation — check back soon"
-                            : others.length > 0
-                              ? `Invitation for ${hit.party.length} — with ${formatNameList(others.map(firstName))}`
-                              : "Individual invitation"}
+                          {hit.party.length > 0
+                            ? `Currently includes ${formatNameList(hit.party.map(firstName))}`
+                            : "Open this invitation to add your family’s names"}
                         </p>
                       </div>
-                      {clickable && (
-                        <ChevronRight
-                          className="w-5 h-5 text-muted group-hover:text-rose group-hover:translate-x-0.5 transition-all shrink-0"
-                          strokeWidth={1.5}
-                        />
-                      )}
+                      <ChevronRight
+                        className="w-5 h-5 text-muted group-hover:text-rose group-hover:translate-x-0.5 transition-all shrink-0"
+                        strokeWidth={1.5}
+                      />
                     </button>
                   );
                 })}
@@ -797,7 +1004,7 @@ export function InvitationClient() {
             </div>
           )}
 
-          {!loadingFamily && familyNotFound && (
+          {!loadingFamily && showFamilyNotFound && (
             <div className="text-center rounded-3xl bg-warm-white/70 border border-white/70 shadow-[0_14px_30px_-18px_rgba(90,80,90,0.35)] px-8 py-10 animate-fade-up">
               <p className="font-display text-2xl text-foreground mb-2">
                 We couldn&apos;t find that invitation
@@ -818,6 +1025,12 @@ export function InvitationClient() {
 
           {!loadingFamily && invitation && (
             <div className="space-y-7">
+              <GuestEntryCard
+                key={`${invitation.familyId}-${invitation.allowAllGuests}-${invitation.remainingMaleSlots}-${invitation.remainingFemaleSlots}-${invitation.guests.length}`}
+                invitation={invitation}
+                onAdded={handleGuestsAdded}
+              />
+
               <div className="animate-fade-up delay-400">
                 <RsvpProgress answered={answered} total={totalRsvps} />
               </div>

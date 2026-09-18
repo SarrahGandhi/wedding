@@ -19,6 +19,10 @@ type Family = {
   side: GuestSide;
   email: string[];
   phone: string | null;
+  family_name: string | null;
+  male_guest_slots: number;
+  female_guest_slots: number;
+  allow_all_guests: boolean;
 };
 
 type Guest = {
@@ -26,6 +30,7 @@ type Guest = {
   name: string;
   category: GuestCategory;
   family_id: number;
+  added_by_family: boolean;
 };
 
 export function FamilySection({
@@ -42,12 +47,21 @@ export function FamilySection({
   onExpandedChange: (expanded: boolean) => void;
 }) {
   const [editing, setEditing] = useState(false);
+  const [editingAllowAll, setEditingAllowAll] = useState(
+    family.allow_all_guests,
+  );
   const [appendEmail, setAppendEmail] = useState("");
   const update = useServerAction(updateFamily);
   const append = useServerAction(appendFamilyEmail);
   const remove = useServerAction(deleteFamily);
   const pending = update.pending || append.pending || remove.pending;
   const error = update.error || append.error || remove.error;
+  const familyAddedMale = guests.filter(
+    (guest) => guest.added_by_family && guest.category === "MALE",
+  ).length;
+  const familyAddedFemale = guests.filter(
+    (guest) => guest.added_by_family && guest.category === "FEMALE",
+  ).length;
 
   function onUpdateFamily(e: React.FormEvent<HTMLFormElement>) {
     update.runForm(e, { onSuccess: () => setEditing(false) });
@@ -79,10 +93,7 @@ export function FamilySection({
       {/* Family heading */}
       <header className="flex flex-col md:flex-row md:items-baseline md:justify-between gap-2 mb-5">
         <div className="flex items-baseline gap-3 flex-wrap">
-          <h2
-            className="font-display italic text-2xl md:text-3xl text-foreground leading-tight"
-            onClick={() => console.log(label)}
-          >
+          <h2 className="font-display italic text-2xl md:text-3xl text-foreground leading-tight">
             {label}
           </h2>
           <span className="text-[10px] tracking-[0.3em] uppercase text-accent font-body">
@@ -108,7 +119,10 @@ export function FamilySection({
             <Button
               variant="ghost"
               onClick={() => {
-                setEditing((v) => !v);
+                setEditing((current) => {
+                  if (!current) setEditingAllowAll(family.allow_all_guests);
+                  return !current;
+                });
                 update.setError(null);
               }}
             >
@@ -130,37 +144,112 @@ export function FamilySection({
           {editing ? (
             <form
               onSubmit={onUpdateFamily}
-              className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3 items-end mb-6"
+              className="mb-6 border border-border/50 bg-warm-white/60 p-4 md:p-5"
             >
               <input type="hidden" name="id" value={family.id} />
-              <FormField
-                label="Emails (comma separated · replaces all)"
-                name="emails"
-                defaultValue={family.email.join(", ")}
-                placeholder="alice@example.com, bob@example.com"
-                labelClassName="md:col-span-2"
-              />
-              <SelectField
-                label="Side"
-                name="side"
-                defaultValue={family.side}
-              >
-                <option value="BRIDE">Bride</option>
-                <option value="GROOM">Groom</option>
-              </SelectField>
-              <FormField
-                label="Phone (optional)"
-                name="phone"
-                defaultValue={family.phone ?? ""}
-                placeholder="+1 555 0100"
-                labelClassName="md:col-span-2"
-              />
-              <Button type="submit" pending={pending} className="self-end">
-                {pending ? "…" : "Save"}
-              </Button>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <FormField
+                  label="Family name (optional)"
+                  name="family_name"
+                  defaultValue={family.family_name ?? ""}
+                  placeholder="The Rahman family"
+                  maxLength={100}
+                />
+                <SelectField
+                  label="Side"
+                  name="side"
+                  defaultValue={family.side}
+                >
+                  <option value="BRIDE">Bride</option>
+                  <option value="GROOM">Groom</option>
+                </SelectField>
+                <FormField
+                  label="Emails (comma separated · replaces all)"
+                  name="emails"
+                  defaultValue={family.email.join(", ")}
+                  placeholder="alice@example.com, bob@example.com"
+                />
+                <FormField
+                  label="Phone (optional)"
+                  name="phone"
+                  defaultValue={family.phone ?? ""}
+                  placeholder="+1 555 0100"
+                />
+              </div>
+
+              <div className="mt-5 border-t border-border/40 pt-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-[10px] tracking-[0.3em] uppercase text-text-secondary font-body mb-1">
+                      Guest-added names
+                    </p>
+                    <p className="text-xs text-muted font-body leading-relaxed">
+                      Set fixed spots, or let this family add everyone.
+                    </p>
+                  </div>
+                  <Button
+                    variant={editingAllowAll ? "primary" : "secondary"}
+                    aria-pressed={editingAllowAll}
+                    onClick={() => setEditingAllowAll((current) => !current)}
+                  >
+                    All
+                  </Button>
+                </div>
+                <input
+                  type="hidden"
+                  name="allow_all_guests"
+                  value={String(editingAllowAll)}
+                />
+                <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <FormField
+                    label="Men"
+                    name="male_guest_slots"
+                    type="number"
+                    min={0}
+                    max={20}
+                    step={1}
+                    defaultValue={family.male_guest_slots}
+                    disabled={editingAllowAll}
+                    placeholder={editingAllowAll ? "Unlimited" : "0"}
+                    labelTone="muted"
+                  />
+                  <FormField
+                    label="Women"
+                    name="female_guest_slots"
+                    type="number"
+                    min={0}
+                    max={20}
+                    step={1}
+                    defaultValue={family.female_guest_slots}
+                    disabled={editingAllowAll}
+                    placeholder={editingAllowAll ? "Unlimited" : "0"}
+                    labelTone="muted"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-5">
+                <Button type="submit" pending={pending}>
+                  {pending ? "…" : "Save changes"}
+                </Button>
+              </div>
             </form>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_auto] gap-x-8 gap-y-3 items-start mb-6">
+            <div className="mb-6">
+              <div className="mb-5 border border-border/40 bg-warm-white/50 px-4 py-3">
+                <p className="text-[10px] tracking-[0.25em] uppercase text-muted font-body mb-1">
+                  Guest-added names
+                </p>
+                <p className="text-sm font-body text-foreground">
+                  {family.allow_all_guests
+                    ? "All — this family can add any number of people"
+                    : family.male_guest_slots > 0 ||
+                        family.female_guest_slots > 0
+                      ? `${Math.max(0, family.male_guest_slots - familyAddedMale)} of ${family.male_guest_slots} men · ${Math.max(0, family.female_guest_slots - familyAddedFemale)} of ${family.female_guest_slots} women remaining`
+                      : "Off"}
+                </p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_auto] gap-x-8 gap-y-3 items-start">
               <div>
                 <p className="text-[10px] tracking-[0.25em] uppercase text-muted font-body mb-2">
                   Emails on file
@@ -216,6 +305,7 @@ export function FamilySection({
                   + Add
                 </Button>
               </form>
+              </div>
             </div>
           )}
 
