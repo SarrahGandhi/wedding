@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test:logistics": "node --experimental-strip-types --test tests/logistics.test.mjs",
     "dblocal:types": "supabase gen types typescript --local > lib/supabase/database.types.ts"
   },
   "dependencies": {

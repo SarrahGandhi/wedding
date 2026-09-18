@@ -5,17 +5,17 @@ truncate table public.event_guests_rsvp, public.guests, public.events, public.gu
 restart identity cascade;
 
 -- Seed guest family/contact groups.
-insert into public.guest_families (email, phone, side)
+insert into public.guest_families (email, phone, side, family_name)
 values
-  (array['amina.rahman@example.com', 'karim.rahman@example.com'], '+1-555-0101', 'BRIDE'),
-  (array['fatima.ali@example.com'], '+1-555-0102', 'BRIDE'),
-  (array['omar.hassan@example.com', 'layla.hassan@example.com'], '+1-555-0103', 'GROOM'),
-  (array['yusuf.khan@example.com'], '+1-555-0104', 'GROOM'),
-  (array['samir.darwish@example.com', 'nadia.darwish@example.com'], '+1-555-0105', 'BRIDE'),
-  (array['ibrahim.saeed@example.com'], '+1-555-0106', 'GROOM'),
-  (array['zainab.rahman@example.com', 'adil.rahman@example.com'], '+1-555-0107', 'GROOM'),
-  (array['mariam.hassan@example.com'], '+1-555-0108', 'BRIDE'),
-  (array['rayyan.ali@example.com', 'noor.ali@example.com'], '+1-555-0109', 'GROOM');
+  (array['amina.rahman@example.com', 'karim.rahman@example.com'], '+1-555-0101', 'BRIDE', 'The Rahman family'),
+  (array['fatima.ali@example.com'], '+1-555-0102', 'BRIDE', 'The Ali family'),
+  (array['omar.hassan@example.com', 'layla.hassan@example.com'], '+1-555-0103', 'GROOM', 'The Hassan family'),
+  (array['yusuf.khan@example.com'], '+1-555-0104', 'GROOM', 'The Khan family'),
+  (array['samir.darwish@example.com', 'nadia.darwish@example.com'], '+1-555-0105', 'BRIDE', 'The Darwish family'),
+  (array['ibrahim.saeed@example.com'], '+1-555-0106', 'GROOM', 'The Saeed family'),
+  (array['zainab.rahman@example.com', 'adil.rahman@example.com'], '+1-555-0107', 'GROOM', 'The Rahman family'),
+  (array['mariam.hassan@example.com'], '+1-555-0108', 'BRIDE', 'The Hassan family'),
+  (array['rayyan.ali@example.com', 'noor.ali@example.com'], '+1-555-0109', 'GROOM', 'The Ali family');
 
 -- Seed individual guests and attach them to their family group.
 insert into public.guests (name, category, family_id)
