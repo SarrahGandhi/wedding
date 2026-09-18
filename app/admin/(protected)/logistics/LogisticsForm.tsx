@@ -13,9 +13,8 @@ export function LogisticsForm({ family, accommodations, onSaved, onCancel }: {
   onCancel: () => void;
 }) {
   const properties = accommodationOptions(accommodations);
-  const initialProperty = family.accommodation
-    ? properties.find((property) => accommodationKey(property) === accommodationKey(family.accommodation!))
-    : null;
+  const initialKey = family.accommodation ? accommodationKey(family.accommodation) : null;
+  const initialProperty = properties.find((property) => accommodationKey(property) === initialKey);
   const [choice, setChoice] = useState(String(initialProperty?.id ?? ""));
   const [kind, setKind] = useState("HOUSE");
   const [name, setName] = useState("");
@@ -85,11 +84,9 @@ export function LogisticsForm({ family, accommodations, onSaved, onCancel }: {
                 list={kind === "HOTEL" ? `${inputId}-hotels` : undefined}
                 placeholder={kind === "HOTEL" ? "Hotel name" : "e.g. Gandhi house"} />
               {kind === "HOTEL" && (
-                <>
-                  <datalist id={`${inputId}-hotels`}>
-                    {hotelNames.map((hotel) => <option key={hotel} value={hotel} />)}
-                  </datalist>
-                </>
+                <datalist id={`${inputId}-hotels`}>
+                  {hotelNames.map((hotel) => <option key={hotel} value={hotel} />)}
+                </datalist>
               )}
             </div>
           )}

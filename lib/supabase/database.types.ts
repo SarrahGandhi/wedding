@@ -257,6 +257,19 @@ export type Database = {
         Args: { family_row_id: number; new_email: string }
         Returns: undefined
       }
+      save_family_logistics: {
+        Args: {
+          p_accommodation_id: number | null
+          p_arrival_date: string | null
+          p_family_id: number
+          p_new_kind: string | null
+          p_new_name: string | null
+          p_new_room_number: string | null
+          p_travel_details: string | null
+          p_travel_mode: string | null
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       event_rsvp_status: "PENDING" | "ACCEPTED" | "DECLINED"
