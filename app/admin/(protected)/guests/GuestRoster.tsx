@@ -3,7 +3,7 @@
 import { useState, type Dispatch, type Ref, type SetStateAction } from "react";
 import type { IFuseOptions } from "fuse.js";
 import { FamilySection } from "./FamilySection";
-import type { GuestCategory, GuestSide } from "@/lib/types";
+import type { GuestCategory, GuestSide, SideFilter } from "@/lib/types";
 import { useFuzzyFilter } from "@/lib/useFuzzyFilter";
 import { Button } from "@/app/shared/Button";
 import {
@@ -16,6 +16,10 @@ type Family = {
   side: GuestSide;
   email: string[];
   phone: string | null;
+  family_name: string | null;
+  male_guest_slots: number;
+  female_guest_slots: number;
+  allow_all_guests: boolean;
 };
 
 type Guest = {
@@ -23,6 +27,7 @@ type Guest = {
   name: string;
   category: GuestCategory;
   family_id: number;
+  added_by_family: boolean;
 };
 
 export type FamilyWithGuests = {
@@ -30,8 +35,6 @@ export type FamilyWithGuests = {
   guests: Guest[];
   label: string;
 };
-
-export type SideFilter = "ALL" | GuestSide;
 
 // A leading "#" means "this exact family id" and bypasses fuzzy matching —
 // otherwise "42" also scores hits on #142, #420 and phone numbers.
