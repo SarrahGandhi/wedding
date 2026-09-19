@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { updateEvent, deleteEvent } from "./actions";
+import { EventGuestList } from "./EventGuestList";
 import { FormField, TextareaField } from "@/app/shared/FormField";
 import { Button } from "@/app/shared/Button";
 import { ErrorMessage } from "@/app/shared/ErrorMessage";
@@ -201,6 +202,8 @@ export function EventRow({ event }: { event: Event }) {
           )}
         </div>
       )}
+
+      <EventGuestList eventId={event.id} eventName={event.name} />
 
       {error && (
         <ErrorMessage variant="inline" className="mt-3">

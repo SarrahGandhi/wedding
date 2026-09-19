@@ -4,6 +4,43 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/supabase/admin-auth";
 import { parseId, parseNullable, parseString } from "@/app/shared/action-helpers";
 import { DATE_RE, TIME_RE } from "@/app/shared/event-date-time";
+import type { GuestSide } from "@/lib/types";
+
+export type EventGuest = { id: number; name: string; side: GuestSide };
+
+export async function getEventGuests(
+  eventId: number,
+): Promise<{ guests: EventGuest[]; error?: never } | { error: string; guests?: never }> {
+  const { supabase } = await requireAdmin();
+  if (!Number.isSafeInteger(eventId) || eventId <= 0) {
+    return { error: "Invalid event id." };
+  }
+
+  const guests: EventGuest[] = [];
+  const pageSize = 1000;
+
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await supabase
+      .from("event_guests_rsvp")
+      .select("guest:guests!inner(id, name, family:guest_families!inner(side))")
+      .eq("event_id", eventId)
+      .order("id", { ascending: true })
+      .range(from, from + pageSize - 1);
+
+    if (error) return { error: "Unable to load the guest list. Please try again." };
+    guests.push(
+      ...data.map(({ guest }) => ({
+        id: guest.id,
+        name: guest.name,
+        side: guest.family.side,
+      })),
+    );
+    if (data.length < pageSize) break;
+  }
+
+  guests.sort((a, b) => a.name.localeCompare(b.name) || a.id - b.id);
+  return { guests };
+}
 
 export async function createEvent(formData: FormData): Promise<void> {
   const { supabase } = await requireAdmin();
