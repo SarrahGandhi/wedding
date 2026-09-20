@@ -10,11 +10,15 @@ function form(overrides = {}) {
 
 test("task forms trim names and persist both completion states", () => {
   assert.deepEqual(parseTask(form()).data, {
-    name: "Confirm menu", owner: "Sarrah", due_date: "2026-10-12", completed: false, side: "BRIDE",
+    name: "Confirm menu", owner: "Sarrah", due_date: "2026-10-12", completed: false, side: "BRIDE", notes: null,
   });
   assert.equal(parseTask(form({ completed: "on" })).data.completed, true);
   assert.ok(parseTask(form({ completed: "false" })).error);
   assert.equal(parseTask(form({ side: "GROOM" })).data.side, "GROOM");
+  assert.equal(parseTask(form({ notes: "  Call the caterer\nConfirm vegetarian options  " })).data.notes,
+    "Call the caterer\nConfirm vegetarian options");
+  assert.equal(parseTask(form({ notes: " \n " })).data.notes, null);
+  assert.ok(parseTask(form({ notes: new Blob(["file"]) })).error);
   for (const side of ["", "BOTH", "bride", "toString"]) {
     assert.ok(parseTask(form({ side })).error);
   }

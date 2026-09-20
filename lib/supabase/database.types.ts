@@ -37,6 +37,7 @@ export type Database = {
       tasks: {
         Row: {
           id: number
+          notes: string | null
           side: Database["public"]["Enums"]["guest_side"]
           name: string
           owner: string
@@ -47,6 +48,7 @@ export type Database = {
         }
         Insert: {
           id?: never
+          notes?: string | null
           side: Database["public"]["Enums"]["guest_side"]
           name: string
           owner: string
@@ -57,6 +59,7 @@ export type Database = {
         }
         Update: {
           id?: never
+          notes?: string | null
           side?: Database["public"]["Enums"]["guest_side"]
           name?: string
           owner?: string
