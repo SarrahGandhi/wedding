@@ -1,5 +1,24 @@
 # Database
 
+## Tasks
+
+The admin page at `/admin/tasks` stores tasks with a required name, owner name,
+due date, and completion status. Admins can add and edit tasks, mark them complete
+or incomplete, and filter by status. Incomplete tasks appear first, ordered by due date.
+The bride/groom toggle shows only the selected side’s tasks and completion count.
+New tasks default to the selected side; the add/edit form can change their side.
+Apply `migrations/20260920010000_task_sides.sql` after the task table migration.
+Existing tasks start on the bride side and can be reassigned through Edit.
+Owner names are free text, with suggestions from existing tasks. Access follows the
+existing invite-only admin model; anonymous visitors cannot access task data.
+A revision check prevents stale forms from overwriting another admin’s changes.
+
+Apply `migrations/20260920000000_admin_tasks.sql` before using the page, using the
+existing `supabase db push` workflow for a linked deployment. Run validation tests
+with `node --experimental-strip-types --test tests/tasks.test.mjs`.
+Database checks in `supabase/tests/tasks.sql` verify editing, completion, stale
+update protection, and anonymous access restrictions in a rolled-back transaction.
+
 ## Events
 This table contains the number of events for the wedding and the details such as dates, location, dress code, descriptions/details
 
