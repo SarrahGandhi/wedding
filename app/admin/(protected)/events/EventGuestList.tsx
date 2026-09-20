@@ -82,9 +82,14 @@ export function EventGuestList({
             </>
           )}
           {guests?.length === 0 && (
-            <p className="text-base leading-snug text-text-secondary">
-              No guests have been invited to this event yet.
-            </p>
+            <>
+              <p className="text-base font-medium leading-snug text-foreground tabular-nums">
+                0 accepted / 0 invited
+              </p>
+              <p className="mt-1 text-base leading-snug text-text-secondary">
+                No guests have been invited to this event yet.
+              </p>
+            </>
           )}
         </div>
         {guests && guests.length > 0 && (
