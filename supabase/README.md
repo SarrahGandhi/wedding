@@ -9,6 +9,9 @@ The bride/groom toggle shows only the selected side’s tasks and completion cou
 New tasks default to the selected side; the add/edit form can change their side.
 Apply `migrations/20260920010000_task_sides.sql` after the task table migration.
 Existing tasks start on the bride side and can be reassigned through Edit.
+Tasks also support optional, multiline notes in the add/edit form and task list.
+Apply `migrations/20260920020000_task_notes.sql` to enable notes. Clearing the field
+removes the saved notes; existing tasks do not require notes.
 Owner names are free text, with suggestions from existing tasks. Access follows the
 existing invite-only admin model; anonymous visitors cannot access task data.
 A revision check prevents stale forms from overwriting another admin’s changes.

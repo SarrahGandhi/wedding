@@ -10,12 +10,17 @@ export const TASK_SIDE_LABELS: Record<TaskSide, string> = {
 
 export function parseTask(form: FormData):
   | { error: string; data?: never }
-  | { data: Pick<Task, "name" | "owner" | "due_date" | "completed" | "side">; error?: never } {
+  | { data: Pick<Task, "name" | "owner" | "due_date" | "completed" | "side" | "notes">; error?: never } {
   const name = form.get("name");
   const owner = form.get("owner");
   const dueDate = form.get("due_date");
   const completed = form.get("completed");
   const side = form.get("side");
+  const notes = form.get("notes");
+
+  if (notes !== null && typeof notes !== "string") {
+    return { error: "Enter notes as text." };
+  }
 
   if (side !== "BRIDE" && side !== "GROOM") {
     return { error: "Choose bride side or groom side." };
@@ -37,7 +42,7 @@ export function parseTask(form: FormData):
   if (completed !== null && completed !== "on") {
     return { error: "Choose a valid completion status." };
   }
-  return { data: { name: name.trim(), owner: owner.trim(), due_date: dueDate, completed: completed === "on", side } };
+  return { data: { name: name.trim(), owner: owner.trim(), due_date: dueDate, completed: completed === "on", side, notes: notes?.trim() || null } };
 }
 
 export function taskIdentity(form: FormData) {

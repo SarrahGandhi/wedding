@@ -3,7 +3,7 @@
 import { useId, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/app/shared/Button";
-import { FormField, SelectField } from "@/app/shared/FormField";
+import { FormField, SelectField, TextareaField } from "@/app/shared/FormField";
 import { PageHeader } from "@/app/shared/PageHeader";
 import { formatTaskDate, TASK_SIDE_LABELS, type Task, type TaskSide } from "@/lib/tasks";
 import { saveTask, setTaskCompleted } from "./actions";
@@ -74,6 +74,9 @@ function TaskForm({ task, owners, defaultSide, onClose, onSaved }: {
           <input type="checkbox" name="completed" defaultChecked={initial?.completed ?? false} className="h-5 w-5 accent-sage" />
           Complete
         </label>
+        <TextareaField label="Notes (optional)" name="notes" rows={4}
+          defaultValue={initial?.notes ?? ""} placeholder="Add details, reminders, or anything else for this task…"
+          className={fieldStyle} labelClassName="sm:col-span-2 [&_span]:!tracking-[0.08em]" />
       </fieldset>
       {save.error && <p role="alert" className="text-sm text-rose">{save.error}</p>}
       <div className="flex flex-wrap gap-3">
@@ -125,6 +128,10 @@ function TaskItem({ task, owners, onSaved }: {
           <Button variant="secondary" className={`${buttonStyle} justify-self-start`} disabled={status.pending}
             aria-label={`Edit ${task.name}`} onClick={() => setEditing(true)}>Edit</Button>
         </div>
+        {task.notes && <dl className="mt-5 min-w-0">
+          <dt className="mb-2 text-sm text-text-secondary">Notes</dt>
+          <dd className="max-w-prose whitespace-pre-wrap break-words text-base leading-[1.45]">{task.notes}</dd>
+        </dl>}
         {status.error && <p role="alert" className="mt-4 text-sm text-rose">{status.error}</p>}
       </>}
     </li>

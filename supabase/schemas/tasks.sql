@@ -3,6 +3,7 @@ create table public.tasks (
   id integer generated always as identity primary key,
   name text not null check (char_length(btrim(name)) between 1 and 160),
   owner text not null check (char_length(btrim(owner)) between 1 and 120),
+  notes text,
   side public.guest_side not null,
   due_date date not null check (due_date between date '0001-01-01' and date '9999-12-31'),
   completed boolean not null default false,

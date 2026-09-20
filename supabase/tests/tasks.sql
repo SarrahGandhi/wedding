@@ -33,6 +33,15 @@ begin
   update public.tasks set side = 'GROOM' where id = task_id and revision = 3;
   assert (select side = 'GROOM' and revision = 4 from public.tasks where id = task_id),
     'Admins can move tasks to the other side';
+  assert (select notes is null from public.tasks where id = task_id), 'Notes are optional';
+  update public.tasks set notes = E'Call the caterer\nConfirm vegetarian options' where id = task_id;
+  assert (select notes = E'Call the caterer\nConfirm vegetarian options' from public.tasks where id = task_id),
+    'Multiline notes are preserved';
+  update public.tasks set completed = true where id = task_id;
+  assert (select notes = E'Call the caterer\nConfirm vegetarian options' from public.tasks where id = task_id),
+    'Completion changes preserve notes';
+  update public.tasks set notes = null where id = task_id;
+  assert (select notes is null from public.tasks where id = task_id), 'Notes can be cleared';
   begin
     update public.tasks set side = null where id = task_id;
     raise exception 'Missing task sides were accepted';
