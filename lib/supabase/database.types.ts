@@ -34,6 +34,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      tasks: {
+        Row: {
+          id: number
+          side: Database["public"]["Enums"]["guest_side"]
+          name: string
+          owner: string
+          due_date: string
+          completed: boolean
+          revision: number
+          created_at: string
+        }
+        Insert: {
+          id?: never
+          side: Database["public"]["Enums"]["guest_side"]
+          name: string
+          owner: string
+          due_date: string
+          completed?: boolean
+          revision?: number
+          created_at?: string
+        }
+        Update: {
+          id?: never
+          side?: Database["public"]["Enums"]["guest_side"]
+          name?: string
+          owner?: string
+          due_date?: string
+          completed?: boolean
+          revision?: number
+          created_at?: string
+        }
+        Relationships: []
+      }
       budget_categories: {
         Row: {
           id: number
