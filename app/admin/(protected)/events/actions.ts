@@ -4,9 +4,14 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/supabase/admin-auth";
 import { parseId, parseNullable, parseString } from "@/app/shared/action-helpers";
 import { DATE_RE, TIME_RE } from "@/app/shared/event-date-time";
-import type { GuestSide } from "@/lib/types";
+import type { GuestSide, RsvpStatus } from "@/lib/types";
 
-export type EventGuest = { id: number; name: string; side: GuestSide };
+export type EventGuest = {
+  id: number;
+  name: string;
+  side: GuestSide;
+  rsvpStatus: RsvpStatus;
+};
 
 export async function getEventGuests(
   eventId: number,
@@ -22,17 +27,18 @@ export async function getEventGuests(
   for (let from = 0; ; from += pageSize) {
     const { data, error } = await supabase
       .from("event_guests_rsvp")
-      .select("guest:guests!inner(id, name, family:guest_families!inner(side))")
+      .select("rsvp_status, guest:guests!inner(id, name, family:guest_families!inner(side))")
       .eq("event_id", eventId)
       .order("id", { ascending: true })
       .range(from, from + pageSize - 1);
 
     if (error) return { error: "Unable to load the guest list. Please try again." };
     guests.push(
-      ...data.map(({ guest }) => ({
+      ...data.map(({ guest, rsvp_status }) => ({
         id: guest.id,
         name: guest.name,
         side: guest.family.side,
+        rsvpStatus: rsvp_status,
       })),
     );
     if (data.length < pageSize) break;

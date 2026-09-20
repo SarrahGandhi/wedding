@@ -28,22 +28,27 @@ export function EventGuestDirectory({
   const matchingGuests = guests.filter((guest) =>
     words.every((word) => normalizeName(guest.name).includes(word)),
   );
+  const acceptedCount = guests.filter((guest) => guest.rsvpStatus === "ACCEPTED").length;
   const summaryId = `event-${eventId}-guest-summary`;
 
   return (
     <div className="space-y-5">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p
+          <div
             id={summaryId}
             aria-live="polite"
             aria-atomic="true"
-            className="text-base font-medium leading-snug text-foreground tabular-nums"
           >
-            {query
-              ? `Showing ${matchingGuests.length} of ${guests.length} guests`
-              : `${guests.length} invited ${guests.length === 1 ? "guest" : "guests"}`}
-          </p>
+            <p className="text-base font-medium leading-snug text-foreground tabular-nums">
+              {acceptedCount} accepted / {guests.length} invited
+            </p>
+            {query && (
+              <p className="mt-1 text-[15px] leading-snug text-text-secondary tabular-nums">
+                Showing {matchingGuests.length} of {guests.length} guests
+              </p>
+            )}
+          </div>
           <p className="mt-1 text-[15px] leading-snug text-text-secondary">
             Alphabetical by side. Scroll each list to see more names.
           </p>
@@ -89,7 +94,9 @@ export function EventGuestDirectory({
 
       <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2">
         {SIDES.map(({ side, label, headerClassName }) => {
-          const total = guests.filter((guest) => guest.side === side).length;
+          const sideGuests = guests.filter((guest) => guest.side === side);
+          const total = sideGuests.length;
+          const accepted = sideGuests.filter((guest) => guest.rsvpStatus === "ACCEPTED").length;
           const visible = matchingGuests.filter((guest) => guest.side === side);
           const headingId = `event-${eventId}-${side.toLowerCase()}-guests`;
 
@@ -99,11 +106,12 @@ export function EventGuestDirectory({
                 <h3 id={headingId} className="font-display text-2xl leading-tight text-foreground">
                   {label}
                 </h3>
-                <span className="text-[15px] leading-snug text-text-secondary tabular-nums">
-                  {query
-                    ? `${visible.length} of ${total}`
-                    : `${total} ${total === 1 ? "guest" : "guests"}`}
-                </span>
+                <div className="text-[15px] leading-snug text-text-secondary tabular-nums">
+                  <p>{accepted} accepted / {total} invited</p>
+                  {query && (
+                    <p className="mt-1">Showing {visible.length} of {total} guests</p>
+                  )}
+                </div>
               </header>
 
               <div
@@ -129,9 +137,27 @@ export function EventGuestDirectory({
                         <span aria-hidden="true" className="w-8 shrink-0 text-right text-[15px] leading-snug text-text-secondary tabular-nums">
                           {index + 1}
                         </span>
-                        <span className="min-w-0 break-words text-base leading-snug text-foreground">
+                        <span
+                          className={`min-w-0 break-words text-base leading-snug ${
+                            guest.rsvpStatus === "ACCEPTED"
+                              ? "text-emerald-700"
+                              : guest.rsvpStatus === "DECLINED"
+                                ? "text-red-700"
+                                : "text-foreground"
+                          }`}
+                        >
                           {guest.name}
                         </span>
+                        {guest.rsvpStatus === "ACCEPTED" && (
+                          <span className="ml-auto shrink-0 text-[15px] font-medium leading-snug text-emerald-700">
+                            Accepted
+                          </span>
+                        )}
+                        {guest.rsvpStatus === "DECLINED" && (
+                          <span className="ml-auto shrink-0 text-[15px] font-medium leading-snug text-red-700">
+                            Declined
+                          </span>
+                        )}
                       </li>
                     ))}
                   </ol>
