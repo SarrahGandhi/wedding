@@ -31,6 +31,17 @@ This table contains all the guests, which category they fall in and their family
 ## Guest Families
 Stores the details of the family such as the emails for invite and reminders and which side of the wedding they belong to.
 
+Fixed male/female guest counts are totals for the family, including names entered
+by admins. Remaining spots subtract every existing guest of that category. All
+mode permits additional names without a fixed limit. The public invitation lists
+saved names separately from the remaining entry fields, including names without
+event RSVP rows. Event invitations and existing replies are preserved.
+
+Apply `migrations/20260920040000_family_guest_total_limits.sql` to enforce these
+totals when families add names. Existing counts and names are not changed.
+Run `node --experimental-strip-types --test tests/family-guest-slots.test.mjs`
+and the rolled-back database checks in `supabase/tests/family_guest_limits.sql`.
+
 ## Event Guests RSVP
 This tables contains which guests are invited to which events and they rsvp status
 
@@ -40,6 +51,14 @@ The admin page at `/admin/budgeting` stores expenses in `budget_categories`.
 Each category contains a name, optional vendor and notes, total cost, split,
 and cumulative amounts paid by the bride and groom. Use separate categories
 for separate vendor costs; matching vendor names are combined in the vendor tally.
+
+Use **Add amount** within a category to record multiple costs. Amounts can be edited
+or removed, and the total and assigned shares update automatically. Saved categories
+show the individual amounts under **View amounts**. Existing categories retain their
+total as a single amount when edited; recorded payments are unchanged.
+Apply `migrations/20260920030000_budget_amounts.sql` before saving multiple amounts.
+`amounts_paise` stores each cost in integer paise, and a database constraint verifies
+that their sum matches `total_paise`. A null array represents a legacy single total.
 
 - Currency is INR; money is stored as integer paise to preserve exact totals.
 - Splits support groom only, bride only, 50/50, and a custom bride amount with

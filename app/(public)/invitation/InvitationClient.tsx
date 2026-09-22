@@ -301,7 +301,7 @@ function GuestEntryCard({
     invitation.remainingMaleSlots > 0 ||
     invitation.remainingFemaleSlots > 0;
 
-  if (!hasAllowance) return null;
+  if (!hasAllowance && invitation.guests.length === 0) return null;
 
   function updateDraft(key: number, patch: Partial<GuestDraft>) {
     setDrafts((current) =>
@@ -313,6 +313,7 @@ function GuestEntryCard({
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (adding) return;
     const guests = drafts
       .map((draft) => ({ ...draft, name: draft.name.trim() }))
       .filter((draft) => draft.name);
@@ -324,18 +325,21 @@ function GuestEntryCard({
 
     setError(null);
     setAdding(true);
-    const result = await addFamilyGuests(
-      invitation.familyId,
-      guests.map(({ name, category }) => ({ name, category })),
-    );
-    if (!result.success) {
+    try {
+      const result = await addFamilyGuests(
+        invitation.familyId,
+        guests.map(({ name, category }) => ({ name, category })),
+      );
+      if (!result.success) {
+        setError(result.error ?? "The guest names could not be added.");
+        return;
+      }
+      await onAdded(guests.length);
+    } catch {
+      setError("We could not confirm the saved names. Refresh your invitation before trying again.");
+    } finally {
       setAdding(false);
-      setError(result.error ?? "The guest names could not be added.");
-      return;
     }
-
-    await onAdded(guests.length);
-    setAdding(false);
   }
 
   return (
@@ -344,19 +348,35 @@ function GuestEntryCard({
       className="rounded-3xl bg-warm-white/85 border border-white/70 shadow-[0_18px_40px_-20px_rgba(90,80,90,0.35)] p-7 md:p-8"
     >
       <div className="mb-5">
-        <p className="text-xs tracking-[0.3em] uppercase text-rose font-body mb-2">
+        <p className="text-xs tracking-[0.08em] uppercase text-rose font-body mb-2">
           Your family
         </p>
+        {invitation.guests.length > 0 && <div className="mb-6">
+          <h3 className="font-display text-3xl font-light text-foreground">Names on your invitation</h3>
+          <p className="mt-2 max-w-prose text-sm leading-relaxed text-text-secondary">These names are already saved. You do not need to enter them again.</p>
+          <ul className="mt-4 space-y-2">
+            {invitation.guests.map((guest) => <li key={guest.id} className="flex min-w-0 items-start gap-3 rounded-xl bg-powder/70 px-4 py-3 text-base text-foreground">
+              <Check className="mt-0.5 h-4 w-4 shrink-0 text-leaf" aria-hidden="true" />
+              <span className="min-w-0 break-words">{guest.name}</span>
+            </li>)}
+          </ul>
+          {!hasAllowance && <p className="mt-4 text-sm leading-relaxed text-text-secondary">All available guest spots are filled.</p>}
+        </div>}
+        {hasAllowance && <>
         <h3 className="font-display text-3xl font-light text-foreground">
-          Add your guest names
+          {invitation.guests.length > 0 ? "Add remaining guest names" : "Add your guest names"}
         </h3>
         <p className="mt-2 max-w-[65ch] text-sm text-text-secondary font-body leading-relaxed">
           {invitation.allowAllGuests
-            ? "Add everyone included in your family. You can add more names later."
+            ? invitation.guests.length > 0
+              ? "Add any family members whose names are not listed above. You can add more names later."
+              : "Add everyone included in your family. You can add more names later."
             : `Your invitation has ${invitation.remainingMaleSlots} ${invitation.remainingMaleSlots === 1 ? "male spot" : "male spots"} and ${invitation.remainingFemaleSlots} ${invitation.remainingFemaleSlots === 1 ? "female spot" : "female spots"} remaining.`}
         </p>
+        </>}
       </div>
 
+      {hasAllowance && <fieldset disabled={adding} className="min-w-0">
       <div className="space-y-3">
         {drafts.map((draft, index) => (
           <div
@@ -365,7 +385,7 @@ function GuestEntryCard({
           >
             <label className="block">
               <span className="mb-1 block text-xs tracking-[0.16em] uppercase text-text-secondary font-body">
-                Guest {index + 1} · Name
+                Guest {invitation.guests.length + index + 1} · Name
               </span>
               <input
                 type="text"
@@ -451,6 +471,7 @@ function GuestEntryCard({
           "Add names to invitation"
         )}
       </button>
+      </fieldset>}
     </form>
   );
 }
@@ -606,6 +627,7 @@ export function InvitationClient() {
   const [invitation, setInvitation] = useState<FamilyInvitation | null>(null);
   const [loadedFamilyParam, setLoadedFamilyParam] = useState<string | null>(null);
   const [familyNotFound, setFamilyNotFound] = useState(false);
+  const [familyLoadError, setFamilyLoadError] = useState(false);
   const [pendingIds, setPendingIds] = useState<Set<number>>(new Set());
   const [toast, setToast] = useState<{
     kind: "success" | "error";
@@ -689,9 +711,14 @@ export function InvitationClient() {
         if (cancelled) return;
         setInvitation(data);
         setFamilyNotFound(data === null);
+        setFamilyLoadError(false);
       })
       .catch(() => {
-        if (!cancelled) setFamilyNotFound(true);
+        if (!cancelled) {
+          setInvitation(null);
+          setFamilyNotFound(false);
+          setFamilyLoadError(true);
+        }
       })
       .finally(() => {
         if (!cancelled) setLoadedFamilyParam(familyParam);
@@ -715,7 +742,8 @@ export function InvitationClient() {
   async function handleGuestsAdded(count: number) {
     if (!invitation) return;
     const refreshed = await getFamilyInvitationByFamilyId(invitation.familyId);
-    if (refreshed) setInvitation(refreshed);
+    if (!refreshed) throw new Error("The saved invitation could not be reloaded");
+    setInvitation(refreshed);
     showToast(
       "success",
       `${count} ${count === 1 ? "guest was" : "guests were"} added`,
@@ -1022,6 +1050,11 @@ export function InvitationClient() {
               </Link>
             </div>
           )}
+
+          {!loadingFamily && familyLoadError && !showFamilyNotFound && <div role="alert" className="rounded-3xl bg-warm-white/80 p-7 text-center">
+            <h2 className="font-display text-2xl">Your invitation could not be loaded</h2>
+            <p className="mt-3 text-base text-text-secondary">Refresh this page to try again. Your saved names and replies have not been changed.</p>
+          </div>}
 
           {!loadingFamily && invitation && (
             <div className="space-y-7">

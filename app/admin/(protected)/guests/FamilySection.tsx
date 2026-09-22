@@ -13,6 +13,7 @@ import { FormField, SelectField } from "@/app/shared/FormField";
 import { Button } from "@/app/shared/Button";
 import { ErrorMessage } from "@/app/shared/ErrorMessage";
 import { useServerAction } from "@/app/shared/useServerAction";
+import { remainingGuestSlots } from "@/lib/family-guest-slots";
 
 type Family = {
   id: number;
@@ -56,12 +57,7 @@ export function FamilySection({
   const remove = useServerAction(deleteFamily);
   const pending = update.pending || append.pending || remove.pending;
   const error = update.error || append.error || remove.error;
-  const familyAddedMale = guests.filter(
-    (guest) => guest.added_by_family && guest.category === "MALE",
-  ).length;
-  const familyAddedFemale = guests.filter(
-    (guest) => guest.added_by_family && guest.category === "FEMALE",
-  ).length;
+  const { remainingMaleSlots, remainingFemaleSlots } = remainingGuestSlots(family, guests);
 
   function onUpdateFamily(e: React.FormEvent<HTMLFormElement>) {
     update.runForm(e, { onSuccess: () => setEditing(false) });
@@ -181,10 +177,10 @@ export function FamilySection({
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="text-[10px] tracking-[0.3em] uppercase text-text-secondary font-body mb-1">
-                      Guest-added names
+                      Number of guests
                     </p>
                     <p className="text-xs text-muted font-body leading-relaxed">
-                      Set fixed spots, or let this family add everyone.
+                      Set the total number of men and women, including names already entered, or choose All for unlimited guests.
                     </p>
                   </div>
                   <Button
@@ -238,15 +234,15 @@ export function FamilySection({
             <div className="mb-6">
               <div className="mb-5 border border-border/40 bg-warm-white/50 px-4 py-3">
                 <p className="text-[10px] tracking-[0.25em] uppercase text-muted font-body mb-1">
-                  Guest-added names
+                  Number of guests
                 </p>
                 <p className="text-sm font-body text-foreground">
                   {family.allow_all_guests
                     ? "All — this family can add any number of people"
                     : family.male_guest_slots > 0 ||
                         family.female_guest_slots > 0
-                      ? `${Math.max(0, family.male_guest_slots - familyAddedMale)} of ${family.male_guest_slots} men · ${Math.max(0, family.female_guest_slots - familyAddedFemale)} of ${family.female_guest_slots} women remaining`
-                      : "Off"}
+                      ? `${remainingMaleSlots} of ${family.male_guest_slots} men · ${remainingFemaleSlots} of ${family.female_guest_slots} women remaining`
+                      : "No additional names allowed"}
                 </p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_auto] gap-x-8 gap-y-3 items-start">

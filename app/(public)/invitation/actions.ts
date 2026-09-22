@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { remainingGuestSlots } from "@/lib/family-guest-slots";
 import {
   GUEST_CATEGORIES,
   type GuestCategory,
@@ -102,11 +103,13 @@ export async function searchGuests(name: string): Promise<FamilySearchHit[]> {
 
   const partyByFamily = new Map<number, string[]>();
   if (familyIds.length > 0) {
-    const { data: members } = await supabase
+    const { data: members, error } = await supabase
       .from("guests")
       .select("name, family_id")
       .in("family_id", familyIds)
       .order("id");
+
+    if (error) throw new Error("Failed to load the names on this invitation");
 
     for (const member of members ?? []) {
       const party = partyByFamily.get(member.family_id) ?? [];
@@ -134,19 +137,22 @@ export async function getFamilyInvitationByFamilyId(
       "id, side, family_name, male_guest_slots, female_guest_slots, allow_all_guests",
     )
     .eq("id", familyId)
-    .single();
+    .maybeSingle();
 
-  if (familyError || !family) return null;
+  if (familyError) throw new Error("Failed to load this invitation");
+  if (!family) return null;
 
-  const { data: familyGuests } = await supabase
+  const { data: familyGuests, error: guestsError } = await supabase
     .from("guests")
-    .select("id, name, category, added_by_family")
+    .select("id, name, category")
     .eq("family_id", family.id)
     .order("id");
 
+  if (guestsError) throw new Error("Failed to load the names on this invitation");
+
   const guestIds = (familyGuests ?? []).map((g) => g.id);
 
-  const { data: rsvpRows } =
+  const { data: rsvpRows, error: rsvpError } =
     guestIds.length > 0
       ? await supabase
           .from("event_guests_rsvp")
@@ -161,7 +167,9 @@ export async function getFamilyInvitationByFamilyId(
           )
           .in("guest_id", guestIds)
           .order("event_id")
-      : { data: [] };
+      : { data: [], error: null };
+
+  if (rsvpError) throw new Error("Failed to load the event replies for this invitation");
 
   const rsvps: EventRsvp[] = (rsvpRows ?? []).map((row) => {
     const event = row.events as unknown as {
@@ -194,20 +202,7 @@ export async function getFamilyInvitationByFamilyId(
     familyName: family.family_name,
     familySide: family.side,
     allowAllGuests: family.allow_all_guests,
-    remainingMaleSlots: Math.max(
-      0,
-      family.male_guest_slots -
-        (familyGuests ?? []).filter(
-          (guest) => guest.added_by_family && guest.category === "MALE",
-        ).length,
-    ),
-    remainingFemaleSlots: Math.max(
-      0,
-      family.female_guest_slots -
-        (familyGuests ?? []).filter(
-          (guest) => guest.added_by_family && guest.category === "FEMALE",
-        ).length,
-    ),
+    ...remainingGuestSlots(family, familyGuests ?? []),
     guests: (familyGuests ?? []).map((g) => ({
       ...g,
       familyId: family.id,

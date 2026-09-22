@@ -1,12 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { parseMoney, splitAmount, parseCategory, summarizeBudget, MAX_PAISE } from "../lib/budgeting.ts";
+import { categoryAmounts, parseAmounts, parseMoney, splitAmount, parseCategory, summarizeBudget, MAX_PAISE } from "../lib/budgeting.ts";
 
 const category = (overrides = {}) => ({
   id: 1, name: "Venue", vendor: "Wedding Hall", notes: null,
   split_type: "EQUAL", total_paise: 10000, bride_share_paise: 5000,
   groom_share_paise: 5000, bride_paid_paise: 0, groom_paid_paise: 0,
-  revision: 1, created_at: "2026-09-18T00:00:00Z", ...overrides,
+  amounts_paise: null, revision: 1, created_at: "2026-09-18T00:00:00Z", ...overrides,
 });
 
 test("money uses exact paise and rejects malformed, negative and oversized amounts", () => {
@@ -31,7 +31,7 @@ test("all split modes preserve the full total including an odd paise", () => {
 
 test("server validation computes shares, normalizes vendors and accepts payments on the other side’s behalf", () => {
   const form = new FormData();
-  for (const [key, value] of Object.entries({ name: " Catering ", vendor: "  Good   Food  ", total: "100.01", split_type: "CUSTOM", bride_share: "25", bride_paid: "80", groom_paid: "0" })) form.set(key, value);
+  for (const [key, value] of Object.entries({ name: " Catering ", vendor: "  Good   Food  ", amount: "100.01", split_type: "CUSTOM", bride_share: "25", bride_paid: "80", groom_paid: "0" })) form.set(key, value);
   const parsed = parseCategory(form);
   assert.equal(parsed.error, undefined);
   assert.equal(parsed.data.vendor, "Good Food");
@@ -48,6 +48,37 @@ test("server validation computes shares, normalizes vendors and accepts payments
   form.set("split_type", "BRIDE");
   form.set("groom_paid", "-5");
   assert.match(parseCategory(form).error, /non-negative/);
+});
+
+test("multiple amounts use exact paise and reject invalid rows or combined overflow", () => {
+  assert.deepEqual(parseAmounts(["0.10", "0.20", "1.01"]), { amounts: [10, 20, 101], total: 131 });
+  assert.deepEqual(parseAmounts(["0"]), { amounts: [0], total: 0 });
+  for (const amounts of [[], ["1", ""], ["1", "-1"], ["1.001"], ["999999999.99", "0.01"], [new Blob(["1"])]]) {
+    assert.equal(parseAmounts(amounts), null);
+  }
+  assert.deepEqual(categoryAmounts(category()), [10000]);
+  assert.deepEqual(categoryAmounts(category({ amounts_paise: [1000, 9000] })), [1000, 9000]);
+});
+
+test("category totals and splits are computed from amounts, ignoring a supplied total", () => {
+  const form = new FormData();
+  for (const [key, value] of Object.entries({ name: "Venue", split_type: "EQUAL", bride_paid: "25", groom_paid: "10", total: "999" })) form.set(key, value);
+  form.append("amount", "50");
+  form.append("amount", "25.01");
+  const parsed = parseCategory(form).data;
+  assert.deepEqual(parsed.amounts_paise, [5000, 2501]);
+  assert.equal(parsed.total_paise, 7501);
+  assert.equal(parsed.bride_share_paise, 3750);
+  assert.equal(parsed.groom_share_paise, 3751);
+  assert.equal(parsed.bride_paid_paise, 2500);
+  assert.equal(summarizeBudget([category(parsed)]).totals.outstanding, 4001);
+  form.set("split_type", "CUSTOM");
+  form.set("bride_share", "80");
+  assert.match(parseCategory(form).error, /between zero and the total/);
+  form.set("bride_share", "50");
+  assert.equal(parseCategory(form).data.groom_share_paise, 2501);
+  form.delete("amount");
+  assert.match(parseCategory(form).error, /at least one/);
 });
 
 test("vendor grouping combines names without letting a credit hide another vendor’s balance", () => {

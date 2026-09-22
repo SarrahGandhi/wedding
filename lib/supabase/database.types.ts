@@ -73,6 +73,7 @@ export type Database = {
       budget_categories: {
         Row: {
           id: number
+          amounts_paise: number[] | null
           name: string
           vendor: string | null
           notes: string | null
@@ -87,6 +88,7 @@ export type Database = {
         }
         Insert: {
           id?: never
+          amounts_paise?: number[] | null
           name: string
           vendor?: string | null
           notes?: string | null
@@ -101,6 +103,7 @@ export type Database = {
         }
         Update: {
           id?: never
+          amounts_paise?: number[] | null
           name?: string
           vendor?: string | null
           notes?: string | null
@@ -337,6 +340,10 @@ export type Database = {
       append_family_email: {
         Args: { family_row_id: number; new_email: string }
         Returns: undefined
+      }
+      budget_amounts_total: {
+        Args: { amounts: number[] }
+        Returns: number
       }
       save_family_logistics: {
         Args: {

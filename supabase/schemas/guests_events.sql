@@ -322,14 +322,13 @@ begin
             count(*) filter (where category = 'FEMALE')
         into used_male, used_female
         from public.guests
-        where family_id = family_row_id
-          and added_by_family;
+        where family_id = family_row_id;
 
-        if used_male + requested_male > family_row.male_guest_slots then
+        if requested_male > greatest(0, family_row.male_guest_slots - used_male) then
             raise exception 'There are not enough male guest spots remaining.';
         end if;
 
-        if used_female + requested_female > family_row.female_guest_slots then
+        if requested_female > greatest(0, family_row.female_guest_slots - used_female) then
             raise exception 'There are not enough female guest spots remaining.';
         end if;
     end if;
