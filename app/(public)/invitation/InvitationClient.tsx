@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -616,7 +616,6 @@ function EventCard({
 
 export function InvitationClient() {
   const searchParams = useSearchParams();
-  const router = useRouter();
 
   const queryParam = searchParams.get("q");
   const familyParam = searchParams.get("family");
@@ -641,6 +640,7 @@ export function InvitationClient() {
   // Monotonic counter so a slow, stale search response can't
   // overwrite the results of a newer one.
   const searchSeq = useRef(0);
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function showToast(kind: "success" | "error", text: string) {
@@ -666,6 +666,7 @@ export function InvitationClient() {
   // Debounced live search; keeps ?q= in the URL so results survive
   // back navigation and can be shared.
   useEffect(() => {
+    const seq = ++searchSeq.current;
     if (familyParam) return;
 
     const trimmed = query.trim();
@@ -673,32 +674,41 @@ export function InvitationClient() {
       return;
     }
 
-    const timer = setTimeout(() => {
-      const seq = ++searchSeq.current;
+    let cancelled = false;
+    searchTimer.current = setTimeout(() => {
+      searchTimer.current = null;
+      if (cancelled || seq !== searchSeq.current) return;
       setSearching(true);
       searchGuests(trimmed)
         .then((found) => {
-          if (seq !== searchSeq.current) return;
+          if (cancelled || seq !== searchSeq.current) return;
           setResults(found);
         })
         .catch(() => {
-          if (seq !== searchSeq.current) return;
+          if (cancelled || seq !== searchSeq.current) return;
           showToast("error", "Search failed — please try again");
         })
         .finally(() => {
-          if (seq === searchSeq.current) setSearching(false);
+          if (!cancelled && seq === searchSeq.current) setSearching(false);
         });
 
       if (trimmed !== lastUrlQuery.current) {
         lastUrlQuery.current = trimmed;
-        router.replace(`/invitation?q=${encodeURIComponent(trimmed)}`, {
-          scroll: false,
-        });
+        // Search state does not need a server navigation. A delayed navigation
+        // here could otherwise replace an invitation just opened by the guest.
+        window.history.replaceState(
+          null,
+          "",
+          `/invitation?q=${encodeURIComponent(trimmed)}`,
+        );
       }
     }, 350);
 
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => {
+      cancelled = true;
+      if (searchTimer.current) clearTimeout(searchTimer.current);
+      searchTimer.current = null;
+    };
   }, [query, familyParam]);
 
   useEffect(() => {
@@ -732,11 +742,12 @@ export function InvitationClient() {
     ? `/invitation?q=${encodeURIComponent(queryParam)}`
     : "/invitation";
 
-  function handleSelectGuest(hit: FamilySearchHit) {
-    const q = query.trim();
-    router.push(
-      `/invitation?family=${hit.familyId}${q ? `&q=${encodeURIComponent(q)}` : ""}`
-    );
+  function cancelSearch() {
+    // Stop immediately on selection, before the invitation URL has loaded.
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = null;
+    ++searchSeq.current;
+    setSearching(false);
   }
 
   async function handleGuestsAdded(count: number) {
@@ -908,6 +919,7 @@ export function InvitationClient() {
                     type="text"
                     value={query}
                     onChange={(e) => {
+                      cancelSearch();
                       const nextQuery = e.target.value;
                       setQuery(nextQuery);
                       if (nextQuery.trim().length < 2) {
@@ -985,10 +997,12 @@ export function InvitationClient() {
                   const resultName =
                     hit.familyName ?? hit.matchedGuestName ?? "Family invitation";
                   return (
-                    <button
+                    <Link
                       key={hit.familyId}
-                      onClick={() => handleSelectGuest(hit)}
-                      className="group w-full text-left rounded-3xl bg-warm-white/90 border border-white/70 shadow-[0_14px_30px_-18px_rgba(90,80,90,0.35)] px-5 py-4 flex items-center gap-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-rose/30 hover:shadow-[0_18px_36px_-16px_rgba(194,100,127,0.35)] cursor-pointer animate-fade-up"
+                      href={`/invitation?family=${hit.familyId}${query.trim() ? `&q=${encodeURIComponent(query.trim())}` : ""}`}
+                      onNavigate={cancelSearch}
+                      prefetch={false}
+                      className="group w-full touch-manipulation text-left rounded-3xl bg-warm-white/90 border border-white/70 shadow-[0_14px_30px_-18px_rgba(90,80,90,0.35)] px-5 py-4 flex items-center gap-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-rose/30 hover:shadow-[0_18px_36px_-16px_rgba(194,100,127,0.35)] cursor-pointer animate-fade-up"
                       style={{ animationDelay: `${i * 60}ms` }}
                     >
                       <span
@@ -1011,7 +1025,7 @@ export function InvitationClient() {
                         className="w-5 h-5 text-muted group-hover:text-rose group-hover:translate-x-0.5 transition-all shrink-0"
                         strokeWidth={1.5}
                       />
-                    </button>
+                    </Link>
                   );
                 })}
               </div>
