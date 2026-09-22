@@ -26,6 +26,24 @@ export function moneyInput(paise: number): string {
   return (paise / 100).toFixed(2);
 }
 
+export function parseAmounts(values: unknown[]) {
+  if (values.length === 0) return null;
+  const amounts: number[] = [];
+  let total = 0;
+  for (const value of values) {
+    const amount = parseMoney(value);
+    if (amount === null) return null;
+    total += amount;
+    if (total > MAX_PAISE) return null;
+    amounts.push(amount);
+  }
+  return { amounts, total };
+}
+
+export function categoryAmounts(category: BudgetCategory): number[] {
+  return category.amounts_paise ?? [category.total_paise];
+}
+
 const currency = new Intl.NumberFormat("en-IN", {
   style: "currency",
   currency: "INR",
@@ -54,10 +72,12 @@ export function parseCategory(form: FormData) {
   if (vendor.length > 160) return { error: "Keep the vendor name to 160 characters." };
   if (notes.length > 2000) return { error: "Keep notes to 2,000 characters." };
   if (!Object.hasOwn(SPLIT_LABELS, split)) return { error: "Choose how to split the total." };
-  const total = parseMoney(form.get("total"));
+  const entries = parseAmounts(form.getAll("amount"));
+  if (!entries) return { error: "Enter at least one non-negative amount with at most two decimal places. The category total cannot exceed ₹99,99,99,999.99." };
+  const total = entries.total;
   const bridePaid = parseMoney(form.get("bride_paid"));
   const groomPaid = parseMoney(form.get("groom_paid"));
-  if (total === null || bridePaid === null || groomPaid === null) {
+  if (bridePaid === null || groomPaid === null) {
     return { error: "Enter non-negative amounts up to ₹99,99,99,999.99, with at most two decimal places." };
   }
   const customBride = split === "CUSTOM" ? parseMoney(form.get("bride_share")) : 0;
@@ -68,6 +88,7 @@ export function parseCategory(form: FormData) {
   return {
     data: {
       name, vendor: vendor || null, notes: notes || null, split_type: split,
+      amounts_paise: entries.amounts,
       total_paise: total, bride_share_paise: shares.bride, groom_share_paise: shares.groom,
       bride_paid_paise: bridePaid, groom_paid_paise: groomPaid,
     },

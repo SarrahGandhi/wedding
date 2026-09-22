@@ -1,13 +1,13 @@
 "use client";
 
-import { useId, useState, useTransition } from "react";
+import { useId, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Pencil, Trash2, Check, X } from "lucide-react";
 import { Button } from "@/app/shared/Button";
 import { FormField, SelectField, TextareaField } from "@/app/shared/FormField";
 import { PageHeader } from "@/app/shared/PageHeader";
 import {
-  categoryBalance, formatMoney, moneyInput, parseMoney, splitAmount,
+  categoryAmounts, categoryBalance, formatMoney, moneyInput, parseAmounts, parseMoney, splitAmount,
   SPLIT_LABELS, summarizeBudget, type BudgetCategory, type SplitType,
 } from "@/lib/budgeting";
 import { deleteCategory, saveCategory } from "./actions";
@@ -66,12 +66,15 @@ function CategoryForm({ category, vendors, onClose, onSaved }: {
   // admin's update refreshes the surrounding page while this form is open.
   const [initial] = useState(category);
   const [split, setSplit] = useState<SplitType>(initial?.split_type ?? "EQUAL");
-  const [totalText, setTotalText] = useState(initial ? moneyInput(initial.total_paise) : "");
+  const [amounts, setAmounts] = useState(() => initial
+    ? categoryAmounts(initial).map((amount, id) => ({ id, value: moneyInput(amount) }))
+    : [{ id: 0, value: "" }]);
+  const nextAmountId = useRef(amounts.length);
   const [brideText, setBrideText] = useState(initial ? moneyInput(initial.bride_share_paise) : "");
   const vendorListId = useId();
   const hintId = useId();
   const save = useBudgetAction(saveCategory);
-  const total = parseMoney(totalText);
+  const total = parseAmounts(amounts.map((amount) => amount.value))?.total ?? null;
   const customBride = parseMoney(brideText);
   const validSplit = total !== null && (split !== "CUSTOM" || (customBride !== null && customBride <= total));
   const shares = validSplit ? splitAmount(total!, split, customBride ?? 0) : null;
@@ -89,7 +92,34 @@ function CategoryForm({ category, vendors, onClose, onSaved }: {
         <FormField label="Category" name="name" autoFocus maxLength={120} required defaultValue={initial?.name} placeholder="Venue, catering, photography…" />
         <FormField label="Vendor (optional)" name="vendor" maxLength={160} defaultValue={initial?.vendor ?? ""} list={vendorListId} placeholder="Who is this payment going to?" />
         <datalist id={vendorListId}>{vendors.map((vendor) => <option key={vendor} value={vendor} />)}</datalist>
-        <FormField label="Total amount (₹)" name="total" {...amountProps} value={totalText} onChange={(event) => setTotalText(event.target.value)} placeholder="0.00" />
+        <div className="min-w-0 space-y-4 rounded-2xl bg-powder/60 p-4 sm:p-5 md:col-span-2">
+          <div>
+            <h3 className="text-base font-medium">Amounts</h3>
+            <p className="mt-1 max-w-prose text-sm leading-relaxed text-text-secondary">Add each cost for this category. The total updates automatically.</p>
+          </div>
+          <ol className="space-y-3">
+            {amounts.map((amount, index) => <li key={amount.id} className="flex min-w-0 flex-wrap items-end gap-3">
+              <FormField label={`Amount ${index + 1} (₹)`} name="amount" {...amountProps}
+                labelClassName="min-w-0 flex-1 basis-40 [&_span]:!tracking-[0.08em]"
+                value={amount.value} placeholder="0.00" onChange={(event) => {
+                  const value = event.target.value;
+                  setAmounts((current) => current.map((entry) => entry.id === amount.id ? { ...entry, value } : entry));
+                }} />
+              <Button variant="secondary" className={`${buttonStyle} shrink-0`} disabled={save.pending || amounts.length === 1}
+                aria-label={`Remove amount ${index + 1}`} onClick={() => setAmounts((current) => current.filter((entry) => entry.id !== amount.id))}>
+                Remove
+              </Button>
+            </li>)}
+          </ol>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <Button variant="secondary" className={`${buttonStyle} flex items-center gap-2`} disabled={save.pending} onClick={() => {
+              const id = nextAmountId.current++;
+              setAmounts((current) => [...current, { id, value: "" }]);
+            }}><Plus size={16} aria-hidden="true" /> Add amount</Button>
+            <p className="text-base tabular-nums" aria-live="polite">Total amount <strong className="ml-2 font-medium">{total === null ? "—" : formatMoney(total)}</strong></p>
+          </div>
+          {total === null && <p className="text-sm text-text-secondary">Enter a valid amount in every row. The combined total can be up to ₹99,99,99,999.99.</p>}
+        </div>
         <SelectField label="Split the cost" aria-label="Split the cost" name="split_type" value={split} onChange={(event) => {
           const next = event.target.value as SplitType;
           if (next === "CUSTOM" && shares) setBrideText(moneyInput(shares.bride));
@@ -102,7 +132,7 @@ function CategoryForm({ category, vendors, onClose, onSaved }: {
           <FormField label="Groom’s share (₹)" type="text" readOnly value={shares ? moneyInput(shares.groom) : ""} placeholder="Calculated from the total" aria-describedby={hintId} className="bg-powder" />
           <p id={hintId} className="-mt-2 text-sm leading-relaxed text-text-secondary md:col-span-2">Enter the bride’s amount; the remaining amount is assigned to the groom.</p>
         </> : <div className="rounded-xl bg-powder p-4 text-sm md:col-span-2" aria-live="polite">
-          {shares ? <p className="flex flex-wrap gap-x-8 gap-y-2 tabular-nums"><span>Bride’s share <strong className="ml-2 font-medium">{formatMoney(shares.bride)}</strong></span><span>Groom’s share <strong className="ml-2 font-medium">{formatMoney(shares.groom)}</strong></span></p> : <p className="text-text-secondary">Enter a total to see each side’s share.</p>}
+          {shares ? <p className="flex flex-wrap gap-x-8 gap-y-2 tabular-nums"><span>Bride’s share <strong className="ml-2 font-medium">{formatMoney(shares.bride)}</strong></span><span>Groom’s share <strong className="ml-2 font-medium">{formatMoney(shares.groom)}</strong></span></p> : <p className="text-text-secondary">Enter the amounts to see each side’s share.</p>}
           {split === "EQUAL" && total !== null && total % 2 !== 0 && <p className="mt-2 text-xs text-text-secondary">The extra ₹0.01 is assigned to the groom so the shares add up exactly.</p>}
         </div>}
         <div className="border-t border-border/50 pt-5 md:col-span-2">
@@ -145,6 +175,14 @@ function CategoryCard({ category, vendors, onSaved }: { category: BudgetCategory
           <div><p className="mb-1 text-xs text-text-secondary">Total cost · {SPLIT_LABELS[category.split_type]}</p><p className="break-words text-2xl font-medium tabular-nums">{formatMoney(category.total_paise)}</p></div>
           <div className="min-[480px]:text-right"><p className={`text-sm font-medium ${balance > 0 ? "text-rose" : "text-sage"}`}>{balance === 0 ? "Paid in full" : `${formatMoney(Math.abs(balance))} ${balance > 0 ? "remaining" : "overpaid"}`}</p><p className="mt-1 text-xs text-text-secondary tabular-nums">{formatMoney(paid)} paid in total</p></div>
         </div>
+        {categoryAmounts(category).length > 1 && <details className="mb-5 rounded-xl bg-powder/60 p-4">
+          <summary className="cursor-pointer text-sm font-medium">View {categoryAmounts(category).length} amounts</summary>
+          <dl className="mt-3 space-y-2 text-sm tabular-nums">
+            {categoryAmounts(category).map((amount, index) => <div key={index} className="flex flex-wrap justify-between gap-3">
+              <dt className="text-text-secondary">Amount {index + 1}</dt><dd>{formatMoney(amount)}</dd>
+            </div>)}
+          </dl>
+        </details>}
         <div className="grid gap-3 sm:grid-cols-2">
           <SideFigures side="Bride" share={category.bride_share_paise} paid={category.bride_paid_paise} />
           <SideFigures side="Groom" share={category.groom_share_paise} paid={category.groom_paid_paise} />
@@ -229,7 +267,7 @@ export function BudgetWorkspace({ categories }: { categories: BudgetCategory[] }
           <h2 id="categories-heading" className="font-display text-3xl">Your categories</h2>
           {categories.length > 0 && <label className="block sm:w-72"><span className="sr-only">Search categories or vendors</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search categories or vendors" className="w-full rounded-full border border-border bg-warm-white px-4 py-3 text-base sm:text-sm" /></label>}
         </div>
-        {categories.length === 0 ? <div className="rounded-3xl border border-dashed border-border bg-warm-white/50 px-6 py-10"><h3 className="mb-3 font-display text-2xl">Start with your first expense.</h3><p className="mb-5 max-w-prose text-sm leading-relaxed text-text-secondary">Add a category such as venue or catering, enter its total, and choose how you’ll share the cost. You can add the vendor and any payments already made.</p><Button variant="secondary" className={buttonStyle} onClick={() => setAdding(true)} disabled={adding}>Add your first category</Button></div>
+        {categories.length === 0 ? <div className="rounded-3xl border border-dashed border-border bg-warm-white/50 px-6 py-10"><h3 className="mb-3 font-display text-2xl">Start with your first expense.</h3><p className="mb-5 max-w-prose text-sm leading-relaxed text-text-secondary">Add a category such as venue or catering, enter one or more amounts, and choose how you’ll share the cost. You can add the vendor and any payments already made.</p><Button variant="secondary" className={buttonStyle} onClick={() => setAdding(true)} disabled={adding}>Add your first category</Button></div>
           : filtered.length === 0 ? <p className="py-6 text-sm text-text-secondary">No categories match this search. Try a different category or vendor name.</p>
           : <div className="space-y-4">{filtered.map((category) => <CategoryCard key={category.id} category={category} vendors={vendorNames} onSaved={setNotice} />)}</div>}
       </section>

@@ -121,11 +121,12 @@ export function AddFamilyForm({
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="text-[10px] tracking-[0.3em] uppercase text-text-secondary font-body mb-1">
-                Guest-added names (optional)
+                Number of guests (optional)
               </p>
               <p className="max-w-[65ch] text-xs text-muted font-body leading-relaxed">
-                Use fixed spots when you know the number of men and women, or
-                choose All so the family can add any number of people.
+                Enter the total number of men and women, including any names
+                you add below, or choose All for unlimited guests. Guests can
+                fill only the remaining spots.
               </p>
             </div>
             <Button
