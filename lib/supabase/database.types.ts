@@ -34,6 +34,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      shopping_list_items: {
+        Row: {
+          id: number
+          item: string
+          store: string
+          vendor: string
+          urgency: Database["public"]["Enums"]["shopping_urgency"]
+          purchased: boolean
+          revision: number
+          created_at: string
+        }
+        Insert: {
+          id?: never
+          item: string
+          store: string
+          vendor: string
+          urgency?: Database["public"]["Enums"]["shopping_urgency"]
+          purchased?: boolean
+          revision?: number
+          created_at?: string
+        }
+        Update: {
+          id?: never
+          item?: string
+          store?: string
+          vendor?: string
+          urgency?: Database["public"]["Enums"]["shopping_urgency"]
+          purchased?: boolean
+          revision?: number
+          created_at?: string
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           id: number
@@ -364,6 +397,7 @@ export type Database = {
       event_rsvp_status: "PENDING" | "ACCEPTED" | "DECLINED"
       guest_category: "MALE" | "FEMALE" | "CHILD"
       guest_side: "BRIDE" | "GROOM"
+      shopping_urgency: "LOW" | "MEDIUM" | "HIGH"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -498,6 +532,7 @@ export const Constants = {
       event_rsvp_status: ["PENDING", "ACCEPTED", "DECLINED"],
       guest_category: ["MALE", "FEMALE", "CHILD"],
       guest_side: ["BRIDE", "GROOM"],
+      shopping_urgency: ["LOW", "MEDIUM", "HIGH"],
     },
   },
 } as const
