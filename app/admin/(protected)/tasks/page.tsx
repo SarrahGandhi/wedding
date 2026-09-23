@@ -25,8 +25,9 @@ export default async function TasksPage() {
   const [tasksResult, shoppingResult] = await Promise.all([
     loadAll<Task>(async (offset) => supabase.from("tasks").select("*")
       .order("completed").order("due_date").order("id").range(offset, offset + 999)),
-    loadAll<ShoppingListItem>(async (offset) => supabase.from("shopping_list_items").select("*")
-      .range(offset, offset + 999)),
+    loadAll<ShoppingListItem>(async (offset) => supabase.from("shopping_list_items")
+      .select("id,item,store,vendor,urgency,purchased,revision,created_at,side,recipient")
+      .order("id").range(offset, offset + 999)),
   ]);
   if (tasksResult.error) {
     return <div>
