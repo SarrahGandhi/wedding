@@ -98,6 +98,28 @@ This table contains which guests are invited to which events and their RSVP stat
 `/admin/logistics` lists families with at least one guest who has accepted an event.
 Each confirmed guest is counted once across all events. Travel method, arrival
 date, travel details, and accommodation can be saved independently as plans emerge.
+The optional “To be picked up by” field accepts a name and suggests names already
+used for confirmed families. Clear it to remove the assignment. Sort by pickup
+name to group families alphabetically, with unassigned families last.
+Apply `20260923010000_logistics_pickup.sql` to enable pickup assignments. Existing
+records remain unassigned, and older clients preserve saved pickup names.
+
+Arrival and Departure are separate tabs on `/admin/logistics`. Departure records
+have their own optional travel method, date, notes, and “To be dropped by” name.
+Sort departures by date or drop-off name, or filter for incomplete plans and
+unassigned drop-offs. Each tab retains its filters and open forms when switching.
+Apply `20260923020000_logistics_departures.sql` after the pickup migration.
+Departure saves update only departure columns; arrival saves preserve departures.
+Both use the same authenticated-admin and confirmed-family access rules.
+
+Arrival forms support multiple pickups per family. Each pickup has optional
+guest names, arrival date, travel method, notes, and pickup person. Add a pickup
+for each group arriving together; remove entries and save to delete them.
+Apply `20260923030000_multiple_arrivals.sql` after the departure migration.
+Existing single arrivals remain visible as the first entry until edited. Saving
+the list and accommodation is atomic and preserves departure details. Date sorting
+uses the earliest arrival; pickup-person sorting uses the first name alphabetically
+across all entries. The incomplete-travel filter checks every pickup.
 
 `family_logistics` stores one plan per family. `accommodations` stores reusable
 houses and hotel stays. Multiple families may share any accommodation. Hotels

@@ -183,6 +183,12 @@ export type Database = {
       }
       family_logistics: {
         Row: {
+          arrivals: Json | null
+          departure_mode: string | null
+          departure_date: string | null
+          departure_details: string | null
+          dropoff_by: string | null
+          pickup_by: string | null
           accommodation_id: number | null
           arrival_date: string | null
           family_id: number
@@ -190,6 +196,12 @@ export type Database = {
           travel_mode: string | null
         }
         Insert: {
+          arrivals?: Json | null
+          departure_mode?: string | null
+          departure_date?: string | null
+          departure_details?: string | null
+          dropoff_by?: string | null
+          pickup_by?: string | null
           accommodation_id?: number | null
           arrival_date?: string | null
           family_id: number
@@ -197,6 +209,12 @@ export type Database = {
           travel_mode?: string | null
         }
         Update: {
+          arrivals?: Json | null
+          departure_mode?: string | null
+          departure_date?: string | null
+          departure_details?: string | null
+          dropoff_by?: string | null
+          pickup_by?: string | null
           accommodation_id?: number | null
           arrival_date?: string | null
           family_id?: number
@@ -386,6 +404,7 @@ export type Database = {
       }
       save_family_logistics: {
         Args: {
+          p_pickup_by?: string | null
           p_accommodation_id: number | null
           p_arrival_date: string | null
           p_family_id: number
@@ -394,6 +413,27 @@ export type Database = {
           p_new_room_number: string | null
           p_travel_details: string | null
           p_travel_mode: string | null
+        }
+        Returns: undefined
+      }
+      save_family_departure: {
+        Args: {
+          p_family_id: number
+          p_departure_mode: string | null
+          p_departure_date: string | null
+          p_departure_details: string | null
+          p_dropoff_by: string | null
+        }
+        Returns: undefined
+      }
+      save_family_arrivals: {
+        Args: {
+          p_family_id: number
+          p_arrivals: Json
+          p_accommodation_id: number | null
+          p_new_kind: string | null
+          p_new_name: string | null
+          p_new_room_number: string | null
         }
         Returns: undefined
       }
