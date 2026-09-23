@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { accommodationLabel, accommodationOptions, formatArrival, groupByAccommodation, matchesFamily, parseLogisticsForm, sortAccommodationFamilies } from "../lib/logistics.ts";
+import { accommodationLabel, accommodationOptions, earliestArrival, familyArrivals, formatArrival, groupByAccommodation, matchesFamily, parseArrivalPlans, parseDepartureForm, parseLogisticsForm, sortAccommodationFamilies, sortLogisticsFamilies } from "../lib/logistics.ts";
 
 function form(values) {
   const data = new FormData();
@@ -39,6 +39,38 @@ test("partial travel plans are allowed but invalid input is rejected", () => {
   assert.equal(parseLogisticsForm(form({ arrival_date: "2028-02-29" })).data.p_arrival_date, "2028-02-29");
 });
 
+test("pickup names are optional, trimmed, and can be cleared", () => {
+  assert.equal(parseLogisticsForm(form({})).data.p_pickup_by, null);
+  for (const pickup_by of ["", "   "]) {
+    assert.equal(parseLogisticsForm(form({ pickup_by })).data.p_pickup_by, null);
+  }
+  const parsed = parseLogisticsForm(form({ pickup_by: "  Ali   Khan ", travel_mode: "CAR", accommodation_id: "12" }));
+  assert.equal(parsed.data.p_pickup_by, "Ali Khan");
+  assert.equal(parsed.data.p_travel_mode, "CAR");
+  assert.equal(parsed.data.p_accommodation_id, 12);
+  assert.ok(parseLogisticsForm(form({ pickup_by: "a".repeat(161) })).error);
+  assert.ok(parseLogisticsForm(form({ pickup_by: new Blob(["not a name"]) })).error);
+});
+
+test("departure saves contain only independent departure fields and allow partial plans", () => {
+  assert.deepEqual(parseDepartureForm(form({})).data, {
+    p_family_id: 1, p_departure_mode: null, p_departure_date: null, p_departure_details: null, p_dropoff_by: null,
+  });
+  assert.deepEqual(parseDepartureForm(form({ departure_mode: "TRAIN", departure_date: "2028-02-29",
+    departure_details: " Train 123 at 18:00 ", dropoff_by: " Ali   Khan ",
+    travel_mode: "FLIGHT", arrival_date: "2028-02-20", pickup_by: "Someone else", accommodation_id: "12",
+  })).data, {
+    p_family_id: 1, p_departure_mode: "TRAIN", p_departure_date: "2028-02-29",
+    p_departure_details: "Train 123 at 18:00", p_dropoff_by: "Ali Khan",
+  });
+  assert.equal(parseDepartureForm(form({ dropoff_by: "  " })).data.p_dropoff_by, null);
+  for (const fields of [
+    { family_id: "-1" }, { departure_mode: "BOAT" }, { departure_date: "2026-02-30" },
+    { departure_date: "0000-01-01" }, { departure_details: "a".repeat(1001) },
+    { dropoff_by: "a".repeat(161) }, { dropoff_by: new Blob(["not text"]) },
+  ]) assert.ok(parseDepartureForm(form(fields)).error);
+});
+
 const stay = (id, name, room_number, kind = "HOTEL") => ({ id, name, room_number, kind, created_at: "2026-09-18" });
 const family = (id, label, accommodation, arrival_date = null) => ({
   id, label, side: "BRIDE", guests: [{ id, name: label }], accommodation,
@@ -52,6 +84,63 @@ const families = [
   family(5, "Fatima", null),
   family(6, "Hassan", stay(4, "Other Hotel", "2")),
 ];
+
+test("pickup sorting groups names ignoring case and puts unassigned families last", () => {
+  const entries = families.map((entry, index) => ({
+    ...entry,
+    logistics: index === 4 ? null : { ...entry.logistics, pickup_by: ["Zain", "ali", "Ali", null, null, "Zain"][index] },
+  }));
+  assert.deepEqual(sortLogisticsFamilies(entries, "pickup").map((entry) => entry.id), [2, 3, 6, 1, 4, 5]);
+  assert.deepEqual(sortLogisticsFamilies(entries, "arrival").map((entry) => entry.id), [2, 1, 3, 4, 5, 6]);
+  assert.deepEqual(sortLogisticsFamilies(entries, "family").map((entry) => entry.id), [2, 3, 4, 5, 6, 1]);
+  assert.deepEqual(entries.map((entry) => entry.id), [1, 2, 3, 4, 5, 6]);
+});
+
+test("departure sorting uses departure dates and drop-off people, independently of arrivals", () => {
+  const entries = families.slice(0, 3).map((entry, index) => ({ ...entry, logistics: {
+    ...entry.logistics, departure_date: [null, "2026-10-14", "2026-10-12"][index],
+    dropoff_by: [null, "Zain", "Ali"][index], pickup_by: ["A", "B", "C"][index],
+  } }));
+  assert.deepEqual(sortLogisticsFamilies(entries, "departure").map((entry) => entry.id), [3, 2, 1]);
+  assert.deepEqual(sortLogisticsFamilies(entries, "dropoff").map((entry) => entry.id), [3, 2, 1]);
+  assert.deepEqual(sortLogisticsFamilies(entries, "pickup").map((entry) => entry.id), [1, 2, 3]);
+});
+
+test("multiple pickups preserve separate dates, guests and people; empty rows are omitted", () => {
+  const entries = [
+    { guests: " Amina ", arrival_date: "2026-10-09", travel_mode: "TRAIN", pickup_by: " Ali   Khan " },
+    { guests: " Remaining family ", arrival_date: "2026-10-11", travel_mode: "FLIGHT", pickup_by: "Zain", travel_details: " Flight 123 " },
+    {},
+  ];
+  const parsed = parseArrivalPlans(form({ arrivals: JSON.stringify(entries) }));
+  assert.equal(parsed.data.length, 2);
+  assert.deepEqual(parsed.data[0], { guests: "Amina", arrival_date: "2026-10-09", travel_mode: "TRAIN", pickup_by: "Ali Khan", travel_details: null });
+  assert.equal(parsed.data[1].arrival_date, "2026-10-11");
+  assert.equal(parsed.data[1].travel_details, "Flight 123");
+  assert.deepEqual(parseArrivalPlans(form({ arrivals: "[]" })).data, []);
+  assert.equal(parseArrivalPlans(form({ arrivals: '[{"guests":"Amina"}]' })).data[0].arrival_date, null);
+  for (const arrivals of ["broken", "null", "{}", '[null]', '[{"arrival_date":"2026-02-30"}]', '[{"arrival_date":"0000-01-01"}]', '[{"pickup_by":3}]', '[{"travel_mode":"BOAT"}]',
+    JSON.stringify([{ guests: "a".repeat(301) }]), JSON.stringify(Array(51).fill({}))]) {
+    assert.ok(parseArrivalPlans(form({ arrivals })).error);
+  }
+});
+
+test("legacy arrivals remain visible and multiple arrivals drive sorting without mutation", () => {
+  const original = { ...families[0].logistics, pickup_by: "Ali" };
+  assert.equal(familyArrivals(original)[0].arrival_date, "2026-10-10");
+  assert.equal(familyArrivals(original)[0].pickup_by, "Ali");
+  assert.deepEqual(familyArrivals({ ...original, arrivals: [] }), []);
+  const arrivals = [
+    { guests: "Later", arrival_date: "2026-10-12", pickup_by: "Zain" },
+    { guests: "Earlier", arrival_date: "2026-10-08", pickup_by: "Aaron" },
+  ];
+  const split = { ...families[0], logistics: { ...original, arrivals } };
+  assert.equal(earliestArrival(split.logistics), "2026-10-08");
+  assert.deepEqual(sortLogisticsFamilies([families[1], split], "arrival").map((entry) => entry.id), [1, 2]);
+  assert.deepEqual(sortLogisticsFamilies([{ ...families[1], logistics: { ...families[1].logistics, pickup_by: "Bilal" } }, split], "pickup").map((entry) => entry.id), [1, 2]);
+  familyArrivals(split.logistics).reverse();
+  assert.equal(arrivals[0].guests, "Later");
+});
 
 test("existing accommodation lists each hotel once without including rooms", () => {
   const entries = families.flatMap((family) => family.accommodation ? [family.accommodation] : []);

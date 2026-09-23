@@ -1,14 +1,15 @@
 "use client";
 
-import { useId, useState, useTransition } from "react";
+import { useId, useRef, useState, useTransition } from "react";
 import { Button } from "@/app/shared/Button";
 import { FormField, SelectField, TextareaField } from "@/app/shared/FormField";
-import { accommodationKey, accommodationOptions, TRAVEL_MODES, TRAVEL_LABELS, type Accommodation, type LogisticsFamily } from "@/lib/logistics";
+import { accommodationKey, accommodationOptions, familyArrivals, TRAVEL_MODES, TRAVEL_LABELS, type Accommodation, type ArrivalPlan, type LogisticsFamily } from "@/lib/logistics";
 import { saveFamilyLogistics } from "./actions";
 
-export function LogisticsForm({ family, accommodations, onSaved, onCancel }: {
+export function LogisticsForm({ family, accommodations, pickupNames, onSaved, onCancel }: {
   family: LogisticsFamily;
   accommodations: Accommodation[];
+  pickupNames: string[];
   onSaved: () => void;
   onCancel: () => void;
 }) {
@@ -21,6 +22,11 @@ export function LogisticsForm({ family, accommodations, onSaved, onCancel }: {
   const [room, setRoom] = useState(family.accommodation?.room_number ?? "");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [arrivals, setArrivals] = useState(() => {
+    const saved = familyArrivals(family.logistics);
+    return (saved.length ? saved : [emptyArrival()]).map((entry, id) => ({ ...entry, id }));
+  });
+  const nextArrivalId = useRef(arrivals.length);
   const inputId = useId();
   const isNew = choice === "new";
   const selectedProperty = properties.find((property) => String(property.id) === choice);
@@ -32,6 +38,10 @@ export function LogisticsForm({ family, accommodations, onSaved, onCancel }: {
   function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
+    form.set("arrivals", JSON.stringify(arrivals.map((entry) => Object.fromEntries(
+      ["guests", "arrival_date", "travel_mode", "travel_details", "pickup_by"].map((field) =>
+        [field, form.get(`arrival-${entry.id}-${field}`) || null])
+    ))));
     setError(null);
     startTransition(async () => {
       try {
@@ -48,16 +58,32 @@ export function LogisticsForm({ family, accommodations, onSaved, onCancel }: {
     <form onSubmit={submit} className="mt-5 bg-warm-white p-4 sm:p-6" aria-label={`Logistics for ${family.label}`}>
       <input type="hidden" name="family_id" value={family.id} />
       <fieldset disabled={pending} className="min-w-0 space-y-6">
-        <legend className="mb-4 font-display text-xl">Travel and arrival</legend>
-        <div className="grid gap-5 sm:grid-cols-2">
-          <SelectField label="Travelling by" name="travel_mode" defaultValue={family.logistics?.travel_mode ?? ""}>
-            <option value="">Not decided yet</option>
-            {TRAVEL_MODES.map((mode) => <option key={mode} value={mode}>{TRAVEL_LABELS[mode]}</option>)}
-          </SelectField>
-          <FormField label="Arrival date" type="date" name="arrival_date" defaultValue={family.logistics?.arrival_date ?? ""} />
-        </div>
-        <TextareaField label="Travel details (optional)" name="travel_details" rows={2} maxLength={1000}
-          defaultValue={family.logistics?.travel_details ?? ""} placeholder="Flight or train number, arrival time, or pickup arrangements" />
+        <legend className="mb-4 font-display text-xl">Arrivals and pickups</legend>
+        <p className="text-sm text-text-secondary">Add a pickup for each group arriving together. All details are optional.</p>
+        {arrivals.map((entry, index) => <fieldset key={entry.id} className="min-w-0 space-y-4 rounded-xl border border-border/60 p-4">
+          <legend className="px-2 font-medium">Pickup {index + 1}</legend>
+          <div className="grid gap-5 sm:grid-cols-2">
+            <FormField label="Guests arriving (optional)" name={`arrival-${entry.id}-guests`} maxLength={300}
+              defaultValue={entry.guests ?? ""} list={`${inputId}-guests`} placeholder="Whole family, or names arriving together" />
+            <FormField label="Arrival date" type="date" name={`arrival-${entry.id}-arrival_date`} min="0001-01-01" max="9999-12-31" defaultValue={entry.arrival_date ?? ""} />
+            <SelectField label="Travelling by" name={`arrival-${entry.id}-travel_mode`} defaultValue={entry.travel_mode ?? ""}>
+              <option value="">Not decided yet</option>
+              {TRAVEL_MODES.map((mode) => <option key={mode} value={mode}>{TRAVEL_LABELS[mode]}</option>)}
+            </SelectField>
+            <FormField label="To be picked up by (optional)" name={`arrival-${entry.id}-pickup_by`} maxLength={160}
+              defaultValue={entry.pickup_by ?? ""} list={`${inputId}-pickup`}
+              placeholder="Enter or choose a name" />
+          </div>
+          <TextareaField label="Travel details (optional)" name={`arrival-${entry.id}-travel_details`} rows={2} maxLength={1000}
+            defaultValue={entry.travel_details ?? ""} placeholder="Flight or train number, arrival time, or pickup arrangements" />
+          <Button variant="ghost" aria-label={`Remove pickup ${index + 1}`} onClick={() => setArrivals((current) => current.filter((plan) => plan.id !== entry.id))}>Remove pickup</Button>
+        </fieldset>)}
+        <datalist id={`${inputId}-pickup`}>{pickupNames.map((person) => <option key={person} value={person} />)}</datalist>
+        <datalist id={`${inputId}-guests`}>{family.guests.map((guest) => <option key={guest.id} value={guest.name} />)}</datalist>
+        <Button variant="secondary" disabled={arrivals.length >= 50} onClick={() => {
+          const id = nextArrivalId.current++;
+          setArrivals((current) => [...current, { ...emptyArrival(), id }]);
+        }}>Add another pickup</Button>
 
         <div className="space-y-4 border-t border-border/60 pt-5">
           <h3 className="font-display text-xl">Where they’re staying</h3>
@@ -109,4 +135,8 @@ export function LogisticsForm({ family, accommodations, onSaved, onCancel }: {
       </fieldset>
     </form>
   );
+}
+
+function emptyArrival(): ArrivalPlan {
+  return { guests: null, arrival_date: null, travel_mode: null, travel_details: null, pickup_by: null };
 }
