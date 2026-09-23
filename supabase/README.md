@@ -22,6 +22,20 @@ with `node --experimental-strip-types --test tests/tasks.test.mjs`.
 Database checks in `supabase/tests/tasks.sql` verify editing, completion, stale
 update protection, and anonymous access restrictions in a rolled-back transaction.
 
+## Shopping list
+
+The Shopping list tab at `/admin/tasks` separates bride-side and groom-side items.
+Add or edit an item to choose its side and enter a recipient (a person or group),
+with suggestions from saved recipients. Filter by recipient, place to buy, and
+purchase status, or sort alphabetically by recipient or place to buy. The default
+sort puts items still needed first, then orders by urgency.
+
+Apply `migrations/20260920050000_shopping_list.sql`, followed by
+`migrations/20260923000000_shopping_sides_recipients.sql`. Existing items start on
+the bride side with no recipient; use Edit to assign them. Their other details
+and purchased status are preserved. New and edited items require a recipient.
+Run `node --experimental-strip-types --test tests/shopping-list.test.mjs`.
+
 ## Events
 This table contains the number of events for the wedding and the details such as dates, location, dress code, descriptions/details
 

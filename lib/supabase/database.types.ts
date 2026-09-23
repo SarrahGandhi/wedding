@@ -36,6 +36,8 @@ export type Database = {
     Tables: {
       shopping_list_items: {
         Row: {
+          side: Database["public"]["Enums"]["guest_side"]
+          recipient: string | null
           id: number
           item: string
           store: string
@@ -46,6 +48,8 @@ export type Database = {
           created_at: string
         }
         Insert: {
+          side?: Database["public"]["Enums"]["guest_side"]
+          recipient?: string | null
           id?: never
           item: string
           store: string
@@ -56,6 +60,8 @@ export type Database = {
           created_at?: string
         }
         Update: {
+          side?: Database["public"]["Enums"]["guest_side"]
+          recipient?: string | null
           id?: never
           item?: string
           store?: string

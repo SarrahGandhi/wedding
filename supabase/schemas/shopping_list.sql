@@ -4,6 +4,8 @@ create type public.shopping_urgency as enum ('LOW', 'MEDIUM', 'HIGH');
 create table public.shopping_list_items (
   id integer generated always as identity primary key,
   item text not null check (char_length(btrim(item)) between 1 and 200),
+  side public.guest_side not null default 'BRIDE',
+  recipient text check (recipient is null or char_length(btrim(recipient)) between 1 and 160),
   store text not null check (char_length(btrim(store)) between 1 and 160),
   vendor text not null check (char_length(btrim(vendor)) between 1 and 160),
   urgency public.shopping_urgency not null default 'MEDIUM',
