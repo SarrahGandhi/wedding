@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { accommodationLabel, accommodationOptions, earliestArrival, familyArrivals, formatArrival, groupByAccommodation, matchesFamily, parseArrivalPlans, parseDepartureForm, parseLogisticsForm, sortAccommodationFamilies, sortLogisticsFamilies } from "../lib/logistics.ts";
+import { accommodationLabel, accommodationOptions, arrivalSupportSummary, earliestArrival, familyArrivals, formatArrival, formatArrivalDateTime, groupArrivalsByTime, groupByAccommodation, hasIncompleteArrival, matchesFamily, needsArrivalSupport, parseArrivalPlans, parseDepartureForm, parseLogisticsForm, sortAccommodationFamilies, sortLogisticsFamilies } from "../lib/logistics.ts";
 
 function form(values) {
   const data = new FormData();
@@ -85,6 +85,23 @@ const families = [
   family(6, "Hassan", stay(4, "Other Hotel", "2")),
 ];
 
+test("local families are excluded from outstanding arrangements and accommodation groups", () => {
+  const localWithStay = { ...families[0], logistics: { ...families[0].logistics, arrival_support_required: false } };
+  const localWithoutStay = { ...families[4], logistics: { ...families[4].logistics, arrival_support_required: false } };
+  const noPlan = { ...families[3], accommodation: null, logistics: null };
+  const entries = [localWithStay, localWithoutStay, families[1], noPlan];
+  assert.equal(needsArrivalSupport(noPlan), true);
+  assert.equal(needsArrivalSupport(families[1]), true);
+  assert.equal(needsArrivalSupport(localWithStay), false);
+  assert.equal(hasIncompleteArrival(localWithoutStay), false);
+  assert.equal(hasIncompleteArrival(noPlan), true);
+  assert.deepEqual(arrivalSupportSummary(entries), { assigned: 1, awaiting: 1, notRequired: 2 });
+  assert.deepEqual(groupByAccommodation(entries).flatMap((group) => group.families.map((entry) => entry.id)), [2]);
+  const restored = { ...localWithStay, logistics: { ...localWithStay.logistics, arrival_support_required: true } };
+  assert.equal(groupByAccommodation([restored])[0].families[0].accommodation.id, families[0].accommodation.id);
+  assert.equal(familyArrivals(restored.logistics)[0].arrival_date, families[0].logistics.arrival_date);
+});
+
 test("pickup sorting groups names ignoring case and puts unassigned families last", () => {
   const entries = families.map((entry, index) => ({
     ...entry,
@@ -140,6 +157,39 @@ test("legacy arrivals remain visible and multiple arrivals drive sorting without
   assert.deepEqual(sortLogisticsFamilies([{ ...families[1], logistics: { ...families[1].logistics, pickup_by: "Bilal" } }, split], "pickup").map((entry) => entry.id), [1, 2]);
   familyArrivals(split.logistics).reverse();
   assert.equal(arrivals[0].guests, "Later");
+});
+
+test("arrival times validate at minute precision and require a date", () => {
+  for (const time of ["00:00", "09:30", "23:59", null]) {
+    const parsed = parseArrivalPlans(form({ arrivals: JSON.stringify([{ arrival_date: "2026-10-09", arrival_time: time }]) }));
+    assert.equal(parsed.data[0].arrival_time, time);
+  }
+  for (const entry of [
+    { arrival_date: "2026-10-09", arrival_time: "24:00" },
+    { arrival_date: "2026-10-09", arrival_time: "12:60" },
+    { arrival_date: "2026-10-09", arrival_time: "9:00" },
+    { arrival_date: "2026-10-09", arrival_time: "09:00Z" },
+    { arrival_date: "2026-10-09", arrival_time: 930 },
+    { arrival_time: "09:30" },
+  ]) assert.ok(parseArrivalPlans(form({ arrivals: JSON.stringify([entry]) })).error);
+  assert.equal(formatArrivalDateTime({ arrival_date: "2026-10-09", arrival_time: "00:00" }), "9 Oct 2026 · 00:00 IST");
+  assert.equal(formatArrivalDateTime({ arrival_date: "2026-10-09" }), "9 Oct 2026 · Time not set");
+});
+
+test("time grouping includes each pickup across families and keeps unknown times separate", () => {
+  const plan = (date, time) => ({ guests: "A guest", arrival_date: date, arrival_time: time, travel_mode: "TRAIN", pickup_by: "Ali" });
+  const a = { ...families[0], logistics: { ...families[0].logistics, arrivals: [plan("2026-10-10", "12:00"), plan("2026-10-10", "09:30")] } };
+  const b = { ...families[1], logistics: { ...families[1].logistics, arrivals: [plan("2026-10-10", "09:30"), plan("2026-10-11", "09:30")] } };
+  const c = { ...families[2], logistics: { ...families[2].logistics, arrivals: [plan("2026-10-10", null), plan(null, null)] } };
+  const local = { ...a, id: 99, logistics: { ...a.logistics, arrival_support_required: false } };
+  const groups = groupArrivalsByTime([a, b, c, local]);
+  assert.deepEqual(groups.map((group) => group.key), ["2026-10-10T09:30", "2026-10-10T12:00", "2026-10-10T99:99", "2026-10-11T09:30", "9999-99-99T99:99"]);
+  assert.deepEqual(groups[0].entries.map((entry) => entry.family.id), [2, 1]);
+  assert.equal(groups.reduce((count, group) => count + group.entries.length, 0), 6);
+  const later = { ...a, logistics: { ...a.logistics, arrivals: [plan("2026-10-10", "15:00")] } };
+  assert.deepEqual(sortLogisticsFamilies([later, b, c], "arrival").map((entry) => entry.id), [2, 1, 3]);
+  assert.deepEqual(sortAccommodationFamilies([later, b, c], "arrival").map((entry) => entry.id), [2, 1, 3]);
+  assert.equal(a.logistics.arrivals[0].arrival_time, "12:00");
 });
 
 test("existing accommodation lists each hotel once without including rooms", () => {

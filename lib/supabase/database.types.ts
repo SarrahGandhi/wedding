@@ -183,6 +183,7 @@ export type Database = {
       }
       family_logistics: {
         Row: {
+          arrival_support_required: boolean
           arrivals: Json | null
           departure_mode: string | null
           departure_date: string | null
@@ -196,6 +197,7 @@ export type Database = {
           travel_mode: string | null
         }
         Insert: {
+          arrival_support_required?: boolean
           arrivals?: Json | null
           departure_mode?: string | null
           departure_date?: string | null
@@ -209,6 +211,7 @@ export type Database = {
           travel_mode?: string | null
         }
         Update: {
+          arrival_support_required?: boolean
           arrivals?: Json | null
           departure_mode?: string | null
           departure_date?: string | null

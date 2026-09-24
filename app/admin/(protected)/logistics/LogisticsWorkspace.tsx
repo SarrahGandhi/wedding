@@ -1,18 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Button } from "@/app/shared/Button";
 import { FormField, SelectField } from "@/app/shared/FormField";
-import { accommodationLabel, compareNames, familyArrivals, formatArrival, matchesFamily, sortLogisticsFamilies, travelLabel, type Accommodation, type LogisticsFamily, type LogisticsSort } from "@/lib/logistics";
+import { accommodationLabel, arrivalSortKey, arrivalSupportSummary, compareNames, familyArrivals, formatArrivalDateTime, groupArrivalsByTime, hasIncompleteArrival, matchesFamily, needsArrivalSupport, sortLogisticsFamilies, travelLabel, type Accommodation, type LogisticsFamily, type LogisticsSort } from "@/lib/logistics";
 import { LogisticsForm } from "./LogisticsForm";
 import { DepartureWorkspace } from "./DepartureWorkspace";
+import { setArrivalSupportRequired } from "./actions";
 
 function FamilyRow({ family, accommodations, pickupNames, initiallyOpen }: {
   family: LogisticsFamily; accommodations: Accommodation[]; pickupNames: string[]; initiallyOpen: boolean;
 }) {
-  const [editing, setEditing] = useState(initiallyOpen);
+  const required = needsArrivalSupport(family);
+  const [editing, setEditing] = useState(initiallyOpen && required);
   const [saved, setSaved] = useState(false);
-  const arrivals = familyArrivals(family.logistics).sort((a, b) => compareNames(a.arrival_date ?? "9999", b.arrival_date ?? "9999"));
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState("");
+  const arrivals = familyArrivals(family.logistics).sort((a, b) => compareNames(arrivalSortKey(a), arrivalSortKey(b)));
   return (
     <article id={`family-${family.id}`} className="border-t border-border/60 py-6">
       <div className="flex items-start justify-between gap-4">
@@ -22,11 +27,39 @@ function FamilyRow({ family, accommodations, pickupNames, initiallyOpen }: {
             <span className="tabular-nums">#{family.id}</span> · {family.side === "BRIDE" ? "Bride’s side" : "Groom’s side"} · {family.guests.length} confirmed {family.guests.length === 1 ? "guest" : "guests"}
           </p>
         </div>
-        <Button variant="secondary" className="shrink-0" aria-expanded={editing} aria-controls={`logistics-form-${family.id}`}
+        {required && <Button variant="secondary" className="shrink-0" disabled={pending} aria-expanded={editing} aria-controls={`logistics-form-${family.id}`}
           onClick={() => { setSaved(false); setEditing(!editing); }}>
           {editing ? "Close" : family.logistics ? "Edit" : "Add details"}
-        </Button>
+        </Button>}
       </div>
+      <label className="mt-5 flex cursor-pointer items-center gap-3 text-sm">
+        <input type="checkbox" checked={required} disabled={pending || editing}
+          aria-label={`Pickup and accommodation required for ${family.label}`}
+          className="h-5 w-5 shrink-0 accent-sage disabled:opacity-50"
+          onChange={(event) => {
+            const nextRequired = event.target.checked;
+            const form = new FormData();
+            form.set("family_id", String(family.id));
+            form.set("required", String(nextRequired));
+            setError(null);
+            setNotice("");
+            setSaved(false);
+            startTransition(async () => {
+              try {
+                const result = await setArrivalSupportRequired(form);
+                if (result.error) setError(result.error);
+                else setNotice(nextRequired ? "Pickup and accommodation marked as required." : "Pickup and accommodation marked as not required.");
+              } catch {
+                setError("The change could not be confirmed. Refresh the page and try again.");
+              }
+            });
+          }} />
+        {pending ? "Saving…" : "Pickup and accommodation required"}
+      </label>
+      {editing && <p className="mt-2 text-sm text-text-secondary">Save or close the form to change this option.</p>}
+      {error && <p role="alert" className="mt-3 text-sm text-rose">{error}</p>}
+      {notice && <p role="status" className="mt-3 text-sm text-sage">{notice}</p>}
+      {!required ? <p className="mt-4 text-sm text-text-secondary">Local family — pickup and accommodation not required.</p> : <>
       <dl className="mt-5 text-sm">
         <dt className="mb-1 text-text-secondary">Accommodation</dt><dd className="break-words">{family.accommodation ? accommodationLabel(family.accommodation) : "Not assigned yet"}</dd>
       </dl>
@@ -34,7 +67,7 @@ function FamilyRow({ family, accommodations, pickupNames, initiallyOpen }: {
         {arrivals.map((entry, index) => <li key={index} className="rounded-xl border border-border/60 p-4">
           <dl className="grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
             <div><dt className="mb-1 text-text-secondary">Guests arriving</dt><dd className="break-words">{entry.guests || "Whole family"}</dd></div>
-            <div><dt className="mb-1 text-text-secondary">Arriving</dt><dd className="tabular-nums">{formatArrival(entry.arrival_date)}</dd></div>
+            <div><dt className="mb-1 text-text-secondary">Arriving</dt><dd className="tabular-nums">{formatArrivalDateTime(entry)}</dd></div>
             <div><dt className="mb-1 text-text-secondary">Travelling by</dt><dd>{travelLabel(entry.travel_mode)}</dd></div>
             <div><dt className="mb-1 text-text-secondary">To be picked up by</dt><dd className="break-words">{entry.pickup_by || "Not assigned yet"}</dd></div>
           </dl>
@@ -46,6 +79,7 @@ function FamilyRow({ family, accommodations, pickupNames, initiallyOpen }: {
         {editing && <LogisticsForm family={family} accommodations={accommodations} pickupNames={pickupNames}
           onSaved={() => { setEditing(false); setSaved(true); }} onCancel={() => setEditing(false)} />}
       </div>
+      </>}
     </article>
   );
 }
@@ -55,17 +89,16 @@ function ArrivalWorkspace({ families, accommodations, initialFamilyId }: {
 }) {
   const [search, setSearch] = useState(initialFamilyId ? `#${initialFamilyId}` : "");
   const [filter, setFilter] = useState("ALL");
+  const [view, setView] = useState("family");
   const [sort, setSort] = useState<Extract<LogisticsSort, "family" | "arrival" | "pickup">>("family");
   const pickupNames = [...new Set(families.flatMap((family) => familyArrivals(family.logistics).flatMap((entry) => entry.pickup_by ? [entry.pickup_by] : [])))].sort(compareNames);
-  const assigned = families.filter((family) => family.accommodation).length;
+  const { assigned, awaiting, notRequired } = arrivalSupportSummary(families);
   const visible = sortLogisticsFamilies(families.filter((family) => {
     const exactId = /^#(\d+)$/.exec(search.trim());
     if (exactId ? family.id !== Number(exactId[1]) : !matchesFamily(family, search)) return false;
-    if (filter === "UNASSIGNED") return !family.accommodation;
-    if (filter === "TRAVEL") {
-      const arrivals = familyArrivals(family.logistics);
-      return arrivals.length === 0 || arrivals.some((entry) => !entry.travel_mode || !entry.arrival_date);
-    }
+    if (filter === "UNASSIGNED") return needsArrivalSupport(family) && !family.accommodation;
+    if (filter === "TRAVEL") return hasIncompleteArrival(family);
+    if (filter === "NOT_REQUIRED") return !needsArrivalSupport(family);
     if (filter === "BRIDE" || filter === "GROOM") return family.side === filter;
     return true;
   }), sort);
@@ -75,28 +108,63 @@ function ArrivalWorkspace({ families, accommodations, initialFamilyId }: {
   return (
     <>
       <p className="mb-6 text-sm text-text-secondary tabular-nums">
-        {families.length} confirmed {families.length === 1 ? "family" : "families"} · {assigned} with accommodation · {families.length - assigned} awaiting accommodation
+        {families.length} confirmed {families.length === 1 ? "family" : "families"} · {assigned} with accommodation · {awaiting} awaiting accommodation · {notRequired} not requiring arrangements
       </p>
-      <div className="mb-8 grid items-end gap-4 sm:grid-cols-[2fr_1fr_1fr]">
+      <div className="mb-8 grid items-end gap-4 sm:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr_1fr]">
         <FormField label="Search families or stays" type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Guest name, family #, hotel or house…" />
         <SelectField label="Show" value={filter} onChange={(event) => setFilter(event.target.value)}>
           <option value="ALL">All confirmed families</option>
           <option value="UNASSIGNED">Awaiting accommodation</option>
           <option value="TRAVEL">Travel details incomplete</option>
+          <option value="NOT_REQUIRED">Pickup and accommodation not required</option>
           <option value="BRIDE">Bride’s side</option>
           <option value="GROOM">Groom’s side</option>
         </SelectField>
-        <SelectField label="Sort by" value={sort} onChange={(event) => setSort(event.target.value as typeof sort)}>
+        <SelectField label="View" value={view} onChange={(event) => setView(event.target.value)}>
+          <option value="family">By family</option>
+          <option value="time">Group by arrival date and time</option>
+        </SelectField>
+        <SelectField label="Sort by" value={view === "time" ? "arrival" : sort} disabled={view === "time"} onChange={(event) => setSort(event.target.value as typeof sort)}>
           <option value="family">Family name</option>
-          <option value="arrival">Earliest arrival date</option>
+          <option value="arrival">Earliest arrival date and time</option>
           <option value="pickup">To be picked up by (A–Z)</option>
         </SelectField>
       </div>
+      <div hidden={view !== "family"}>
       {visible.length === 0 ? <p className="py-6 text-text-secondary">No families match these filters.</p> : visible.map((family) => (
         <FamilyRow key={family.id} family={family} accommodations={accommodations} pickupNames={pickupNames} initiallyOpen={family.id === initialFamilyId} />
       ))}
+      </div>
+      {view === "time" && <ArrivalTimeGroups families={visible} onViewFamily={(id) => { setView("family"); setSearch(`#${id}`); }} />}
     </>
   );
+}
+
+function ArrivalTimeGroups({ families, onViewFamily }: { families: LogisticsFamily[]; onViewFamily: (id: number) => void }) {
+  const groups = groupArrivalsByTime(families);
+  return <div className="space-y-7">
+    <p className="text-sm text-text-secondary">Pickups with the same date and time appear together. All times are in India Standard Time (IST).</p>
+    {groups.length === 0 ? <p className="py-6 text-text-secondary">No pickups to group. Switch to the family view to add arrival details.</p> : groups.map((group) => <section key={group.key} className="border-t border-border/60 pt-6">
+      <h2 className="font-display text-2xl tabular-nums">{group.label}</h2>
+      <p className="mt-2 text-sm text-text-secondary">{group.entries.length} {group.entries.length === 1 ? "pickup" : "pickups"}</p>
+      <ul className="mt-4 space-y-3">
+        {group.entries.map(({ family, arrival, index }) => <li key={`${family.id}-${index}`} className="rounded-xl border border-border/60 bg-warm-white p-5">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <h3 className="break-words text-lg font-medium">{family.label}</h3>
+              <p className="mt-1 break-words text-sm text-text-secondary">{arrival.guests || "Whole family"} · {family.side === "BRIDE" ? "Bride’s side" : "Groom’s side"}</p>
+            </div>
+            <Button variant="secondary" className="shrink-0" onClick={() => onViewFamily(family.id)} aria-label={`View ${family.label}`}>View family</Button>
+          </div>
+          <dl className="mt-4 grid gap-4 text-sm sm:grid-cols-2">
+            <div><dt className="mb-1 text-text-secondary">Travelling by</dt><dd>{travelLabel(arrival.travel_mode)}</dd></div>
+            <div><dt className="mb-1 text-text-secondary">To be picked up by</dt><dd className="break-words">{arrival.pickup_by || "Not assigned yet"}</dd></div>
+          </dl>
+          {arrival.travel_details && <p className="mt-4 whitespace-pre-wrap break-words text-sm text-text-secondary">{arrival.travel_details}</p>}
+        </li>)}
+      </ul>
+    </section>)}
+  </div>;
 }
 
 export function LogisticsWorkspace(props: {
