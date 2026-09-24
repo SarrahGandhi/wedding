@@ -183,7 +183,57 @@ begin
         if sqlerrm not like 'This family no longer%' then raise; end if;
     end;
 
+    assert (select arrival_support_required from public.family_logistics where family_id = family_a),
+        'Existing plans must require arrangements by default';
+    insert into public.family_logistics (family_id, arrival_support_required) values (family_a, false)
+        on conflict (family_id) do update set arrival_support_required = excluded.arrival_support_required;
+    assert (select not arrival_support_required and accommodation_id = shared_id and departure_mode = 'CAR'
+        and arrivals = '[]'::jsonb from public.family_logistics where family_id = family_a),
+        'Opting out changed saved logistics';
+    perform public.save_family_departure(family_a, 'TRAIN', null, null, null);
+    assert (select not arrival_support_required from public.family_logistics where family_id = family_a),
+        'Saving departure reset arrival support';
+    insert into public.family_logistics (family_id, arrival_support_required) values (family_a, true)
+        on conflict (family_id) do update set arrival_support_required = excluded.arrival_support_required;
+    assert (select arrival_support_required and accommodation_id = shared_id from public.family_logistics where family_id = family_a),
+        'Re-enabling arrangements lost accommodation';
+    delete from public.family_logistics where family_id = family_b;
+    insert into public.family_logistics (family_id, arrival_support_required) values (family_b, false);
+    assert (select not arrival_support_required and arrival_date is null from public.family_logistics where family_id = family_b),
+        'Cannot opt out before entering travel details';
+    begin
+        insert into public.family_logistics (family_id, arrival_support_required) values (pending_family, false);
+        raise exception 'Unconfirmed family changed arrangement requirement';
+    exception when insufficient_privilege then null;
+    end;
+
+    perform public.save_family_arrivals(family_a, '[
+        {"arrival_date":"2026-10-09","arrival_time":"18:00","pickup_by":"Late pickup"},
+        {"arrival_date":"2026-10-09","arrival_time":"09:30","pickup_by":"Early pickup"},
+        {"arrival_date":"2026-10-09","pickup_by":"Time unknown"}
+    ]', shared_id, null, null, null);
+    assert (select pickup_by = 'Early pickup' and arrivals -> 0 ->> 'arrival_time' = '18:00'
+        and departure_mode = 'TRAIN' from public.family_logistics where family_id = family_a),
+        'Timed arrivals were not preserved or earliest time was not selected';
+    begin
+        perform public.save_family_arrivals(family_a, '[{"arrival_date":"2026-10-09","arrival_time":"24:00"}]', null, null, null, null);
+        raise exception 'Invalid arrival time was accepted';
+    exception when check_violation then null;
+    end;
+    begin
+        perform public.save_family_arrivals(family_a, '[{"arrival_time":"09:00"}]', null, null, null, null);
+        raise exception 'Arrival time without a date was accepted';
+    exception when check_violation then null;
+    end;
+    assert (select jsonb_array_length(arrivals) = 3 and accommodation_id = shared_id
+        from public.family_logistics where family_id = family_a), 'Invalid time changed saved plans';
+
     execute 'set local role anon';
+    begin
+        update public.family_logistics set arrival_support_required = false where family_id = family_a;
+        raise exception 'Anonymous arrangement changes were allowed';
+    exception when insufficient_privilege then null;
+    end;
     begin
         perform public.save_family_arrivals(family_a, '[]', null, null, null, null);
         raise exception 'Anonymous pickup-list writes were allowed';

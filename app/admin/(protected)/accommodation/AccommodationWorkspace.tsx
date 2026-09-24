@@ -3,17 +3,18 @@
 import Link from "next/link";
 import { useState } from "react";
 import { FormField, SelectField } from "@/app/shared/FormField";
-import { formatArrival, groupByAccommodation, matchesFamily, sortAccommodationFamilies, travelLabel, type AccommodationGroup, type LogisticsFamily } from "@/lib/logistics";
+import { arrivalSupportSummary, earliestArrivalPlan, formatArrivalDateTime, groupByAccommodation, matchesFamily, needsArrivalSupport, sortAccommodationFamilies, travelLabel, type AccommodationGroup, type LogisticsFamily } from "@/lib/logistics";
 
 function FamilyDetails({ family }: { family: LogisticsFamily }) {
+  const arrival = earliestArrivalPlan(family.logistics);
   return (
     <div className="min-w-0 flex-1">
       <Link href={`/admin/logistics?family=${family.id}#family-${family.id}`} className="break-words font-display text-xl hover:text-accent">
         {family.label} <span className="sr-only">— edit logistics</span>
       </Link>
-      <p className="mt-1 text-sm text-text-secondary">{family.guests.length} confirmed {family.guests.length === 1 ? "guest" : "guests"} · {family.side === "BRIDE" ? "Bride’s side" : "Groom’s side"}</p>
+      <p className="mt-1 text-sm text-text-secondary">{family.guests.length} attending {family.guests.length === 1 ? "guest" : "guests"} · {family.side === "BRIDE" ? "Bride’s side" : "Groom’s side"}</p>
       <p className="mt-1 break-words text-sm text-text-secondary">{family.guests.map((guest) => guest.name).join(", ")}</p>
-      <p className="mt-2 text-sm tabular-nums">{formatArrival(family.logistics?.arrival_date)} · {travelLabel(family.logistics?.travel_mode)}</p>
+      <p className="mt-2 text-sm tabular-nums">{arrival ? `${formatArrivalDateTime(arrival)} · ${travelLabel(arrival.travel_mode)}` : "Arrival not set"}</p>
     </div>
   );
 }
@@ -31,14 +32,14 @@ function StayGroup({ group }: { group: AccommodationGroup }) {
           <p className="mb-2 text-xs uppercase tracking-[0.1em] text-accent">{isHotel ? "Hotel" : "House"}</p>
           <h2 className="break-words font-display text-3xl">{group.name}</h2>
           <p className="mt-2 text-sm text-text-secondary tabular-nums">
-            {group.families.length} {group.families.length === 1 ? "family" : "families"} · {guestCount} confirmed {guestCount === 1 ? "guest" : "guests"}{isHotel ? ` · ${rooms} ${rooms === 1 ? "room" : "rooms"} assigned` : ""}
+            {group.families.length} {group.families.length === 1 ? "family" : "families"} · {guestCount} attending {guestCount === 1 ? "guest" : "guests"}{isHotel ? ` · ${rooms} ${rooms === 1 ? "room" : "rooms"} assigned` : ""}
           </p>
         </div>
         <SelectField label={`Sort ${group.name} by`} value={sort} onChange={(event) => setSort(event.target.value as typeof sort)}>
           {isHotel && <option value="room">Room number</option>}
           {!isHotel && <option value="room">Family name</option>}
           {isHotel && <option value="family">Family name</option>}
-          <option value="arrival">Arrival date</option>
+          <option value="arrival">Arrival date and time</option>
         </SelectField>
       </div>
       <ul className="space-y-4">
@@ -64,16 +65,17 @@ function StayGroup({ group }: { group: AccommodationGroup }) {
 export function AccommodationWorkspace({ families }: { families: LogisticsFamily[] }) {
   const [search, setSearch] = useState("");
   const [kind, setKind] = useState("ALL");
-  const visible = families.filter((family) => matchesFamily(family, search) &&
+  const visible = families.filter((family) => needsArrivalSupport(family) && matchesFamily(family, search) &&
     (kind === "ALL" || (kind === "UNASSIGNED" ? !family.accommodation : family.accommodation?.kind === kind)));
   const groups = groupByAccommodation(visible);
   const unassigned = visible.filter((family) => !family.accommodation);
   const totalGroups = groupByAccommodation(families);
-  const assigned = families.filter((family) => family.accommodation).length;
+  const { assigned, notRequired } = arrivalSupportSummary(families);
+  const attendingCount = families.filter(needsArrivalSupport).reduce((total, family) => total + family.guests.length, 0);
   return (
     <>
       <p className="mb-6 text-sm text-text-secondary tabular-nums">
-        {totalGroups.filter((group) => group.kind === "HOTEL").length} hotels · {totalGroups.filter((group) => group.kind === "HOUSE").length} houses · {assigned} {assigned === 1 ? "family" : "families"} assigned
+        {attendingCount} attending {attendingCount === 1 ? "guest" : "guests"} needing accommodation · {totalGroups.filter((group) => group.kind === "HOTEL").length} hotels · {totalGroups.filter((group) => group.kind === "HOUSE").length} houses · {assigned} {assigned === 1 ? "family" : "families"} assigned · {notRequired} {notRequired === 1 ? "family" : "families"} not requiring accommodation
       </p>
       <div className="mb-8 grid gap-4 sm:grid-cols-[2fr_1fr]">
         <FormField label="Search accommodation or guests" type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Hotel, house, room or guest name…" />

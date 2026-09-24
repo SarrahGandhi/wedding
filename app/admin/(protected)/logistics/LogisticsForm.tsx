@@ -39,7 +39,7 @@ export function LogisticsForm({ family, accommodations, pickupNames, onSaved, on
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     form.set("arrivals", JSON.stringify(arrivals.map((entry) => Object.fromEntries(
-      ["guests", "arrival_date", "travel_mode", "travel_details", "pickup_by"].map((field) =>
+      ["guests", "arrival_date", "arrival_time", "travel_mode", "travel_details", "pickup_by"].map((field) =>
         [field, form.get(`arrival-${entry.id}-${field}`) || null])
     ))));
     setError(null);
@@ -65,7 +65,15 @@ export function LogisticsForm({ family, accommodations, pickupNames, onSaved, on
           <div className="grid gap-5 sm:grid-cols-2">
             <FormField label="Guests arriving (optional)" name={`arrival-${entry.id}-guests`} maxLength={300}
               defaultValue={entry.guests ?? ""} list={`${inputId}-guests`} placeholder="Whole family, or names arriving together" />
-            <FormField label="Arrival date" type="date" name={`arrival-${entry.id}-arrival_date`} min="0001-01-01" max="9999-12-31" defaultValue={entry.arrival_date ?? ""} />
+            <fieldset className="min-w-0">
+              <legend className="text-sm text-text-secondary">Arrival date and time (IST)</legend>
+              <div className="mt-2 grid min-w-0 gap-3 sm:grid-cols-2">
+                <FormField label="Date" type="date" name={`arrival-${entry.id}-arrival_date`} min="0001-01-01" max="9999-12-31"
+                  defaultValue={entry.arrival_date ?? ""} labelClassName="min-w-0" className="min-w-0" />
+                <FormField label="Time (optional)" type="time" step={60} name={`arrival-${entry.id}-arrival_time`}
+                  defaultValue={entry.arrival_time ?? ""} labelClassName="min-w-0" className="min-w-0" />
+              </div>
+            </fieldset>
             <SelectField label="Travelling by" name={`arrival-${entry.id}-travel_mode`} defaultValue={entry.travel_mode ?? ""}>
               <option value="">Not decided yet</option>
               {TRAVEL_MODES.map((mode) => <option key={mode} value={mode}>{TRAVEL_LABELS[mode]}</option>)}

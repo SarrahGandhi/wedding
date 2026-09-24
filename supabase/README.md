@@ -104,6 +104,14 @@ name to group families alphabetically, with unassigned families last.
 Apply `20260923010000_logistics_pickup.sql` to enable pickup assignments. Existing
 records remain unassigned, and older clients preserve saved pickup names.
 
+Accommodation counts and guest lists use individual accepted RSVPs only: two
+accepted guests and one declined guest in a family contribute two people. Pending
+or declined-only guests are excluded. A guest accepted for one event still counts
+if they declined another. Family headings use the saved family name or the names
+of attending members. RSVP changes and removals refresh the logistics and
+accommodation pages. No database migration is required for this attendance logic.
+Run `node --experimental-strip-types --test tests/logistics-attendance.test.mjs`.
+
 Arrival and Departure are separate tabs on `/admin/logistics`. Departure records
 have their own optional travel method, date, notes, and “To be dropped by” name.
 Sort departures by date or drop-off name, or filter for incomplete plans and
@@ -120,6 +128,24 @@ Existing single arrivals remain visible as the first entry until edited. Saving
 the list and accommodation is atomic and preserves departure details. Date sorting
 uses the earliest arrival; pickup-person sorting uses the first name alphabetically
 across all entries. The incomplete-travel filter checks every pickup.
+
+Uncheck “Pickup and accommodation required” on a family’s Arrival entry for
+local families. They remain visible in Logistics, including a dedicated filter,
+but are excluded from incomplete-travel and awaiting-accommodation lists and
+accommodation occupancy counts. Checking it again restores their saved plans.
+The flag does not change departure details or delete any arrival/accommodation data.
+Apply `20260923040000_optional_arrival_support.sql` to enable this setting;
+existing families default to requiring arrangements.
+
+Arrival entries support optional times at minute precision in India Standard Time
+(IST). Use “Group by arrival date and time” to see pickups across families at the
+same exact date and time. This view honors the active family filters and excludes
+families that do not need arrangements. Unknown times are kept separate, after
+known times on that date; unknown dates are last. Family and accommodation arrival
+sorts use the earliest date and time across all of a family’s pickups.
+Apply `20260923050000_arrival_times.sql` to enable time validation and chronological
+summaries. Existing dates are retained with no assumed time; departure dates are
+unchanged. Times are stored as local `HH:mm` values, independent of browser timezone.
 
 `family_logistics` stores one plan per family. `accommodations` stores reusable
 houses and hotel stays. Multiple families may share any accommodation. Hotels

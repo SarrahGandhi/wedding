@@ -15,6 +15,7 @@ export type FamilyLogistics = Tables<"family_logistics">;
 export type ArrivalPlan = {
   guests: string | null;
   arrival_date: string | null;
+  arrival_time?: string | null;
   travel_mode: string | null;
   travel_details: string | null;
   pickup_by: string | null;
@@ -31,6 +32,41 @@ export function earliestArrival(logistics: FamilyLogistics | null) {
   return familyArrivals(logistics).flatMap((entry) => entry.arrival_date ? [entry.arrival_date] : []).sort()[0] ?? null;
 }
 
+// Arrival times are wedding-local wall times (IST), not browser-local instants.
+export function arrivalSortKey(entry: ArrivalPlan) {
+  return entry.arrival_date ? `${entry.arrival_date}T${entry.arrival_time || "99:99"}` : "9999-99-99T99:99";
+}
+
+export function earliestArrivalPlan(logistics: FamilyLogistics | null) {
+  return familyArrivals(logistics).sort((a, b) => compareNames(arrivalSortKey(a), arrivalSortKey(b)))[0];
+}
+
+function earliestArrivalKey(logistics: FamilyLogistics | null) {
+  const entry = earliestArrivalPlan(logistics);
+  return entry ? arrivalSortKey(entry) : "9999-99-99T99:99";
+}
+
+export function formatArrivalDateTime(entry: ArrivalPlan) {
+  if (!entry.arrival_date) return "Date and time not set";
+  return `${formatArrival(entry.arrival_date)} · ${entry.arrival_time ? `${entry.arrival_time} IST` : "Time not set"}`;
+}
+
+export function groupArrivalsByTime(families: LogisticsFamily[]) {
+  const groups = new Map<string, { key: string; label: string; entries: { family: LogisticsFamily; arrival: ArrivalPlan; index: number }[] }>();
+  for (const family of families) {
+    if (!needsArrivalSupport(family)) continue;
+    familyArrivals(family.logistics).forEach((arrival, index) => {
+      const key = arrivalSortKey(arrival);
+      const group = groups.get(key) ?? { key, label: formatArrivalDateTime(arrival), entries: [] };
+      group.entries.push({ family, arrival, index });
+      groups.set(key, group);
+    });
+  }
+  return [...groups.values()].sort((a, b) => compareNames(a.key, b.key)).map((group) => ({
+    ...group, entries: group.entries.sort((a, b) => compareNames(a.family.label, b.family.label) || a.index - b.index),
+  }));
+}
+
 function firstPickupName(logistics: FamilyLogistics | null) {
   return familyArrivals(logistics).flatMap((entry) => entry.pickup_by ? [entry.pickup_by] : []).sort(compareNames)[0] ?? "";
 }
@@ -43,6 +79,22 @@ export type LogisticsFamily = {
   accommodation: Accommodation | null;
 };
 
+export function needsArrivalSupport(family: LogisticsFamily) {
+  return family.logistics?.arrival_support_required !== false;
+}
+
+export function hasIncompleteArrival(family: LogisticsFamily) {
+  if (!needsArrivalSupport(family)) return false;
+  const arrivals = familyArrivals(family.logistics);
+  return arrivals.length === 0 || arrivals.some((entry) => !entry.travel_mode || !entry.arrival_date);
+}
+
+export function arrivalSupportSummary(families: LogisticsFamily[]) {
+  const required = families.filter(needsArrivalSupport);
+  const assigned = required.filter((family) => family.accommodation).length;
+  return { assigned, awaiting: required.length - assigned, notRequired: families.length - required.length };
+}
+
 const naturalOrder = new Intl.Collator("en", { numeric: true, sensitivity: "base" });
 export const compareNames = (a: string, b: string) => naturalOrder.compare(a, b);
 
@@ -52,12 +104,12 @@ export function sortLogisticsFamilies(families: LogisticsFamily[], sort: Logisti
   return [...families].sort((a, b) => {
     const pickupA = sort === "dropoff" ? a.logistics?.dropoff_by ?? "" : firstPickupName(a.logistics);
     const pickupB = sort === "dropoff" ? b.logistics?.dropoff_by ?? "" : firstPickupName(b.logistics);
-    const dateA = sort === "departure" ? a.logistics?.departure_date : earliestArrival(a.logistics);
-    const dateB = sort === "departure" ? b.logistics?.departure_date : earliestArrival(b.logistics);
+    const dateA = sort === "departure" ? a.logistics?.departure_date : earliestArrivalKey(a.logistics);
+    const dateB = sort === "departure" ? b.logistics?.departure_date : earliestArrivalKey(b.logistics);
     const primary = sort === "pickup" || sort === "dropoff"
       ? Number(!pickupA) - Number(!pickupB) || compareNames(pickupA, pickupB)
       : sort === "arrival" || sort === "departure"
-        ? compareNames(dateA ?? "9999", dateB ?? "9999")
+        ? compareNames(dateA ?? "9999-99-99T99:99", dateB ?? "9999-99-99T99:99")
         : 0;
     return primary || compareNames(a.label, b.label) || a.id - b.id;
   });
@@ -118,6 +170,7 @@ export type AccommodationGroup = {
 export function groupByAccommodation(families: LogisticsFamily[]): AccommodationGroup[] {
   const groups = new Map<string, AccommodationGroup>();
   for (const family of families) {
+    if (!needsArrivalSupport(family)) continue;
     const stay = family.accommodation;
     if (!stay) continue;
     const key = accommodationKey(stay);
@@ -134,7 +187,7 @@ export function sortAccommodationFamilies(families: LogisticsFamily[], sort: "ro
       ? Number(!a.accommodation?.room_number) - Number(!b.accommodation?.room_number)
         || compareNames(a.accommodation?.room_number ?? "", b.accommodation?.room_number ?? "")
       : sort === "arrival"
-        ? compareNames(earliestArrival(a.logistics) ?? "9999", earliestArrival(b.logistics) ?? "9999")
+        ? compareNames(earliestArrivalKey(a.logistics), earliestArrivalKey(b.logistics))
         : 0;
     return primary || compareNames(a.label, b.label) || a.id - b.id;
   });
@@ -238,6 +291,12 @@ export function parseArrivalPlans(form: FormData): { data: ArrivalPlan[]; error?
       normalized[key] = value?.trim() || null;
     }
     const plan = normalized as ArrivalPlan;
+    if (entry.arrival_time != null && typeof entry.arrival_time !== "string") return { error: `Pickup ${index + 1}: enter a valid arrival time.` };
+    const time = entry.arrival_time?.trim() || null;
+    if (time && (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time) || !plan.arrival_date)) {
+      return { error: `Pickup ${index + 1}: choose an arrival date and a valid time.` };
+    }
+    if (entry.arrival_time !== undefined) plan.arrival_time = time;
     if (plan.guests && plan.guests.length > 300) return { error: `Pickup ${index + 1}: guest names must be 300 characters or fewer.` };
     const single = new FormData();
     single.set("family_id", String(form.get("family_id") ?? ""));

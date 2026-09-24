@@ -4,6 +4,23 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/supabase/admin-auth";
 import { parseArrivalPlans, parseDepartureForm, parseLogisticsForm } from "@/lib/logistics";
 
+export async function setArrivalSupportRequired(form: FormData) {
+  const { supabase } = await requireAdmin();
+  const familyId = Number(form.get("family_id"));
+  const required = form.get("required");
+  if (!Number.isSafeInteger(familyId) || familyId <= 0 || (required !== "true" && required !== "false")) {
+    return { error: "Choose a valid family and arrangement status." };
+  }
+  // Update only the requirement flag, preserving saved plans for re-enabling.
+  const { error } = await supabase.from("family_logistics").upsert({
+    family_id: familyId, arrival_support_required: required === "true",
+  }, { onConflict: "family_id" });
+  if (error) return { error: "Could not update the arrangement requirement. Please try again." };
+  revalidatePath("/admin/logistics");
+  revalidatePath("/admin/accommodation");
+  return { success: true };
+}
+
 export async function saveFamilyDeparture(formData: FormData) {
   const { supabase } = await requireAdmin();
   const parsed = parseDepartureForm(formData);

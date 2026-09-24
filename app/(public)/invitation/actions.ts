@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { remainingGuestSlots } from "@/lib/family-guest-slots";
 import {
@@ -278,6 +279,8 @@ export async function updateRsvpStatus(
     .eq("id", rsvpId);
 
   if (error) return { success: false, error: error.message };
+  revalidatePath("/admin/logistics");
+  revalidatePath("/admin/accommodation");
   return { success: true };
 }
 
@@ -295,6 +298,8 @@ export async function updateRsvpStatusBulk(
     .in("id", rsvpIds);
 
   if (error) return { success: false, error: error.message };
+  revalidatePath("/admin/logistics");
+  revalidatePath("/admin/accommodation");
   return { success: true };
 }
 
