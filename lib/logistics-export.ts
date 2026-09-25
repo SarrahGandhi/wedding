@@ -19,7 +19,7 @@ export async function createLogisticsExport(families: LogisticsFamily[]) {
   sheet.columns = LOGISTICS_EXPORT_HEADERS.map((header, index) => ({
     header, width: COLUMN_WIDTHS[index],
     style: {
-      font: { name: "Arial", size: 11, color: { argb: "FF292524" } },
+      font: { name: "Calibri", size: 11, color: { argb: "FF000000" } },
       alignment: { vertical: "top", wrapText: true },
       numFmt: "@",
     },
@@ -52,19 +52,20 @@ export async function createLogisticsExport(families: LogisticsFamily[]) {
       ? value.split("\n").reduce((count, line) => count + Math.max(1, Math.ceil(line.length / (COLUMN_WIDTHS[index] - 3))), 0)
       : 1);
     row.height = Math.min(409, Math.max(30, Math.max(...lines) * 15 + 8));
-    if (row.number % 2 === 0) {
-      row.eachCell({ includeEmpty: true }, (cell) => {
-        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF5F3EF" } };
-      });
-    }
   }
 
-  const header = sheet.getRow(1);
-  header.height = 36;
-  header.eachCell((cell) => {
-    cell.font = { name: "Arial", size: 11, bold: true, color: { argb: "FFFFFFFF" } };
-    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF44403C" } };
-    cell.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
+  sheet.getRow(1).height = 36;
+  sheet.eachRow((row) => {
+    for (let column = 1; column <= LOGISTICS_EXPORT_HEADERS.length; column++) {
+      const cell = row.getCell(column);
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFFFFF" } };
+      cell.border = {
+        top: { style: "thin", color: { argb: "FF000000" } },
+        left: { style: "thin", color: { argb: "FF000000" } },
+        bottom: { style: "thin", color: { argb: "FF000000" } },
+        right: { style: "thin", color: { argb: "FF000000" } },
+      };
+    }
   });
   sheet.autoFilter = `A1:K${sheet.rowCount}`;
   sheet.pageSetup.printTitlesRow = "1:1";
