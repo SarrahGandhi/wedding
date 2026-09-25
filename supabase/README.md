@@ -168,8 +168,11 @@ logistics details are exposed to anonymous invitation visitors. If a family late
 has no accepted RSVPs, its saved plan is retained but hidden from these pages.
 
 Apply `20260918000000_family_logistics.sql`,
-`20260918010000_optional_hotel_rooms.sql`, and
-`20260925000000_travel_numbers_house_rooms.sql` before using these pages:
+`20260918010000_optional_hotel_rooms.sql`,
+`20260925000000_travel_numbers_house_rooms.sql`, and
+`20260925010000_fix_logistics_overloads.sql` before using these pages.
+The last migration resolves the ambiguous `save_family_logistics` call when
+saving pickups, while preserving the eight-, nine-, and eleven-argument APIs:
 
 ```sh
 pnpm supabase migration up --local

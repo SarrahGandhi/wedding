@@ -20,10 +20,6 @@ export function LogisticsForm({ family, accommodations, pickupNames, onSaved, on
   const [kind, setKind] = useState("HOUSE");
   const [name, setName] = useState("");
   const [room, setRoom] = useState(family.accommodation?.room_number ?? "");
-  const [travelMode, setTravelMode] = useState(family.logistics?.travel_mode ?? "");
-  const [trainNumber, setTrainNumber] = useState(family.logistics?.train_number ?? "");
-  const [coachNumber, setCoachNumber] = useState(family.logistics?.coach_number ?? "");
-  const [flightNumber, setFlightNumber] = useState(family.logistics?.flight_number ?? "");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [arrivals, setArrivals] = useState(() => {
@@ -62,30 +58,6 @@ export function LogisticsForm({ family, accommodations, pickupNames, onSaved, on
     <form onSubmit={submit} className="mt-5 bg-warm-white p-4 sm:p-6" aria-label={`Logistics for ${family.label}`}>
       <input type="hidden" name="family_id" value={family.id} />
       <fieldset disabled={pending} className="min-w-0 space-y-6">
-        <legend className="mb-4 font-display text-xl">Travel and arrival</legend>
-        <div className="grid gap-5 sm:grid-cols-2">
-          <SelectField label="Travelling by" name="travel_mode" value={travelMode} onChange={(event) => setTravelMode(event.target.value)}>
-            <option value="">Not decided yet</option>
-            {TRAVEL_MODES.map((mode) => <option key={mode} value={mode}>{TRAVEL_LABELS[mode]}</option>)}
-          </SelectField>
-          <FormField label="Arrival date" type="date" name="arrival_date" defaultValue={family.logistics?.arrival_date ?? ""} />
-        </div>
-        {travelMode === "TRAIN" && (
-          <div className="grid gap-5 sm:grid-cols-2">
-            <FormField label="Train number" name="train_number" maxLength={40} value={trainNumber}
-              onChange={(event) => setTrainNumber(event.target.value)} placeholder="e.g. 12952" />
-            <FormField label="Coach number" name="coach_number" maxLength={40} value={coachNumber}
-              onChange={(event) => setCoachNumber(event.target.value)} placeholder="e.g. B2" />
-          </div>
-        )}
-        {travelMode === "FLIGHT" && (
-          <div className="sm:max-w-sm">
-            <FormField label="Flight number" name="flight_number" maxLength={40} value={flightNumber}
-              onChange={(event) => setFlightNumber(event.target.value)} placeholder="e.g. AI 101" />
-          </div>
-        )}
-        <TextareaField label="Travel details (optional)" name="travel_details" rows={2} maxLength={1000}
-          defaultValue={family.logistics?.travel_details ?? ""} placeholder="Arrival time or pickup arrangements" />
         <legend className="mb-4 font-display text-xl">Arrivals and pickups</legend>
         <p className="text-sm text-text-secondary">Add a pickup for each group arriving together. All details are optional.</p>
         {arrivals.map((entry, index) => <fieldset key={entry.id} className="min-w-0 space-y-4 rounded-xl border border-border/60 p-4">
@@ -111,7 +83,7 @@ export function LogisticsForm({ family, accommodations, pickupNames, onSaved, on
               placeholder="Enter or choose a name" />
           </div>
           <TextareaField label="Travel details (optional)" name={`arrival-${entry.id}-travel_details`} rows={2} maxLength={1000}
-            defaultValue={entry.travel_details ?? ""} placeholder="Flight or train number, arrival time, or pickup arrangements" />
+            defaultValue={entry.travel_details ?? ""} placeholder="Flight or train number, coach number, or pickup arrangements" />
           <Button variant="ghost" aria-label={`Remove pickup ${index + 1}`} onClick={() => setArrivals((current) => current.filter((plan) => plan.id !== entry.id))}>Remove pickup</Button>
         </fieldset>)}
         <datalist id={`${inputId}-pickup`}>{pickupNames.map((person) => <option key={person} value={person} />)}</datalist>
