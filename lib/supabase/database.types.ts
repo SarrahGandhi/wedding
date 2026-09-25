@@ -147,6 +147,9 @@ export type Database = {
           accommodation_id: number | null
           arrival_date: string | null
           family_id: number
+          train_number: string | null
+          coach_number: string | null
+          flight_number: string | null
           travel_details: string | null
           travel_mode: string | null
         }
@@ -154,6 +157,9 @@ export type Database = {
           accommodation_id?: number | null
           arrival_date?: string | null
           family_id: number
+          train_number?: string | null
+          coach_number?: string | null
+          flight_number?: string | null
           travel_details?: string | null
           travel_mode?: string | null
         }
@@ -161,6 +167,9 @@ export type Database = {
           accommodation_id?: number | null
           arrival_date?: string | null
           family_id?: number
+          train_number?: string | null
+          coach_number?: string | null
+          flight_number?: string | null
           travel_details?: string | null
           travel_mode?: string | null
         }
@@ -353,6 +362,9 @@ export type Database = {
           p_new_kind: string | null
           p_new_name: string | null
           p_new_room_number: string | null
+          p_train_number?: string | null
+          p_coach_number?: string | null
+          p_flight_number?: string | null
           p_travel_details: string | null
           p_travel_mode: string | null
         }

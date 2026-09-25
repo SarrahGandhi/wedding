@@ -52,6 +52,48 @@ begin
         raise exception 'Shared house assignment failed';
     end if;
 
+    perform public.save_family_logistics(family_a, 'TRAIN', 'Pickup needed', null, null, 'HOUSE', 'Logistics test house', ' 2A ', ' 01234 ', ' B2 ', 'stale flight');
+    select accommodation_id into shared_id from public.family_logistics where family_id = family_a;
+    if (select room_number from public.accommodations where id = shared_id) is distinct from '2A' then
+        raise exception 'House room was not saved';
+    end if;
+    if (select accommodation_id from public.family_logistics where family_id = family_b) <> second_id then
+        raise exception 'House room assignment changed another family';
+    end if;
+    if not exists (select 1 from public.family_logistics where family_id = family_a
+        and train_number = '01234' and coach_number = 'B2' and flight_number is null and travel_details = 'Pickup needed') then
+        raise exception 'Train details were not saved correctly';
+    end if;
+    perform public.save_family_logistics(family_b, 'FLIGHT', null, null, null, 'HOUSE', ' LOGISTICS TEST HOUSE ', '2a', 'stale train', 'stale coach', ' AI 101 ');
+    if (select accommodation_id from public.family_logistics where family_id = family_b) <> shared_id then
+        raise exception 'Shared house room was not reused';
+    end if;
+    perform public.save_family_logistics(family_a, 'FLIGHT', null, null, shared_id, null, null, null, null, null, ' AI 101 ');
+    if not exists (select 1 from public.family_logistics where family_id = family_a
+        and train_number is null and coach_number is null and flight_number = 'AI 101') then
+        raise exception 'Switching to flight did not clear train details';
+    end if;
+    perform public.save_family_logistics(family_a, 'CAR', null, null, shared_id, null, null, null);
+    if exists (select 1 from public.family_logistics where family_id = family_a
+        and (train_number is not null or coach_number is not null or flight_number is not null)) then
+        raise exception 'Switching to car did not clear travel numbers';
+    end if;
+    begin
+        update public.family_logistics set flight_number = 'AI 101' where family_id = family_a;
+        raise exception 'Travel number mode constraint was bypassed';
+    exception when check_violation then null;
+    end;
+    begin
+        perform public.save_family_logistics(family_a, 'TRAIN', null, null, shared_id, null, null, null, repeat('1', 41), null, null);
+        raise exception 'Oversized train number was accepted';
+    exception when check_violation then null;
+    end;
+    begin
+        insert into public.accommodations(kind, name, room_number) values ('HOUSE', 'Invalid house room', '   ');
+        raise exception 'House room constraint was bypassed';
+    exception when check_violation then null;
+    end;
+
     perform public.save_family_logistics(family_a, null, null, null, null, 'HOTEL', 'Logistics pending room hotel', null);
     select accommodation_id into shared_id from public.family_logistics where family_id = family_a;
     if (select room_number from public.accommodations where id = shared_id) is not null then

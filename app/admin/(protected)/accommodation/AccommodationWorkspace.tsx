@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { FormField, SelectField } from "@/app/shared/FormField";
-import { formatArrival, groupByAccommodation, matchesFamily, sortAccommodationFamilies, travelLabel, type AccommodationGroup, type LogisticsFamily } from "@/lib/logistics";
+import { formatArrival, groupByAccommodation, matchesFamily, sortAccommodationFamilies, travelSummary, type AccommodationGroup, type LogisticsFamily } from "@/lib/logistics";
 
 function FamilyDetails({ family }: { family: LogisticsFamily }) {
   return (
@@ -13,7 +13,7 @@ function FamilyDetails({ family }: { family: LogisticsFamily }) {
       </Link>
       <p className="mt-1 text-sm text-text-secondary">{family.guests.length} confirmed {family.guests.length === 1 ? "guest" : "guests"} · {family.side === "BRIDE" ? "Bride’s side" : "Groom’s side"}</p>
       <p className="mt-1 break-words text-sm text-text-secondary">{family.guests.map((guest) => guest.name).join(", ")}</p>
-      <p className="mt-2 text-sm tabular-nums">{formatArrival(family.logistics?.arrival_date)} · {travelLabel(family.logistics?.travel_mode)}</p>
+      <p className="mt-2 break-words text-sm tabular-nums">{formatArrival(family.logistics?.arrival_date)} · {travelSummary(family.logistics)}</p>
     </div>
   );
 }
@@ -31,28 +31,25 @@ function StayGroup({ group }: { group: AccommodationGroup }) {
           <p className="mb-2 text-xs uppercase tracking-[0.1em] text-accent">{isHotel ? "Hotel" : "House"}</p>
           <h2 className="break-words font-display text-3xl">{group.name}</h2>
           <p className="mt-2 text-sm text-text-secondary tabular-nums">
-            {group.families.length} {group.families.length === 1 ? "family" : "families"} · {guestCount} confirmed {guestCount === 1 ? "guest" : "guests"}{isHotel ? ` · ${rooms} ${rooms === 1 ? "room" : "rooms"} assigned` : ""}
+            {group.families.length} {group.families.length === 1 ? "family" : "families"} · {guestCount} confirmed {guestCount === 1 ? "guest" : "guests"}{` · ${rooms} ${rooms === 1 ? "room" : "rooms"} assigned`}
           </p>
         </div>
         <SelectField label={`Sort ${group.name} by`} value={sort} onChange={(event) => setSort(event.target.value as typeof sort)}>
-          {isHotel && <option value="room">Room number</option>}
-          {!isHotel && <option value="room">Family name</option>}
-          {isHotel && <option value="family">Family name</option>}
+          <option value="room">Room number</option>
+          <option value="family">Family name</option>
           <option value="arrival">Arrival date</option>
         </SelectField>
       </div>
       <ul className="space-y-4">
         {ordered.map((family) => (
           <li key={family.id} className="flex flex-col gap-3 bg-warm-white p-4 sm:flex-row sm:gap-6 sm:p-5">
-            {isHotel && (
-              <div className="w-24 shrink-0">
-                <p className="text-xs uppercase tracking-[0.1em] text-text-secondary">Room</p>
-                <p className={`mt-1 break-words ${family.accommodation?.room_number ? "font-display text-2xl tabular-nums" : "text-sm text-text-secondary"}`}>{family.accommodation?.room_number ?? "Not assigned"}</p>
-                {family.accommodation?.room_number && group.families.filter((other) => other.accommodation?.id === family.accommodation?.id).length > 1 && (
-                  <p className="mt-1 text-xs text-sage">Shared room</p>
-                )}
-              </div>
-            )}
+            <div className="w-24 shrink-0">
+              <p className="text-xs uppercase tracking-[0.1em] text-text-secondary">Room</p>
+              <p className={`mt-1 break-words ${family.accommodation?.room_number ? "font-display text-2xl tabular-nums" : "text-sm text-text-secondary"}`}>{family.accommodation?.room_number ?? "Not assigned"}</p>
+              {family.accommodation?.room_number && group.families.filter((other) => other.accommodation?.id === family.accommodation?.id).length > 1 && (
+                <p className="mt-1 text-xs text-sage">Shared room</p>
+              )}
+            </div>
             <FamilyDetails family={family} />
           </li>
         ))}

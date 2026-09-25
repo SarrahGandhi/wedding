@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { accommodationLabel, accommodationOptions, formatArrival, groupByAccommodation, matchesFamily, parseLogisticsForm, sortAccommodationFamilies } from "../lib/logistics.ts";
+import { accommodationLabel, accommodationOptions, formatArrival, groupByAccommodation, matchesFamily, parseLogisticsForm, sortAccommodationFamilies, travelSummary } from "../lib/logistics.ts";
 
 function form(values) {
   const data = new FormData();
@@ -8,15 +8,34 @@ function form(values) {
   return data;
 }
 
-test("hotel rooms are optional; a house does not retain a stale room", () => {
-  for (const room of ["", "   ", "12A"]) {
-    const hotel = parseLogisticsForm(form({ accommodation_id: "new", new_kind: "HOTEL", new_name: "Lake Hotel", room_number: room }));
-    assert.equal(hotel.data.p_new_room_number, room.trim() || null);
+test("house and hotel rooms are optional and retain supplied room numbers", () => {
+  for (const kind of ["HOUSE", "HOTEL"]) {
+    for (const room of ["", "   ", "12A"]) {
+      const hotel = parseLogisticsForm(form({ accommodation_id: "new", new_kind: kind, new_name: "Lake stay", room_number: room }));
+      assert.equal(hotel.data.p_new_room_number, room.trim() || null);
+    }
+    assert.match(parseLogisticsForm(form({ accommodation_id: "new", new_kind: kind, new_name: "Lake stay", room_number: "1".repeat(41) })).error, /room number/);
   }
-  assert.match(parseLogisticsForm(form({ accommodation_id: "new", new_kind: "HOTEL", new_name: "Lake Hotel", room_number: "1".repeat(41) })).error, /room number/);
   const house = parseLogisticsForm(form({ accommodation_id: "new", new_kind: "HOUSE", new_name: "  Gandhi   house ", room_number: "201" }));
-  assert.equal(house.data.p_new_room_number, null);
+  assert.equal(house.data.p_new_room_number, "201");
   assert.equal(house.data.p_new_name, "Gandhi house");
+});
+
+test("travel numbers are trimmed and only saved for the selected mode", () => {
+  const numbers = { train_number: " 01234 ", coach_number: " B2 ", flight_number: " AI 101 " };
+  for (const mode of ["TRAIN", "FLIGHT", "CAR", "BUS", "OTHER", ""]) {
+    const { data } = parseLogisticsForm(form({ travel_mode: mode, ...numbers }));
+    assert.equal(data.p_train_number, mode === "TRAIN" ? "01234" : null);
+    assert.equal(data.p_coach_number, mode === "TRAIN" ? "B2" : null);
+    assert.equal(data.p_flight_number, mode === "FLIGHT" ? "AI 101" : null);
+  }
+  for (const [mode, field] of [["TRAIN", "train_number"], ["TRAIN", "coach_number"], ["FLIGHT", "flight_number"]]) {
+    assert.match(parseLogisticsForm(form({ travel_mode: mode, [field]: "1".repeat(41) })).error, /40 characters/);
+    assert.equal(parseLogisticsForm(form({ travel_mode: mode, [field]: "  " })).data[`p_${field}`], null);
+  }
+  assert.equal(travelSummary({ travel_mode: "TRAIN", train_number: "01234", coach_number: "B2" }), "Train 01234 · Coach B2");
+  assert.equal(travelSummary({ travel_mode: "FLIGHT", flight_number: "AI 101" }), "Flight · AI 101");
+  assert.equal(travelSummary(null), "Travel not set");
 });
 
 test("existing shared stays are selected by ID and assignments can be cleared", () => {
@@ -82,6 +101,17 @@ test("hotels without room numbers remain grouped and sort after assigned rooms",
   assert.equal(groupByAccommodation(entries).length, 1);
   assert.deepEqual(sortAccommodationFamilies(entries, "room").map((f) => f.id), [2, 3, 1, 7]);
   assert.equal(accommodationLabel(unassigned.accommodation), "Lake Hotel · Room not assigned");
+});
+
+test("house rooms are displayed, grouped and sorted with unassigned rooms last", () => {
+  const entries = [family(1, "A", stay(10, "Gandhi house", "10", "HOUSE")),
+    family(2, "B", stay(11, "Gandhi house", "2", "HOUSE")),
+    family(3, "C", stay(12, "Gandhi house", null, "HOUSE"))];
+  assert.equal(groupByAccommodation(entries).length, 1);
+  assert.equal(accommodationOptions(entries.map((f) => f.accommodation)).length, 1);
+  assert.deepEqual(sortAccommodationFamilies(entries, "room").map((f) => f.id), [2, 1, 3]);
+  assert.equal(accommodationLabel(entries[0].accommodation), "Gandhi house · House · Room 10");
+  assert.equal(accommodationLabel(entries[2].accommodation), "Gandhi house · House");
 });
 
 test("search covers guests, accommodation and room; dates do not shift time zones", () => {

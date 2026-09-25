@@ -19,15 +19,19 @@ export function LogisticsForm({ family, accommodations, onSaved, onCancel }: {
   const [kind, setKind] = useState("HOUSE");
   const [name, setName] = useState("");
   const [room, setRoom] = useState(family.accommodation?.room_number ?? "");
+  const [travelMode, setTravelMode] = useState(family.logistics?.travel_mode ?? "");
+  const [trainNumber, setTrainNumber] = useState(family.logistics?.train_number ?? "");
+  const [coachNumber, setCoachNumber] = useState(family.logistics?.coach_number ?? "");
+  const [flightNumber, setFlightNumber] = useState(family.logistics?.flight_number ?? "");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const inputId = useId();
   const isNew = choice === "new";
   const selectedProperty = properties.find((property) => String(property.id) === choice);
-  const isHotel = isNew ? kind === "HOTEL" : selectedProperty?.kind === "HOTEL";
-  const hotelName = isNew ? name : selectedProperty?.name ?? "";
+  const propertyKind = isNew ? kind : selectedProperty?.kind;
+  const propertyName = isNew ? name : selectedProperty?.name ?? "";
   const hotelNames = properties.filter((property) => property.kind === "HOTEL").map((property) => property.name);
-  const existingRooms = accommodations.filter((stay) => stay.kind === "HOTEL" && stay.room_number && stay.name.trim().toLocaleLowerCase() === hotelName.trim().toLocaleLowerCase());
+  const existingRooms = accommodations.filter((stay) => stay.kind === propertyKind && stay.room_number && stay.name.trim().toLocaleLowerCase() === propertyName.trim().toLocaleLowerCase());
 
   function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -50,14 +54,28 @@ export function LogisticsForm({ family, accommodations, onSaved, onCancel }: {
       <fieldset disabled={pending} className="min-w-0 space-y-6">
         <legend className="mb-4 font-display text-xl">Travel and arrival</legend>
         <div className="grid gap-5 sm:grid-cols-2">
-          <SelectField label="Travelling by" name="travel_mode" defaultValue={family.logistics?.travel_mode ?? ""}>
+          <SelectField label="Travelling by" name="travel_mode" value={travelMode} onChange={(event) => setTravelMode(event.target.value)}>
             <option value="">Not decided yet</option>
             {TRAVEL_MODES.map((mode) => <option key={mode} value={mode}>{TRAVEL_LABELS[mode]}</option>)}
           </SelectField>
           <FormField label="Arrival date" type="date" name="arrival_date" defaultValue={family.logistics?.arrival_date ?? ""} />
         </div>
+        {travelMode === "TRAIN" && (
+          <div className="grid gap-5 sm:grid-cols-2">
+            <FormField label="Train number" name="train_number" maxLength={40} value={trainNumber}
+              onChange={(event) => setTrainNumber(event.target.value)} placeholder="e.g. 12952" />
+            <FormField label="Coach number" name="coach_number" maxLength={40} value={coachNumber}
+              onChange={(event) => setCoachNumber(event.target.value)} placeholder="e.g. B2" />
+          </div>
+        )}
+        {travelMode === "FLIGHT" && (
+          <div className="sm:max-w-sm">
+            <FormField label="Flight number" name="flight_number" maxLength={40} value={flightNumber}
+              onChange={(event) => setFlightNumber(event.target.value)} placeholder="e.g. AI 101" />
+          </div>
+        )}
         <TextareaField label="Travel details (optional)" name="travel_details" rows={2} maxLength={1000}
-          defaultValue={family.logistics?.travel_details ?? ""} placeholder="Flight or train number, arrival time, or pickup arrangements" />
+          defaultValue={family.logistics?.travel_details ?? ""} placeholder="Arrival time or pickup arrangements" />
 
         <div className="space-y-4 border-t border-border/60 pt-5">
           <h3 className="font-display text-xl">Where they’re staying</h3>
@@ -90,7 +108,7 @@ export function LogisticsForm({ family, accommodations, onSaved, onCancel }: {
               )}
             </div>
           )}
-          {isHotel && (
+          {(isNew || selectedProperty) && (
             <div className="space-y-2 sm:max-w-sm">
               <FormField label="Room number (optional)" name="room_number" maxLength={40}
                 value={room} onChange={(event) => setRoom(event.target.value)} list={`${inputId}-rooms`} placeholder="e.g. 201 or 12A" />

@@ -17,15 +17,11 @@ export async function saveFamilyLogistics(formData: FormData) {
       .maybeSingle();
     if (error) return { error: error.message };
     if (!accommodation) return { error: "This accommodation is no longer available. Refresh the page and choose another." };
-    if (accommodation.kind === "HOTEL") {
-      // Resolve the selected hotel's name on the server, then reuse/create its
-      // requested room atomically without changing any other family's stay.
-      values.p_accommodation_id = null;
-      values.p_new_kind = "HOTEL";
-      values.p_new_name = accommodation.name;
-    } else {
-      values.p_new_room_number = null;
-    }
+    // Resolve the property on the server, then reuse/create its requested room
+    // atomically without changing any other family's stay.
+    values.p_accommodation_id = null;
+    values.p_new_kind = accommodation.kind;
+    values.p_new_name = accommodation.name;
   }
   const { error } = await supabase.rpc("save_family_logistics", values);
   if (error) {
