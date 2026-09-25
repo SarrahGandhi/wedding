@@ -1,27 +1,33 @@
 import type { Metadata } from "next";
-import { Bodoni_Moda, Cormorant_Garamond, Instrument_Sans } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const displaySerif = Bodoni_Moda({
+const displaySerif = localFont({
+  src: [
+    { path: "./fonts/bodoni-moda/regular.ttf", style: "normal", weight: "400 700" },
+    { path: "./fonts/bodoni-moda/italic.ttf", style: "italic", weight: "400 700" },
+  ],
   variable: "--font-display-serif",
-  subsets: ["latin"],
   display: "swap",
-  style: ["normal", "italic"],
-  weight: ["400", "500", "600", "700"],
+  adjustFontFallback: "Times New Roman",
 });
 
-const bodySans = Instrument_Sans({
+const bodySans = localFont({
+  src: "./fonts/instrument-sans/regular.ttf",
+  weight: "400 700",
+  style: "normal",
   variable: "--font-body-sans",
-  subsets: ["latin"],
   display: "swap",
 });
 
-const accentSerif = Cormorant_Garamond({
+const accentSerif = localFont({
+  src: [
+    { path: "./fonts/cormorant-garamond/regular.ttf", style: "normal", weight: "400 600" },
+    { path: "./fonts/cormorant-garamond/italic.ttf", style: "italic", weight: "400 600" },
+  ],
   variable: "--font-accent-serif",
-  subsets: ["latin"],
   display: "swap",
-  style: ["normal", "italic"],
-  weight: ["400", "500", "600"],
+  adjustFontFallback: "Times New Roman",
 });
 
 export const metadata: Metadata = {
