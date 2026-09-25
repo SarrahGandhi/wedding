@@ -32,20 +32,12 @@ function StayGroup({ group }: { group: AccommodationGroup }) {
           <p className="mb-2 text-xs uppercase tracking-[0.1em] text-accent">{isHotel ? "Hotel" : "House"}</p>
           <h2 className="break-words font-display text-3xl">{group.name}</h2>
           <p className="mt-2 text-sm text-text-secondary tabular-nums">
-            {group.families.length} {group.families.length === 1 ? "family" : "families"} · {guestCount} confirmed {guestCount === 1 ? "guest" : "guests"}{` · ${rooms} ${rooms === 1 ? "room" : "rooms"} assigned`}
+            {group.families.length} {group.families.length === 1 ? "family" : "families"} · {guestCount} attending {guestCount === 1 ? "guest" : "guests"}{` · ${rooms} ${rooms === 1 ? "room" : "rooms"} assigned`}
           </p>
         </div>
         <SelectField label={`Sort ${group.name} by`} value={sort} onChange={(event) => setSort(event.target.value as typeof sort)}>
           <option value="room">Room number</option>
           <option value="family">Family name</option>
-          <option value="arrival">Arrival date</option>
-            {group.families.length} {group.families.length === 1 ? "family" : "families"} · {guestCount} attending {guestCount === 1 ? "guest" : "guests"}{isHotel ? ` · ${rooms} ${rooms === 1 ? "room" : "rooms"} assigned` : ""}
-          </p>
-        </div>
-        <SelectField label={`Sort ${group.name} by`} value={sort} onChange={(event) => setSort(event.target.value as typeof sort)}>
-          {isHotel && <option value="room">Room number</option>}
-          {!isHotel && <option value="room">Family name</option>}
-          {isHotel && <option value="family">Family name</option>}
           <option value="arrival">Arrival date and time</option>
         </SelectField>
       </div>

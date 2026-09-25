@@ -32,10 +32,6 @@ function FamilyRow({ family, accommodations, pickupNames, initiallyOpen }: {
           {editing ? "Close" : family.logistics ? "Edit" : "Add details"}
         </Button>}
       </div>
-      <dl className="mt-5 grid gap-4 text-sm sm:grid-cols-3">
-        <div><dt className="mb-1 text-text-secondary">Travelling by</dt><dd className="break-words">{travelSummary(family.logistics)}</dd></div>
-        <div><dt className="mb-1 text-text-secondary">Arriving</dt><dd className="tabular-nums">{formatArrival(family.logistics?.arrival_date)}</dd></div>
-        <div><dt className="mb-1 text-text-secondary">Accommodation</dt><dd className="break-words">{family.accommodation ? accommodationLabel(family.accommodation) : "Not assigned yet"}</dd></div>
       <label className="mt-5 flex cursor-pointer items-center gap-3 text-sm">
         <input type="checkbox" checked={required} disabled={pending || editing}
           aria-label={`Pickup and accommodation required for ${family.label}`}
@@ -93,11 +89,8 @@ function ArrivalWorkspace({ families, accommodations, initialFamilyId }: {
 }) {
   const [search, setSearch] = useState(initialFamilyId ? `#${initialFamilyId}` : "");
   const [filter, setFilter] = useState("ALL");
-  const [sort, setSort] = useState("family");
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
-  const assigned = families.filter((family) => family.accommodation).length;
-  const visible = families.filter((family) => {
   const [view, setView] = useState("family");
   const [sort, setSort] = useState<Extract<LogisticsSort, "family" | "arrival" | "pickup">>("family");
   const pickupNames = [...new Set(families.flatMap((family) => familyArrivals(family.logistics).flatMap((entry) => entry.pickup_by ? [entry.pickup_by] : [])))].sort(compareNames);

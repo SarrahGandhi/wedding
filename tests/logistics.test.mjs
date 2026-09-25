@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { accommodationLabel, accommodationOptions, arrivalSupportSummary, earliestArrival, familyArrivals, formatArrival, formatArrivalDateTime, groupArrivalsByTime, groupByAccommodation, hasIncompleteArrival, matchesFamily, needsArrivalSupport, parseArrivalPlans, parseDepartureForm, parseLogisticsForm, sortAccommodationFamilies, sortLogisticsFamilies } from "../lib/logistics.ts";
+import { accommodationLabel, accommodationOptions, arrivalSupportSummary, earliestArrival, familyArrivals, formatArrival, formatArrivalDateTime, groupArrivalsByTime, groupByAccommodation, hasIncompleteArrival, matchesFamily, needsArrivalSupport, parseArrivalPlans, parseDepartureForm, parseLogisticsForm, sortAccommodationFamilies, sortLogisticsFamilies, travelSummary } from "../lib/logistics.ts";
 
 function form(values) {
   const data = new FormData();
