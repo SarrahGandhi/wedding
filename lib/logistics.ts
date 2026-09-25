@@ -174,6 +174,20 @@ export function matchesFamily(family: LogisticsFamily, query: string): boolean {
   return words.every((word) => haystack.includes(word));
 }
 
+export type LogisticsSideFilter = "ALL" | "BRIDE" | "GROOM";
+export type AccommodationRequiredFilter = "ALL" | "REQUIRED" | "NOT_REQUIRED";
+
+export function filterLogisticsFamilies(families: LogisticsFamily[], {
+  search = "", side = "ALL", required = "ALL",
+}: { search?: string; side?: LogisticsSideFilter; required?: AccommodationRequiredFilter } = {}) {
+  const exactId = /^#(\d+)$/.exec(search.trim());
+  return families.filter((family) => {
+    if (side !== "ALL" && family.side !== side) return false;
+    if (required !== "ALL" && needsArrivalSupport(family) !== (required === "REQUIRED")) return false;
+    return exactId ? family.id === Number(exactId[1]) : matchesFamily(family, search);
+  });
+}
+
 export type AccommodationGroup = {
   key: string;
   name: string;
