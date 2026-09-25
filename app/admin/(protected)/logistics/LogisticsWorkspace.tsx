@@ -89,6 +89,8 @@ function ArrivalWorkspace({ families, accommodations, initialFamilyId }: {
 }) {
   const [search, setSearch] = useState(initialFamilyId ? `#${initialFamilyId}` : "");
   const [filter, setFilter] = useState("ALL");
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
   const [view, setView] = useState("family");
   const [sort, setSort] = useState<Extract<LogisticsSort, "family" | "arrival" | "pickup">>("family");
   const pickupNames = [...new Set(families.flatMap((family) => familyArrivals(family.logistics).flatMap((entry) => entry.pickup_by ? [entry.pickup_by] : [])))].sort(compareNames);
@@ -102,6 +104,19 @@ function ArrivalWorkspace({ families, accommodations, initialFamilyId }: {
     if (filter === "BRIDE" || filter === "GROOM") return family.side === filter;
     return true;
   }), sort);
+
+  async function exportExcel() {
+    setExporting(true);
+    setExportError(null);
+    try {
+      const { downloadLogisticsExport } = await import("@/lib/logistics-export");
+      await downloadLogisticsExport(visible);
+    } catch {
+      setExportError("The Excel file could not be exported. Please try again.");
+    } finally {
+      setExporting(false);
+    }
+  }
 
   if (families.length === 0) return <p className="py-6 text-text-secondary">Confirmed families will appear here when a guest accepts an invitation.</p>;
 
@@ -130,6 +145,13 @@ function ArrivalWorkspace({ families, accommodations, initialFamilyId }: {
           <option value="pickup">To be picked up by (A–Z)</option>
         </SelectField>
       </div>
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-text-secondary">Exports the families shown below, in the current order.</p>
+        <Button variant="secondary" onClick={exportExcel} disabled={exporting || visible.length === 0} aria-busy={exporting}>
+          {exporting ? "Exporting…" : "Export Excel"}
+        </Button>
+      </div>
+      {exportError && <p role="alert" className="mb-6 text-sm text-rose">{exportError}</p>}
       <div hidden={view !== "family"}>
       {visible.length === 0 ? <p className="py-6 text-text-secondary">No families match these filters.</p> : visible.map((family) => (
         <FamilyRow key={family.id} family={family} accommodations={accommodations} pickupNames={pickupNames} initiallyOpen={family.id === initialFamilyId} />

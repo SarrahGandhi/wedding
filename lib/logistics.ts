@@ -118,7 +118,7 @@ export function sortLogisticsFamilies(families: LogisticsFamily[], sort: Logisti
 export function accommodationLabel(stay: Accommodation): string {
   return stay.kind === "HOTEL"
     ? `${stay.name} · ${stay.room_number ? `Room ${stay.room_number}` : "Room not assigned"}`
-    : `${stay.name} · House`;
+    : `${stay.name} · House${stay.room_number ? ` · Room ${stay.room_number}` : ""}`;
 }
 
 export function accommodationKey(stay: Pick<Accommodation, "kind" | "name">): string {
@@ -150,6 +150,16 @@ export function travelLabel(value: string | null | undefined): string {
   return value && value in TRAVEL_LABELS
     ? TRAVEL_LABELS[value as TravelMode]
     : "Travel not set";
+}
+
+export function travelSummary(plan: FamilyLogistics | null): string {
+  const parts = [travelLabel(plan?.travel_mode)];
+  if (plan?.travel_mode === "TRAIN") {
+    if (plan.train_number) parts[0] = `Train ${plan.train_number}`;
+    if (plan.coach_number) parts.push(`Coach ${plan.coach_number}`);
+  }
+  if (plan?.travel_mode === "FLIGHT" && plan.flight_number) parts.push(plan.flight_number);
+  return parts.join(" · ");
 }
 
 export function matchesFamily(family: LogisticsFamily, query: string): boolean {
@@ -203,6 +213,12 @@ export function parseLogisticsForm(form: FormData) {
   if (mode && !(TRAVEL_MODES as readonly string[]).includes(mode)) return { error: "Choose a valid travel method." } as const;
   const details = value("travel_details");
   if (details.length > 1000) return { error: "Travel details must be 1,000 characters or fewer." } as const;
+  const train = mode === "TRAIN" ? value("train_number") : "";
+  const coach = mode === "TRAIN" ? value("coach_number") : "";
+  const flight = mode === "FLIGHT" ? value("flight_number") : "";
+  for (const [label, number] of [["Train", train], ["Coach", coach], ["Flight", flight]]) {
+    if (number.length > 40) return { error: `${label} number must be 40 characters or fewer.` } as const;
+  }
   const pickupValue = form.get("pickup_by");
   if (pickupValue !== null && typeof pickupValue !== "string") {
     return { error: "Enter the pickup person’s name as text." } as const;
@@ -222,15 +238,18 @@ export function parseLogisticsForm(form: FormData) {
   if (id !== null && (!Number.isSafeInteger(id) || id <= 0)) return { error: "Choose a valid accommodation." } as const;
   const kind = isNew ? value("new_kind") : "";
   const name = isNew ? value("new_name").replace(/\s+/g, " ") : "";
-  const room = (isNew && kind === "HOTEL") || id !== null ? value("room_number") : "";
+  const room = isNew || id !== null ? value("room_number") : "";
   if (isNew && kind !== "HOUSE" && kind !== "HOTEL") return { error: "Choose a house or hotel." } as const;
   if (isNew && (!name || name.length > 160)) return { error: "Enter a house or hotel name of up to 160 characters." } as const;
-  if (room.length > 40) return { error: "Enter a hotel room number of up to 40 characters." } as const;
+  if (room.length > 40) return { error: "Enter a room number of up to 40 characters." } as const;
   return {
     data: {
       p_family_id: familyId,
       p_travel_mode: mode || null,
       p_travel_details: details || null,
+      p_train_number: train || null,
+      p_coach_number: coach || null,
+      p_flight_number: flight || null,
       p_pickup_by: pickupBy || null,
       p_arrival_date: date || null,
       p_accommodation_id: id,

@@ -98,6 +98,8 @@ This table contains which guests are invited to which events and their RSVP stat
 `/admin/logistics` lists families with at least one guest who has accepted an event.
 Each confirmed guest is counted once across all events. Travel method, arrival
 date, travel details, and accommodation can be saved independently as plans emerge.
+Train travel has separate train and coach numbers; flights have a flight number.
+These fields support partial plans and are cleared when a different mode is saved.
 The optional “To be picked up by” field accepts a name and suggests names already
 used for confirmed families. Clear it to remove the assignment. Sort by pickup
 name to group families alphabetically, with unassigned families last.
@@ -148,26 +150,26 @@ summaries. Existing dates are retained with no assumed time; departure dates are
 unchanged. Times are stored as local `HH:mm` values, independent of browser timezone.
 
 `family_logistics` stores one plan per family. `accommodations` stores reusable
-houses and hotel stays. Multiple families may share any accommodation. Hotels
-require a name; room numbers are optional and can be assigned later. Houses
-require a name and have no room number. Hotel stays without a room number are
+houses and hotel stays. Multiple families may share any accommodation. Hotels and houses
+require a name; room numbers are optional and can be assigned later. Stays without a room number are
 shown as “Room not assigned” and sort after numbered rooms. They are excluded
 from assigned-room counts and are not labeled as shared rooms.
-The accommodation picker lists each hotel once. Select the existing hotel and
+The accommodation picker lists each hotel or house once. Select the existing property and
 enter or choose the family's optional room number separately; a different room
-does not require entering the hotel name again. Changing one family's room
+does not require entering the property name again. Changing one family's room
 preserves every other family's assignment.
-Hotel names and room numbers are matched without regard to case or surrounding
+Property names and room numbers are matched without regard to case or surrounding
 spaces. `/admin/accommodation` groups families by house or hotel and supports
-natural room-number sorting within each hotel.
+natural room-number sorting within each property.
 
 Both tables and the transactional `save_family_logistics` function are restricted
 to authenticated admins, following the existing admin authentication model. No
 logistics details are exposed to anonymous invitation visitors. If a family later
 has no accepted RSVPs, its saved plan is retained but hidden from these pages.
 
-Apply `20260918000000_family_logistics.sql` and
-`20260918010000_optional_hotel_rooms.sql` before using these pages:
+Apply `20260918000000_family_logistics.sql`,
+`20260918010000_optional_hotel_rooms.sql`, and
+`20260925000000_travel_numbers_house_rooms.sql` before using these pages:
 
 ```sh
 pnpm supabase migration up --local
