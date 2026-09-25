@@ -34,16 +34,16 @@ export async function createLogisticsExport(families: LogisticsFamily[]) {
     const travel = mode === "TRAIN" ? ["Train", plan?.train_number].filter(Boolean).join(" ")
       : mode === "FLIGHT" ? ["Flight", plan?.flight_number].filter(Boolean).join(" ")
         : mode ? mode[0] + mode.slice(1).toLowerCase() : null;
-    // Times, location and departure details are not yet captured by the form.
-    // Keep their cells empty for manual completion, rather than guessing from notes.
+    // Keep time and departure cells empty for manual completion.
     const values = [
       plan?.arrival_date ? new Date(`${plan.arrival_date}T00:00:00Z`) : null,
       null,
       travel,
       mode === "TRAIN" ? plan?.coach_number ?? null : null,
       family.guests.map((guest) => guest.name).join("\n"),
-      stay ? `${stay.name}${stay.room_number ? ` · Room ${stay.room_number}` : ""}` : null,
-      null, null, null, null,
+      stay?.name ?? null,
+      stay?.room_number ? `Room ${stay.room_number}` : null,
+      null, null, null,
       plan?.travel_details ?? null,
     ];
     const row = sheet.addRow(values);
