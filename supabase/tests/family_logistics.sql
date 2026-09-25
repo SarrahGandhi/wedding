@@ -270,6 +270,35 @@ begin
     assert (select jsonb_array_length(arrivals) = 3 and accommodation_id = shared_id
         from public.family_logistics where family_id = family_a), 'Invalid time changed saved plans';
 
+    -- Each pickup retains its own numbers; the earliest supplies the export summary.
+    perform public.save_family_arrivals(family_a, '[
+        {"arrival_date":"2026-10-09","arrival_time":"18:00","travel_mode":"FLIGHT","flight_number":"AI 101","pickup_by":"Late pickup"},
+        {"arrival_date":"2026-10-09","arrival_time":"09:30","travel_mode":"TRAIN","train_number":"01234","coach_number":"B2","pickup_by":"Early pickup"}
+    ]', shared_id, null, null, null);
+    assert (select train_number = '01234' and coach_number = 'B2' and flight_number is null
+        and pickup_by = 'Early pickup' and arrivals -> 0 ->> 'flight_number' = 'AI 101'
+        and arrivals -> 1 ->> 'train_number' = '01234' and departure_mode = 'TRAIN'
+        from public.family_logistics where family_id = family_a), 'Arrival travel numbers did not save independently';
+    assert not public.valid_family_arrivals('[{"travel_mode":"TRAIN","train_number":123}]'), 'Numeric train number accepted';
+    assert not public.valid_family_arrivals('[{"travel_mode":"TRAIN","coach_number":" "}]'), 'Blank coach number accepted';
+    assert not public.valid_family_arrivals('[{"travel_mode":"CAR","train_number":"01234"}]'), 'Train number accepted for car';
+    assert not public.valid_family_arrivals('[{"travel_mode":"TRAIN","flight_number":"AI 101"}]'), 'Flight number accepted for train';
+    begin
+        perform public.save_family_arrivals(family_a,
+            jsonb_build_array(jsonb_build_object('travel_mode', 'FLIGHT', 'flight_number', repeat('x', 41))),
+            null, 'HOUSE', 'Invalid flight number house', null);
+        raise exception 'Oversized arrival flight number accepted';
+    exception when check_violation then null;
+    end;
+    assert (select train_number = '01234' and accommodation_id = shared_id
+        from public.family_logistics where family_id = family_a), 'Invalid number changed saved logistics';
+    perform public.save_family_arrivals(family_a, '[{"travel_mode":"FLIGHT","flight_number":"AI 202"}]', shared_id, null, null, null);
+    assert (select train_number is null and coach_number is null and flight_number = 'AI 202' and pickup_by is null
+        from public.family_logistics where family_id = family_a), 'Switching arrival to flight retained stale details';
+    perform public.save_family_arrivals(family_a, '[]', shared_id, null, null, null);
+    assert (select train_number is null and coach_number is null and flight_number is null
+        from public.family_logistics where family_id = family_a), 'Removing arrivals retained travel numbers';
+
     execute 'set local role anon';
     begin
         update public.family_logistics set arrival_support_required = false where family_id = family_a;

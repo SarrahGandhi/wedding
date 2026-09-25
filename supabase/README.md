@@ -131,6 +131,13 @@ the list and accommodation is atomic and preserves departure details. Date sorti
 uses the earliest arrival; pickup-person sorting uses the first name alphabetically
 across all entries. The incomplete-travel filter checks every pickup.
 
+Selecting Train reveals optional train and coach numbers for that pickup;
+selecting Flight reveals an optional flight number. These values are saved per
+arrival and shown in the family and time-group views. Apply
+`20260925020000_arrival_travel_numbers.sql` after the overload fix to validate
+the numbers and keep the earliest arrival’s numbers in the Excel export summary.
+Changing travel method clears numbers for the previous method when saved.
+
 Uncheck “Pickup and accommodation required” on a family’s Arrival entry for
 local families. They remain visible in Logistics, including a dedicated filter,
 but are excluded from incomplete-travel and awaiting-accommodation lists and
