@@ -72,6 +72,8 @@ export async function deleteGuest(formData: FormData) {
   if (error) return { error: error.message };
 
   revalidatePath("/admin/guests");
+  revalidatePath("/admin/logistics");
+  revalidatePath("/admin/accommodation");
   return { success: true };
 }
 

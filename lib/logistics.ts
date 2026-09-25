@@ -12,6 +12,64 @@ export const TRAVEL_LABELS: Record<TravelMode, string> = {
 
 export type Accommodation = Tables<"accommodations">;
 export type FamilyLogistics = Tables<"family_logistics">;
+export type ArrivalPlan = {
+  guests: string | null;
+  arrival_date: string | null;
+  arrival_time?: string | null;
+  travel_mode: string | null;
+  travel_details: string | null;
+  pickup_by: string | null;
+};
+
+export function familyArrivals(logistics: FamilyLogistics | null): ArrivalPlan[] {
+  if (Array.isArray(logistics?.arrivals)) return [...logistics.arrivals] as ArrivalPlan[];
+  if (!logistics || !(logistics.arrival_date || logistics.travel_mode || logistics.travel_details || logistics.pickup_by)) return [];
+  return [{ guests: null, arrival_date: logistics.arrival_date, travel_mode: logistics.travel_mode,
+    travel_details: logistics.travel_details, pickup_by: logistics.pickup_by }];
+}
+
+export function earliestArrival(logistics: FamilyLogistics | null) {
+  return familyArrivals(logistics).flatMap((entry) => entry.arrival_date ? [entry.arrival_date] : []).sort()[0] ?? null;
+}
+
+// Arrival times are wedding-local wall times (IST), not browser-local instants.
+export function arrivalSortKey(entry: ArrivalPlan) {
+  return entry.arrival_date ? `${entry.arrival_date}T${entry.arrival_time || "99:99"}` : "9999-99-99T99:99";
+}
+
+export function earliestArrivalPlan(logistics: FamilyLogistics | null) {
+  return familyArrivals(logistics).sort((a, b) => compareNames(arrivalSortKey(a), arrivalSortKey(b)))[0];
+}
+
+function earliestArrivalKey(logistics: FamilyLogistics | null) {
+  const entry = earliestArrivalPlan(logistics);
+  return entry ? arrivalSortKey(entry) : "9999-99-99T99:99";
+}
+
+export function formatArrivalDateTime(entry: ArrivalPlan) {
+  if (!entry.arrival_date) return "Date and time not set";
+  return `${formatArrival(entry.arrival_date)} · ${entry.arrival_time ? `${entry.arrival_time} IST` : "Time not set"}`;
+}
+
+export function groupArrivalsByTime(families: LogisticsFamily[]) {
+  const groups = new Map<string, { key: string; label: string; entries: { family: LogisticsFamily; arrival: ArrivalPlan; index: number }[] }>();
+  for (const family of families) {
+    if (!needsArrivalSupport(family)) continue;
+    familyArrivals(family.logistics).forEach((arrival, index) => {
+      const key = arrivalSortKey(arrival);
+      const group = groups.get(key) ?? { key, label: formatArrivalDateTime(arrival), entries: [] };
+      group.entries.push({ family, arrival, index });
+      groups.set(key, group);
+    });
+  }
+  return [...groups.values()].sort((a, b) => compareNames(a.key, b.key)).map((group) => ({
+    ...group, entries: group.entries.sort((a, b) => compareNames(a.family.label, b.family.label) || a.index - b.index),
+  }));
+}
+
+function firstPickupName(logistics: FamilyLogistics | null) {
+  return familyArrivals(logistics).flatMap((entry) => entry.pickup_by ? [entry.pickup_by] : []).sort(compareNames)[0] ?? "";
+}
 export type LogisticsFamily = {
   id: number;
   label: string;
@@ -21,8 +79,41 @@ export type LogisticsFamily = {
   accommodation: Accommodation | null;
 };
 
+export function needsArrivalSupport(family: LogisticsFamily) {
+  return family.logistics?.arrival_support_required !== false;
+}
+
+export function hasIncompleteArrival(family: LogisticsFamily) {
+  if (!needsArrivalSupport(family)) return false;
+  const arrivals = familyArrivals(family.logistics);
+  return arrivals.length === 0 || arrivals.some((entry) => !entry.travel_mode || !entry.arrival_date);
+}
+
+export function arrivalSupportSummary(families: LogisticsFamily[]) {
+  const required = families.filter(needsArrivalSupport);
+  const assigned = required.filter((family) => family.accommodation).length;
+  return { assigned, awaiting: required.length - assigned, notRequired: families.length - required.length };
+}
+
 const naturalOrder = new Intl.Collator("en", { numeric: true, sensitivity: "base" });
 export const compareNames = (a: string, b: string) => naturalOrder.compare(a, b);
+
+export type LogisticsSort = "family" | "arrival" | "pickup" | "departure" | "dropoff";
+
+export function sortLogisticsFamilies(families: LogisticsFamily[], sort: LogisticsSort) {
+  return [...families].sort((a, b) => {
+    const pickupA = sort === "dropoff" ? a.logistics?.dropoff_by ?? "" : firstPickupName(a.logistics);
+    const pickupB = sort === "dropoff" ? b.logistics?.dropoff_by ?? "" : firstPickupName(b.logistics);
+    const dateA = sort === "departure" ? a.logistics?.departure_date : earliestArrivalKey(a.logistics);
+    const dateB = sort === "departure" ? b.logistics?.departure_date : earliestArrivalKey(b.logistics);
+    const primary = sort === "pickup" || sort === "dropoff"
+      ? Number(!pickupA) - Number(!pickupB) || compareNames(pickupA, pickupB)
+      : sort === "arrival" || sort === "departure"
+        ? compareNames(dateA ?? "9999-99-99T99:99", dateB ?? "9999-99-99T99:99")
+        : 0;
+    return primary || compareNames(a.label, b.label) || a.id - b.id;
+  });
+}
 
 export function accommodationLabel(stay: Accommodation): string {
   return stay.kind === "HOTEL"
@@ -89,6 +180,7 @@ export type AccommodationGroup = {
 export function groupByAccommodation(families: LogisticsFamily[]): AccommodationGroup[] {
   const groups = new Map<string, AccommodationGroup>();
   for (const family of families) {
+    if (!needsArrivalSupport(family)) continue;
     const stay = family.accommodation;
     if (!stay) continue;
     const key = accommodationKey(stay);
@@ -105,7 +197,7 @@ export function sortAccommodationFamilies(families: LogisticsFamily[], sort: "ro
       ? Number(!a.accommodation?.room_number) - Number(!b.accommodation?.room_number)
         || compareNames(a.accommodation?.room_number ?? "", b.accommodation?.room_number ?? "")
       : sort === "arrival"
-        ? compareNames(a.logistics?.arrival_date ?? "9999", b.logistics?.arrival_date ?? "9999")
+        ? compareNames(earliestArrivalKey(a.logistics), earliestArrivalKey(b.logistics))
         : 0;
     return primary || compareNames(a.label, b.label) || a.id - b.id;
   });
@@ -127,10 +219,16 @@ export function parseLogisticsForm(form: FormData) {
   for (const [label, number] of [["Train", train], ["Coach", coach], ["Flight", flight]]) {
     if (number.length > 40) return { error: `${label} number must be 40 characters or fewer.` } as const;
   }
+  const pickupValue = form.get("pickup_by");
+  if (pickupValue !== null && typeof pickupValue !== "string") {
+    return { error: "Enter the pickup person’s name as text." } as const;
+  }
+  const pickupBy = (pickupValue ?? "").trim().replace(/\s+/g, " ");
+  if (pickupBy.length > 160) return { error: "Pickup names must be 160 characters or fewer." } as const;
   const date = value("arrival_date");
   if (date) {
     const parsed = new Date(`${date}T00:00:00Z`);
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !Number.isFinite(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== date) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date < "0001-01-01" || !Number.isFinite(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== date) {
       return { error: "Enter a valid arrival date." } as const;
     }
   }
@@ -152,6 +250,7 @@ export function parseLogisticsForm(form: FormData) {
       p_train_number: train || null,
       p_coach_number: coach || null,
       p_flight_number: flight || null,
+      p_pickup_by: pickupBy || null,
       p_arrival_date: date || null,
       p_accommodation_id: id,
       p_new_kind: kind || null,
@@ -159,4 +258,72 @@ export function parseLogisticsForm(form: FormData) {
       p_new_room_number: room || null,
     },
   } as const;
+}
+
+export function parseDepartureForm(form: FormData) {
+  for (const field of ["family_id", "departure_mode", "departure_date", "departure_details", "dropoff_by"]) {
+    const entry = form.get(field);
+    if (entry !== null && typeof entry !== "string") return { error: "Enter departure details as text." } as const;
+  }
+  const value = (key: string) => String(form.get(key) ?? "").trim();
+  const familyId = Number(value("family_id"));
+  if (!Number.isSafeInteger(familyId) || familyId <= 0) return { error: "Choose a valid family." } as const;
+  const mode = value("departure_mode");
+  if (mode && !(TRAVEL_MODES as readonly string[]).includes(mode)) return { error: "Choose a valid departure travel method." } as const;
+  const date = value("departure_date");
+  if (date) {
+    const parsed = new Date(`${date}T00:00:00Z`);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date < "0001-01-01" || !Number.isFinite(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== date) {
+      return { error: "Enter a valid departure date." } as const;
+    }
+  }
+  const details = value("departure_details");
+  if (details.length > 1000) return { error: "Departure details must be 1,000 characters or fewer." } as const;
+  const dropoffBy = value("dropoff_by").replace(/\s+/g, " ");
+  if (dropoffBy.length > 160) return { error: "Drop-off names must be 160 characters or fewer." } as const;
+  return { data: {
+    p_family_id: familyId,
+    p_departure_mode: mode || null,
+    p_departure_date: date || null,
+    p_departure_details: details || null,
+    p_dropoff_by: dropoffBy || null,
+  } } as const;
+}
+
+export function parseArrivalPlans(form: FormData): { data: ArrivalPlan[]; error?: never } | { error: string; data?: never } {
+  let entries: unknown;
+  try {
+    const raw = form.get("arrivals");
+    if (typeof raw !== "string") throw new Error();
+    entries = JSON.parse(raw);
+  } catch {
+    return { error: "The pickup entries could not be read. Refresh and try again." };
+  }
+  if (!Array.isArray(entries) || entries.length > 50) return { error: "Use up to 50 pickup entries per family." };
+  const plans: ArrivalPlan[] = [];
+  for (const [index, entry] of entries.entries()) {
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) return { error: `Check pickup ${index + 1}.` };
+    const normalized: Record<string, string | null> = {};
+    for (const key of ["guests", "arrival_date", "travel_mode", "travel_details", "pickup_by"] as const) {
+      const value = entry[key];
+      if (value != null && typeof value !== "string") return { error: `Check pickup ${index + 1}: enter details as text.` };
+      normalized[key] = value?.trim() || null;
+    }
+    const plan = normalized as ArrivalPlan;
+    if (entry.arrival_time != null && typeof entry.arrival_time !== "string") return { error: `Pickup ${index + 1}: enter a valid arrival time.` };
+    const time = entry.arrival_time?.trim() || null;
+    if (time && (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time) || !plan.arrival_date)) {
+      return { error: `Pickup ${index + 1}: choose an arrival date and a valid time.` };
+    }
+    if (entry.arrival_time !== undefined) plan.arrival_time = time;
+    if (plan.guests && plan.guests.length > 300) return { error: `Pickup ${index + 1}: guest names must be 300 characters or fewer.` };
+    const single = new FormData();
+    single.set("family_id", String(form.get("family_id") ?? ""));
+    for (const key of ["arrival_date", "travel_mode", "travel_details", "pickup_by"] as const) single.set(key, plan[key] ?? "");
+    const parsed = parseLogisticsForm(single);
+    if (parsed.error) return { error: `Pickup ${index + 1}: ${parsed.error}` };
+    plan.pickup_by = parsed.data.p_pickup_by;
+    if (Object.values(plan).some(Boolean)) plans.push(plan);
+  }
+  return { data: plans };
 }

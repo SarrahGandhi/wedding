@@ -34,6 +34,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      shopping_list_items: {
+        Row: {
+          side: Database["public"]["Enums"]["guest_side"]
+          recipient: string | null
+          id: number
+          item: string
+          store: string
+          vendor: string
+          urgency: Database["public"]["Enums"]["shopping_urgency"]
+          purchased: boolean
+          revision: number
+          created_at: string
+        }
+        Insert: {
+          side?: Database["public"]["Enums"]["guest_side"]
+          recipient?: string | null
+          id?: never
+          item: string
+          store: string
+          vendor: string
+          urgency?: Database["public"]["Enums"]["shopping_urgency"]
+          purchased?: boolean
+          revision?: number
+          created_at?: string
+        }
+        Update: {
+          side?: Database["public"]["Enums"]["guest_side"]
+          recipient?: string | null
+          id?: never
+          item?: string
+          store?: string
+          vendor?: string
+          urgency?: Database["public"]["Enums"]["shopping_urgency"]
+          purchased?: boolean
+          revision?: number
+          created_at?: string
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           id: number
@@ -144,6 +183,13 @@ export type Database = {
       }
       family_logistics: {
         Row: {
+          arrival_support_required: boolean
+          arrivals: Json | null
+          departure_mode: string | null
+          departure_date: string | null
+          departure_details: string | null
+          dropoff_by: string | null
+          pickup_by: string | null
           accommodation_id: number | null
           arrival_date: string | null
           family_id: number
@@ -154,6 +200,13 @@ export type Database = {
           travel_mode: string | null
         }
         Insert: {
+          arrival_support_required?: boolean
+          arrivals?: Json | null
+          departure_mode?: string | null
+          departure_date?: string | null
+          departure_details?: string | null
+          dropoff_by?: string | null
+          pickup_by?: string | null
           accommodation_id?: number | null
           arrival_date?: string | null
           family_id: number
@@ -164,6 +217,13 @@ export type Database = {
           travel_mode?: string | null
         }
         Update: {
+          arrival_support_required?: boolean
+          arrivals?: Json | null
+          departure_mode?: string | null
+          departure_date?: string | null
+          departure_details?: string | null
+          dropoff_by?: string | null
+          pickup_by?: string | null
           accommodation_id?: number | null
           arrival_date?: string | null
           family_id?: number
@@ -356,6 +416,7 @@ export type Database = {
       }
       save_family_logistics: {
         Args: {
+          p_pickup_by?: string | null
           p_accommodation_id: number | null
           p_arrival_date: string | null
           p_family_id: number
@@ -370,12 +431,34 @@ export type Database = {
         }
         Returns: undefined
       }
+      save_family_departure: {
+        Args: {
+          p_family_id: number
+          p_departure_mode: string | null
+          p_departure_date: string | null
+          p_departure_details: string | null
+          p_dropoff_by: string | null
+        }
+        Returns: undefined
+      }
+      save_family_arrivals: {
+        Args: {
+          p_family_id: number
+          p_arrivals: Json
+          p_accommodation_id: number | null
+          p_new_kind: string | null
+          p_new_name: string | null
+          p_new_room_number: string | null
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       budget_split_type: "GROOM" | "BRIDE" | "EQUAL" | "CUSTOM"
       event_rsvp_status: "PENDING" | "ACCEPTED" | "DECLINED"
       guest_category: "MALE" | "FEMALE" | "CHILD"
       guest_side: "BRIDE" | "GROOM"
+      shopping_urgency: "LOW" | "MEDIUM" | "HIGH"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -510,6 +593,7 @@ export const Constants = {
       event_rsvp_status: ["PENDING", "ACCEPTED", "DECLINED"],
       guest_category: ["MALE", "FEMALE", "CHILD"],
       guest_side: ["BRIDE", "GROOM"],
+      shopping_urgency: ["LOW", "MEDIUM", "HIGH"],
     },
   },
 } as const

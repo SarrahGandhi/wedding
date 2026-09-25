@@ -114,5 +114,7 @@ export async function deleteEvent(formData: FormData) {
 
   revalidatePath("/admin/events");
   revalidatePath("/admin/rsvp");
+  revalidatePath("/admin/logistics");
+  revalidatePath("/admin/accommodation");
   return { success: true };
 }

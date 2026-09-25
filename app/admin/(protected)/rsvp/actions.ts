@@ -108,6 +108,8 @@ export async function setRsvpStatus(formData: FormData) {
   }
 
   revalidatePath("/admin/rsvp");
+  revalidatePath("/admin/logistics");
+  revalidatePath("/admin/accommodation");
   return { success: true };
 }
 
@@ -139,5 +141,7 @@ export async function uninviteGuestFromEvent(formData: FormData) {
   }
 
   revalidatePath("/admin/rsvp");
+  revalidatePath("/admin/logistics");
+  revalidatePath("/admin/accommodation");
   return { success: true };
 }
