@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { Button } from "@/app/shared/Button";
 import { FormField, SelectField } from "@/app/shared/FormField";
-import { accommodationLabel, arrivalSortKey, arrivalSupportSummary, compareNames, familyArrivals, formatArrivalDateTime, groupArrivalsByTime, hasIncompleteArrival, matchesFamily, needsArrivalSupport, sortLogisticsFamilies, travelSummary, type Accommodation, type LogisticsFamily, type LogisticsSort } from "@/lib/logistics";
+import { accommodationLabel, arrivalSortKey, arrivalSupportSummary, compareNames, familyArrivals, filterLogisticsFamilies, formatArrivalDateTime, groupArrivalsByTime, hasIncompleteArrival, needsArrivalSupport, sortLogisticsFamilies, travelSummary, type Accommodation, type AccommodationRequiredFilter, type LogisticsFamily, type LogisticsSideFilter, type LogisticsSort } from "@/lib/logistics";
 import { LogisticsForm } from "./LogisticsForm";
 import { DepartureWorkspace } from "./DepartureWorkspace";
 import { setArrivalSupportRequired } from "./actions";
@@ -89,19 +89,17 @@ function ArrivalWorkspace({ families, accommodations, initialFamilyId }: {
 }) {
   const [search, setSearch] = useState(initialFamilyId ? `#${initialFamilyId}` : "");
   const [filter, setFilter] = useState("ALL");
+  const [side, setSide] = useState<LogisticsSideFilter>("ALL");
+  const [required, setRequired] = useState<AccommodationRequiredFilter>("ALL");
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
   const [view, setView] = useState("family");
   const [sort, setSort] = useState<Extract<LogisticsSort, "family" | "arrival" | "pickup">>("family");
   const pickupNames = [...new Set(families.flatMap((family) => familyArrivals(family.logistics).flatMap((entry) => entry.pickup_by ? [entry.pickup_by] : [])))].sort(compareNames);
   const { assigned, awaiting, notRequired } = arrivalSupportSummary(families);
-  const visible = sortLogisticsFamilies(families.filter((family) => {
-    const exactId = /^#(\d+)$/.exec(search.trim());
-    if (exactId ? family.id !== Number(exactId[1]) : !matchesFamily(family, search)) return false;
+  const visible = sortLogisticsFamilies(filterLogisticsFamilies(families, { search, side, required }).filter((family) => {
     if (filter === "UNASSIGNED") return needsArrivalSupport(family) && !family.accommodation;
     if (filter === "TRAVEL") return hasIncompleteArrival(family);
-    if (filter === "NOT_REQUIRED") return !needsArrivalSupport(family);
-    if (filter === "BRIDE" || filter === "GROOM") return family.side === filter;
     return true;
   }), sort);
 
@@ -125,15 +123,22 @@ function ArrivalWorkspace({ families, accommodations, initialFamilyId }: {
       <p className="mb-6 text-sm text-text-secondary tabular-nums">
         {families.length} confirmed {families.length === 1 ? "family" : "families"} · {assigned} with accommodation · {awaiting} awaiting accommodation · {notRequired} not requiring arrangements
       </p>
-      <div className="mb-8 grid items-end gap-4 sm:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr_1fr]">
+      <div className="mb-8 grid items-end gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <FormField label="Search families or stays" type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Guest name, family #, hotel or house…" />
+        <SelectField label="Side" value={side} onChange={(event) => setSide(event.target.value as LogisticsSideFilter)}>
+          <option value="ALL">Both sides</option>
+          <option value="BRIDE">Bride’s side</option>
+          <option value="GROOM">Groom’s side</option>
+        </SelectField>
+        <SelectField label="Accommodation required" value={required} onChange={(event) => setRequired(event.target.value as AccommodationRequiredFilter)}>
+          <option value="ALL">All families</option>
+          <option value="REQUIRED">Required (checked)</option>
+          <option value="NOT_REQUIRED">Not required (unchecked)</option>
+        </SelectField>
         <SelectField label="Show" value={filter} onChange={(event) => setFilter(event.target.value)}>
           <option value="ALL">All confirmed families</option>
           <option value="UNASSIGNED">Awaiting accommodation</option>
           <option value="TRAVEL">Travel details incomplete</option>
-          <option value="NOT_REQUIRED">Pickup and accommodation not required</option>
-          <option value="BRIDE">Bride’s side</option>
-          <option value="GROOM">Groom’s side</option>
         </SelectField>
         <SelectField label="View" value={view} onChange={(event) => setView(event.target.value)}>
           <option value="family">By family</option>

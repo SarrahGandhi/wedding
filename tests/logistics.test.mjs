@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { accommodationLabel, accommodationOptions, arrivalSupportSummary, earliestArrival, familyArrivals, formatArrival, formatArrivalDateTime, groupArrivalsByTime, groupByAccommodation, hasIncompleteArrival, matchesFamily, needsArrivalSupport, parseArrivalPlans, parseDepartureForm, parseLogisticsForm, sortAccommodationFamilies, sortLogisticsFamilies, travelSummary } from "../lib/logistics.ts";
+import { accommodationLabel, accommodationOptions, arrivalSupportSummary, earliestArrival, familyArrivals, filterLogisticsFamilies, formatArrival, formatArrivalDateTime, groupArrivalsByTime, groupByAccommodation, hasIncompleteArrival, matchesFamily, needsArrivalSupport, parseArrivalPlans, parseDepartureForm, parseLogisticsForm, sortAccommodationFamilies, sortLogisticsFamilies, travelSummary } from "../lib/logistics.ts";
 
 function form(values) {
   const data = new FormData();
@@ -119,6 +119,38 @@ test("local families are excluded from outstanding arrangements and accommodatio
   const restored = { ...localWithStay, logistics: { ...localWithStay.logistics, arrival_support_required: true } };
   assert.equal(groupByAccommodation([restored])[0].families[0].accommodation.id, families[0].accommodation.id);
   assert.equal(familyArrivals(restored.logistics)[0].arrival_date, families[0].logistics.arrival_date);
+});
+
+test("accommodation requirement combines independently with side and search filters", () => {
+  const entries = [
+    families[0],
+    { ...families[1], logistics: { ...families[1].logistics, arrival_support_required: false } },
+    { ...families[2], side: "GROOM", logistics: { ...families[2].logistics, arrival_support_required: true } },
+    { ...families[3], side: "GROOM", logistics: { ...families[3].logistics, arrival_support_required: false } },
+    { ...families[4], logistics: null },
+  ];
+  const ids = (filters) => filterLogisticsFamilies(entries, filters).map((entry) => entry.id);
+  assert.deepEqual(ids(), [1, 2, 3, 4, 5]);
+  assert.deepEqual(ids({ required: "REQUIRED" }), [1, 3, 5]);
+  assert.deepEqual(ids({ side: "BRIDE", required: "REQUIRED" }), [1, 5]);
+  assert.deepEqual(ids({ side: "GROOM", required: "REQUIRED" }), [3]);
+  assert.deepEqual(ids({ side: "BRIDE", required: "NOT_REQUIRED" }), [2]);
+  assert.deepEqual(ids({ side: "GROOM", required: "NOT_REQUIRED" }), [4]);
+  assert.deepEqual(ids({ side: "GROOM", required: "REQUIRED", search: "Bilal" }), [3]);
+  assert.deepEqual(ids({ required: "REQUIRED", search: "#2" }), []);
+  assert.deepEqual(ids({ required: "NOT_REQUIRED", search: "#2" }), [2]);
+});
+
+test("unchecked families stay out of departures even with saved plans and return when checked", () => {
+  const local = { ...families[0], logistics: { ...families[0].logistics,
+    arrival_support_required: false, departure_mode: "FLIGHT", departure_date: "2026-10-15", dropoff_by: "Ali",
+  } };
+  assert.deepEqual(filterLogisticsFamilies([local], { required: "REQUIRED" }), []);
+  assert.deepEqual(filterLogisticsFamilies([local], { required: "REQUIRED", search: `#${local.id}` }), []);
+  const restored = { ...local, logistics: { ...local.logistics, arrival_support_required: true } };
+  assert.deepEqual(filterLogisticsFamilies([restored], { required: "REQUIRED" }), [restored]);
+  assert.equal(restored.logistics.departure_mode, "FLIGHT");
+  assert.equal(local.logistics.arrival_support_required, false);
 });
 
 test("pickup sorting groups names ignoring case and puts unassigned families last", () => {

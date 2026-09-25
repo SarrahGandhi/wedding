@@ -139,9 +139,11 @@ the numbers and keep the earliest arrival’s numbers in the Excel export summar
 Changing travel method clears numbers for the previous method when saved.
 
 Uncheck “Pickup and accommodation required” on a family’s Arrival entry for
-local families. They remain visible in Logistics, including a dedicated filter,
-but are excluded from incomplete-travel and awaiting-accommodation lists and
-accommodation occupancy counts. Checking it again restores their saved plans.
+local families. They remain visible in Arrival, but are excluded from Departure,
+incomplete-travel and awaiting-accommodation lists, and accommodation occupancy
+counts. The separate “Accommodation required” filter shows all, checked, or
+unchecked families and combines with the independent bride/groom “Side” filter.
+Checking the arrangement option again restores their saved plans in Departure.
 The flag does not change departure details or delete any arrival/accommodation data.
 Apply `20260923040000_optional_arrival_support.sql` to enable this setting;
 existing families default to requiring arrangements.
