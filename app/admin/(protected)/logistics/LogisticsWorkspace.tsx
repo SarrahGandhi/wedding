@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { Button } from "@/app/shared/Button";
 import { FormField, SelectField } from "@/app/shared/FormField";
-import { accommodationLabel, arrivalSortKey, arrivalSupportSummary, compareNames, familyArrivals, formatArrivalDateTime, groupArrivalsByTime, hasIncompleteArrival, matchesFamily, needsArrivalSupport, sortLogisticsFamilies, travelLabel, type Accommodation, type LogisticsFamily, type LogisticsSort } from "@/lib/logistics";
+import { accommodationLabel, arrivalSortKey, arrivalSupportSummary, compareNames, familyArrivals, formatArrivalDateTime, groupArrivalsByTime, hasIncompleteArrival, matchesFamily, needsArrivalSupport, sortLogisticsFamilies, travelSummary, type Accommodation, type LogisticsFamily, type LogisticsSort } from "@/lib/logistics";
 import { LogisticsForm } from "./LogisticsForm";
 import { DepartureWorkspace } from "./DepartureWorkspace";
 import { setArrivalSupportRequired } from "./actions";
@@ -68,7 +68,7 @@ function FamilyRow({ family, accommodations, pickupNames, initiallyOpen }: {
           <dl className="grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
             <div><dt className="mb-1 text-text-secondary">Guests arriving</dt><dd className="break-words">{entry.guests || "Whole family"}</dd></div>
             <div><dt className="mb-1 text-text-secondary">Arriving</dt><dd className="tabular-nums">{formatArrivalDateTime(entry)}</dd></div>
-            <div><dt className="mb-1 text-text-secondary">Travelling by</dt><dd>{travelLabel(entry.travel_mode)}</dd></div>
+            <div><dt className="mb-1 text-text-secondary">Travelling by</dt><dd>{travelSummary(entry)}</dd></div>
             <div><dt className="mb-1 text-text-secondary">To be picked up by</dt><dd className="break-words">{entry.pickup_by || "Not assigned yet"}</dd></div>
           </dl>
           {entry.travel_details && <p className="mt-4 whitespace-pre-wrap break-words text-sm text-text-secondary">{entry.travel_details}</p>}
@@ -179,7 +179,7 @@ function ArrivalTimeGroups({ families, onViewFamily }: { families: LogisticsFami
             <Button variant="secondary" className="shrink-0" onClick={() => onViewFamily(family.id)} aria-label={`View ${family.label}`}>View family</Button>
           </div>
           <dl className="mt-4 grid gap-4 text-sm sm:grid-cols-2">
-            <div><dt className="mb-1 text-text-secondary">Travelling by</dt><dd>{travelLabel(arrival.travel_mode)}</dd></div>
+            <div><dt className="mb-1 text-text-secondary">Travelling by</dt><dd>{travelSummary(arrival)}</dd></div>
             <div><dt className="mb-1 text-text-secondary">To be picked up by</dt><dd className="break-words">{arrival.pickup_by || "Not assigned yet"}</dd></div>
           </dl>
           {arrival.travel_details && <p className="mt-4 whitespace-pre-wrap break-words text-sm text-text-secondary">{arrival.travel_details}</p>}

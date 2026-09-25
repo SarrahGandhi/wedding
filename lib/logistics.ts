@@ -17,6 +17,9 @@ export type ArrivalPlan = {
   arrival_date: string | null;
   arrival_time?: string | null;
   travel_mode: string | null;
+  train_number?: string | null;
+  coach_number?: string | null;
+  flight_number?: string | null;
   travel_details: string | null;
   pickup_by: string | null;
 };
@@ -25,6 +28,7 @@ export function familyArrivals(logistics: FamilyLogistics | null): ArrivalPlan[]
   if (Array.isArray(logistics?.arrivals)) return [...logistics.arrivals] as ArrivalPlan[];
   if (!logistics || !(logistics.arrival_date || logistics.travel_mode || logistics.travel_details || logistics.pickup_by)) return [];
   return [{ guests: null, arrival_date: logistics.arrival_date, travel_mode: logistics.travel_mode,
+    train_number: logistics.train_number, coach_number: logistics.coach_number, flight_number: logistics.flight_number,
     travel_details: logistics.travel_details, pickup_by: logistics.pickup_by }];
 }
 
@@ -152,7 +156,7 @@ export function travelLabel(value: string | null | undefined): string {
     : "Travel not set";
 }
 
-export function travelSummary(plan: FamilyLogistics | null): string {
+export function travelSummary(plan: Pick<ArrivalPlan, "travel_mode" | "train_number" | "coach_number" | "flight_number"> | null): string {
   const parts = [travelLabel(plan?.travel_mode)];
   if (plan?.travel_mode === "TRAIN") {
     if (plan.train_number) parts[0] = `Train ${plan.train_number}`;
@@ -304,7 +308,7 @@ export function parseArrivalPlans(form: FormData): { data: ArrivalPlan[]; error?
   for (const [index, entry] of entries.entries()) {
     if (!entry || typeof entry !== "object" || Array.isArray(entry)) return { error: `Check pickup ${index + 1}.` };
     const normalized: Record<string, string | null> = {};
-    for (const key of ["guests", "arrival_date", "travel_mode", "travel_details", "pickup_by"] as const) {
+    for (const key of ["guests", "arrival_date", "travel_mode", "travel_details", "pickup_by", "train_number", "coach_number", "flight_number"] as const) {
       const value = entry[key];
       if (value != null && typeof value !== "string") return { error: `Check pickup ${index + 1}: enter details as text.` };
       normalized[key] = value?.trim() || null;
@@ -319,10 +323,13 @@ export function parseArrivalPlans(form: FormData): { data: ArrivalPlan[]; error?
     if (plan.guests && plan.guests.length > 300) return { error: `Pickup ${index + 1}: guest names must be 300 characters or fewer.` };
     const single = new FormData();
     single.set("family_id", String(form.get("family_id") ?? ""));
-    for (const key of ["arrival_date", "travel_mode", "travel_details", "pickup_by"] as const) single.set(key, plan[key] ?? "");
+    for (const key of ["arrival_date", "travel_mode", "travel_details", "pickup_by", "train_number", "coach_number", "flight_number"] as const) single.set(key, plan[key] ?? "");
     const parsed = parseLogisticsForm(single);
     if (parsed.error) return { error: `Pickup ${index + 1}: ${parsed.error}` };
     plan.pickup_by = parsed.data.p_pickup_by;
+    plan.train_number = parsed.data.p_train_number;
+    plan.coach_number = parsed.data.p_coach_number;
+    plan.flight_number = parsed.data.p_flight_number;
     if (Object.values(plan).some(Boolean)) plans.push(plan);
   }
   return { data: plans };

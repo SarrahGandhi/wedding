@@ -39,7 +39,7 @@ export function LogisticsForm({ family, accommodations, pickupNames, onSaved, on
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     form.set("arrivals", JSON.stringify(arrivals.map((entry) => Object.fromEntries(
-      ["guests", "arrival_date", "arrival_time", "travel_mode", "travel_details", "pickup_by"].map((field) =>
+      ["guests", "arrival_date", "arrival_time", "travel_mode", "travel_details", "pickup_by", "train_number", "coach_number", "flight_number"].map((field) =>
         [field, form.get(`arrival-${entry.id}-${field}`) || null])
     ))));
     setError(null);
@@ -74,7 +74,9 @@ export function LogisticsForm({ family, accommodations, pickupNames, onSaved, on
                   defaultValue={entry.arrival_time ?? ""} labelClassName="min-w-0" className="min-w-0" />
               </div>
             </fieldset>
-            <SelectField label="Travelling by" name={`arrival-${entry.id}-travel_mode`} defaultValue={entry.travel_mode ?? ""}>
+            <SelectField label="Travelling by" name={`arrival-${entry.id}-travel_mode`} value={entry.travel_mode ?? ""}
+              onChange={(event) => setArrivals((current) => current.map((plan) => plan.id === entry.id
+                ? { ...plan, travel_mode: event.target.value || null } : plan))}>
               <option value="">Not decided yet</option>
               {TRAVEL_MODES.map((mode) => <option key={mode} value={mode}>{TRAVEL_LABELS[mode]}</option>)}
             </SelectField>
@@ -82,8 +84,24 @@ export function LogisticsForm({ family, accommodations, pickupNames, onSaved, on
               defaultValue={entry.pickup_by ?? ""} list={`${inputId}-pickup`}
               placeholder="Enter or choose a name" />
           </div>
+          {entry.travel_mode === "TRAIN" && <div className="grid gap-5 sm:grid-cols-2">
+            <FormField label="Train number (optional)" name={`arrival-${entry.id}-train_number`} maxLength={40}
+              value={entry.train_number ?? ""} placeholder="e.g. 12952"
+              onChange={(event) => setArrivals((current) => current.map((plan) => plan.id === entry.id
+                ? { ...plan, train_number: event.target.value } : plan))} />
+            <FormField label="Coach number (optional)" name={`arrival-${entry.id}-coach_number`} maxLength={40}
+              value={entry.coach_number ?? ""} placeholder="e.g. B2"
+              onChange={(event) => setArrivals((current) => current.map((plan) => plan.id === entry.id
+                ? { ...plan, coach_number: event.target.value } : plan))} />
+          </div>}
+          {entry.travel_mode === "FLIGHT" && <div className="sm:max-w-sm">
+            <FormField label="Flight number (optional)" name={`arrival-${entry.id}-flight_number`} maxLength={40}
+              value={entry.flight_number ?? ""} placeholder="e.g. AI 101"
+              onChange={(event) => setArrivals((current) => current.map((plan) => plan.id === entry.id
+                ? { ...plan, flight_number: event.target.value } : plan))} />
+          </div>}
           <TextareaField label="Travel details (optional)" name={`arrival-${entry.id}-travel_details`} rows={2} maxLength={1000}
-            defaultValue={entry.travel_details ?? ""} placeholder="Flight or train number, coach number, or pickup arrangements" />
+            defaultValue={entry.travel_details ?? ""} placeholder="Station, terminal, or pickup arrangements" />
           <Button variant="ghost" aria-label={`Remove pickup ${index + 1}`} onClick={() => setArrivals((current) => current.filter((plan) => plan.id !== entry.id))}>Remove pickup</Button>
         </fieldset>)}
         <datalist id={`${inputId}-pickup`}>{pickupNames.map((person) => <option key={person} value={person} />)}</datalist>

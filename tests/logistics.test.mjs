@@ -150,7 +150,8 @@ test("multiple pickups preserve separate dates, guests and people; empty rows ar
   ];
   const parsed = parseArrivalPlans(form({ arrivals: JSON.stringify(entries) }));
   assert.equal(parsed.data.length, 2);
-  assert.deepEqual(parsed.data[0], { guests: "Amina", arrival_date: "2026-10-09", travel_mode: "TRAIN", pickup_by: "Ali Khan", travel_details: null });
+  assert.deepEqual(parsed.data[0], { guests: "Amina", arrival_date: "2026-10-09", travel_mode: "TRAIN", pickup_by: "Ali Khan", travel_details: null,
+    train_number: null, coach_number: null, flight_number: null });
   assert.equal(parsed.data[1].arrival_date, "2026-10-11");
   assert.equal(parsed.data[1].travel_details, "Flight 123");
   assert.deepEqual(parseArrivalPlans(form({ arrivals: "[]" })).data, []);
@@ -158,6 +159,30 @@ test("multiple pickups preserve separate dates, guests and people; empty rows ar
   for (const arrivals of ["broken", "null", "{}", '[null]', '[{"arrival_date":"2026-02-30"}]', '[{"arrival_date":"0000-01-01"}]', '[{"pickup_by":3}]', '[{"travel_mode":"BOAT"}]',
     JSON.stringify([{ guests: "a".repeat(301) }]), JSON.stringify(Array(51).fill({}))]) {
     assert.ok(parseArrivalPlans(form({ arrivals })).error);
+  }
+});
+
+test("each arrival saves only its selected travel numbers and retains leading zeros", () => {
+  const parse = (entries) => parseArrivalPlans(form({ arrivals: JSON.stringify(entries) }));
+  const numbers = { train_number: " 01234 ", coach_number: " B2 ", flight_number: " AI 101 " };
+  const parsed = parse(["TRAIN", "FLIGHT", "CAR"].map((travel_mode) => ({ ...numbers, travel_mode })));
+  assert.equal(parsed.error, undefined);
+  assert.equal(travelSummary(parsed.data[0]), "Train 01234 · Coach B2");
+  assert.equal(parsed.data[0].flight_number, null);
+  assert.equal(travelSummary(parsed.data[1]), "Flight · AI 101");
+  assert.equal(parsed.data[1].train_number, null);
+  assert.equal(parsed.data[1].coach_number, null);
+  assert.equal(parsed.data[2].flight_number, null);
+  assert.equal(parsed.data[2].train_number, null);
+  assert.equal(parsed.data[2].coach_number, null);
+  assert.deepEqual(familyArrivals({ arrivals: parsed.data }), parsed.data);
+  const legacy = familyArrivals({ travel_mode: "TRAIN", train_number: "00123", coach_number: "A1" });
+  assert.equal(travelSummary(legacy[0]), "Train 00123 · Coach A1");
+  for (const [travel_mode, field] of [["TRAIN", "train_number"], ["TRAIN", "coach_number"], ["FLIGHT", "flight_number"]]) {
+    for (const value of [123, {}, "x".repeat(41)]) {
+      assert.ok(parse([{ travel_mode, [field]: value }]).error);
+    }
+    assert.equal(parse([{ travel_mode, [field]: "   " }]).data[0][field], null);
   }
 });
 
