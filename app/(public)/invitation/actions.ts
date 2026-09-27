@@ -279,6 +279,8 @@ export async function updateRsvpStatus(
     .eq("id", rsvpId);
 
   if (error) return { success: false, error: error.message };
+  revalidatePath("/admin/dashboard");
+  revalidatePath("/admin/rsvp");
   revalidatePath("/admin/logistics");
   revalidatePath("/admin/accommodation");
   return { success: true };
@@ -298,6 +300,8 @@ export async function updateRsvpStatusBulk(
     .in("id", rsvpIds);
 
   if (error) return { success: false, error: error.message };
+  revalidatePath("/admin/dashboard");
+  revalidatePath("/admin/rsvp");
   revalidatePath("/admin/logistics");
   revalidatePath("/admin/accommodation");
   return { success: true };

@@ -3,6 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 import { StatusIcon } from "@/app/shared/StatusIcon";
 import type { GuestSide } from "@/lib/types";
 
+import { allRows } from "@/lib/supabase/all-rows";
+import { confirmedGuestCount } from "@/lib/rsvp-counts";
+
 type SideTally = { families: number; guests: number };
 
 type StatusTally = {
@@ -38,10 +41,10 @@ const SIDE_ROWS: { side: GuestSide; label: string }[] = [
 
 function StatusCounts({ tally }: { tally: StatusTally }) {
   return (
-    <div className="flex items-baseline gap-5 text-[10px] tracking-[0.25em] uppercase font-body text-text-secondary tabular-nums">
+    <div className="flex flex-wrap items-baseline gap-x-5 gap-y-2 text-[10px] tracking-[0.08em] uppercase font-body text-text-secondary tabular-nums">
       <span>
         <StatusIcon status="ACCEPTED" className="mr-2" />
-        {tally.accepted} accepted
+        {tally.accepted} confirmed guests
       </span>
       <span className={tally.pending > 0 ? "text-accent" : ""}>
         <StatusIcon status="PENDING" className="mr-2" />
@@ -57,22 +60,11 @@ function StatusCounts({ tally }: { tally: StatusTally }) {
 
 export default async function DashboardPage() {
   const supabase = await createClient();
-  // Rows rather than head-only counts: the per-side breakdown needs each
-  // family's side and each guest's family, and a wedding roster is small.
-  const [
-    { data: familyRows },
-    { data: guestRows },
-    { data: events },
-    { data: rsvps },
-  ] = await Promise.all([
-    supabase.from("guest_families").select("id, side"),
-    supabase.from("guests").select("id, family_id"),
-    supabase
-      .from("events")
-      .select("id, name, date, time")
-      .order("date", { ascending: true })
-      .order("time", { ascending: true }),
-    supabase.from("event_guests_rsvp").select("event_id, guest_id, rsvp_status"),
+  const [familyRows, guestRows, events, rsvps] = await Promise.all([
+    allRows((from, to) => supabase.from("guest_families").select("id, side").order("id").range(from, to)),
+    allRows((from, to) => supabase.from("guests").select("id, family_id").order("id").range(from, to)),
+    allRows((from, to) => supabase.from("events").select("id, name, date, time").order("date").order("time").order("id").range(from, to)),
+    allRows((from, to) => supabase.from("event_guests_rsvp").select("event_id, guest_id, rsvp_status").order("id").range(from, to)),
   ]);
 
   const guests = guestRows?.length ?? 0;
@@ -110,6 +102,14 @@ export default async function DashboardPage() {
 
   const cards = [
     {
+      label: "Confirmed guests",
+      count: confirmedGuestCount(rsvps),
+      sub: "Each person counted once across all events",
+      breakdown: null,
+      href: "/admin/rsvp",
+      roman: "I",
+    },
+    {
       label: "Roster",
       count: guests,
       sub: `${families} ${families === 1 ? "family" : "families"}`,
@@ -118,7 +118,7 @@ export default async function DashboardPage() {
         { label: "Groom's side", tally: bySide.GROOM },
       ],
       href: "/admin/guests",
-      roman: "I",
+      roman: "II",
     },
     {
       label: "Events",
@@ -126,7 +126,7 @@ export default async function DashboardPage() {
       sub: null,
       breakdown: null,
       href: "/admin/events",
-      roman: "II",
+      roman: "III",
     },
   ];
 
@@ -142,7 +142,7 @@ export default async function DashboardPage() {
         <div className="mt-5 w-12 h-px bg-accent/40" />
       </header>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-border/40 border border-border/40">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-border/40 border border-border/40">
         {cards.map((card, i) => (
           <Link
             key={card.href}
@@ -198,7 +198,7 @@ export default async function DashboardPage() {
         <div className="flex items-baseline justify-between mb-4">
           <div className="flex items-baseline gap-3">
             <span className="font-display italic text-sm text-text-secondary">
-              III.
+              IV.
             </span>
             <span className="text-[10px] tracking-[0.3em] uppercase text-text-secondary font-body">
               Replies by event
@@ -233,7 +233,7 @@ export default async function DashboardPage() {
                         {event.name}
                       </span>
                       <span className="ml-3 text-[10px] tracking-[0.25em] uppercase font-body text-muted tabular-nums">
-                        {tally.invited} invited
+                        {tally.invited} guests invited
                       </span>
                     </div>
                     <StatusCounts tally={tally} />
