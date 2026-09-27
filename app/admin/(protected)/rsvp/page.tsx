@@ -1,3 +1,5 @@
+import { allRows } from "@/lib/supabase/all-rows";
+import { confirmedGuestCount } from "@/lib/rsvp-counts";
 import { createClient } from "@/lib/supabase/server";
 import type { GuestSide, RsvpStatus } from "@/lib/types";
 import { PageHeader } from "@/app/shared/PageHeader";
@@ -12,56 +14,21 @@ import { familyLabel } from "../guests/family-label";
 export default async function RsvpPage() {
   const supabase = await createClient();
 
-  async function getAllRsvps() {
-    const pageSize = 1000;
-    const allRsvps: {
-      event_id: number;
-      guest_id: number;
-      rsvp_status: RsvpStatus;
-    }[] = [];
-
-    for (let from = 0; ; from += pageSize) {
-      const { data, error } = await supabase
-        .from("event_guests_rsvp")
-        .select("event_id, guest_id, rsvp_status")
-        .order("id", { ascending: true })
-        .range(from, from + pageSize - 1);
-
-      if (error) throw error;
-      allRsvps.push(...(data as typeof allRsvps));
-      if (data.length < pageSize) break;
-    }
-
-    return allRsvps;
-  }
-
-  const [{ data: events }, { data: families }, { data: guests }, rsvps] =
-    await Promise.all([
-      supabase
-        .from("events")
-        .select("id, name, date, time")
-        .order("date", { ascending: true })
-        .order("time", { ascending: true }),
-      supabase
-        .from("guest_families")
-        .select("id, side, family_name")
-        .order("id", { ascending: true }),
-      supabase
-        .from("guests")
-        .select("id, name, family_id")
-        .order("id", { ascending: true }),
-      getAllRsvps(),
-    ]);
+  const [events, families, guests, rsvps] = await Promise.all([
+    allRows((from, to) => supabase.from("events").select("id, name, date, time").order("date").order("time").order("id").range(from, to)),
+    allRows((from, to) => supabase.from("guest_families").select("id, side, family_name").order("id").range(from, to)),
+    allRows((from, to) => supabase.from("guests").select("id, name, family_id").order("id").range(from, to)),
+    allRows((from, to) => supabase.from("event_guests_rsvp").select("event_id, guest_id, rsvp_status").order("id").range(from, to)),
+  ]);
 
   // Per-guest map of event id → rsvp status.
   const statusByGuest = new Map<number, Record<number, RsvpStatus>>();
-  const totals = { pending: 0, accepted: 0, declined: 0 };
+  const totals = { pending: 0, declined: 0 };
   for (const r of rsvps) {
     const record = statusByGuest.get(r.guest_id) ?? {};
     record[r.event_id] = r.rsvp_status as RsvpStatus;
     statusByGuest.set(r.guest_id, record);
     if (r.rsvp_status === "PENDING") totals.pending += 1;
-    else if (r.rsvp_status === "ACCEPTED") totals.accepted += 1;
     else if (r.rsvp_status === "DECLINED") totals.declined += 1;
   }
 
@@ -108,22 +75,27 @@ export default async function RsvpPage() {
         chapter="Chapter IV"
         title="Replies."
         meta={
-          <div className="flex items-center gap-6 tracking-[0.3em]">
+          <div className="flex flex-wrap items-center gap-6 tracking-[0.08em]">
             <span>
               <StatusIcon status="ACCEPTED" className="mr-2" />
-              {totals.accepted} accepted
+              {confirmedGuestCount(rsvps)} confirmed guests
             </span>
             <span>
               <StatusIcon status="PENDING" className="mr-2" />
-              {totals.pending} pending
+              {totals.pending} pending event replies
             </span>
             <span>
               <StatusIcon status="DECLINED" className="mr-2" />
-              {totals.declined} declined
+              {totals.declined} declined event replies
             </span>
           </div>
         }
       />
+
+      <p className="mb-8 text-sm text-text-secondary">
+        The confirmed guest total counts each person once if they accepted any event.
+        Pending and declined counts are individual event replies.
+      </p>
 
       {!events || events.length === 0 ? (
         <p className="text-sm text-text-secondary font-body italic">
