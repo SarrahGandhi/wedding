@@ -9,7 +9,7 @@ import {
   type CreatedFamily,
 } from "./AddFamilyForm";
 import { GuestRoster, type FamilyWithGuests } from "./GuestRoster";
-import type { SideFilter } from "@/lib/types";
+import { useAdminSide } from "../AdminSideProvider";
 import { Button } from "@/app/shared/Button";
 
 export function GuestsWorkspace({
@@ -23,7 +23,7 @@ export function GuestsWorkspace({
   const [focusNonce, setFocusNonce] = useState(0);
   const [created, setCreated] = useState<CreatedFamily[]>([]);
   const [search, setSearch] = useState("");
-  const [sideFilter, setSideFilter] = useState<SideFilter>("ALL");
+  const { side: sideFilter, setSide: setSideFilter } = useAdminSide();
   const [openFamilyIds, setOpenFamilyIds] = useState<Set<number>>(new Set());
   // Only ever set from the IntersectionObserver callback, so a truthy value
   // also guarantees we are client-side and `document.body` exists.
@@ -139,7 +139,6 @@ export function GuestsWorkspace({
             onSearchChange={setSearch}
             searchRef={searchRef}
             sideFilter={sideFilter}
-            onSideFilterChange={setSideFilter}
             openFamilyIds={openFamilyIds}
             onOpenFamilyIdsChange={setOpenFamilyIds}
           />

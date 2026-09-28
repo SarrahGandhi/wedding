@@ -2,6 +2,7 @@
 
 import { useId, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useAdminSide } from "../AdminSideProvider";
 import { Button } from "@/app/shared/Button";
 import { FormField, SelectField } from "@/app/shared/FormField";
 import { PageHeader } from "@/app/shared/PageHeader";
@@ -171,11 +172,20 @@ export function ShoppingListWorkspace({ items }: { items: ShoppingListItem[] }) 
   const [adding, setAdding] = useState(false);
   const [filter, setFilter] = useState<"all" | "needed" | "purchased">("all");
   const [notice, setNotice] = useState("");
-  const [side, setSide] = useState<ShoppingSide>("BRIDE");
+  const { side, setSide } = useAdminSide();
   const [sort, setSort] = useState<ShoppingSort>("priority");
   const [recipientFilter, setRecipientFilter] = useState("");
   const [storeFilter, setStoreFilter] = useState("");
-  const sideItems = items.filter((item) => item.side === side);
+  const [previousSide, setPreviousSide] = useState(side);
+  // Side-specific dropdown values must not hide the newly selected side.
+  if (previousSide !== side) {
+    setPreviousSide(side);
+    setFilter("all");
+    setRecipientFilter("");
+    setStoreFilter("");
+    setNotice("");
+  }
+  const sideItems = items.filter((item) => side === "ALL" || item.side === side);
   const purchasedCount = sideItems.filter((item) => item.purchased).length;
   const stores = [...new Set(items.map((item) => item.store))].sort();
   const vendors = [...new Set(items.map((item) => item.vendor))].sort();
@@ -201,29 +211,19 @@ export function ShoppingListWorkspace({ items }: { items: ShoppingListItem[] }) 
         <p className="max-w-prose text-base text-text-secondary">Track what to buy, who it’s for, where to get it, and how soon you need it.</p>
         <Button className={buttonStyle} onClick={() => setAdding(true)} disabled={adding}>Add item</Button>
       </div>
-      <div className="inline-flex flex-wrap gap-1 rounded-2xl border border-border/60 bg-warm-white p-1.5" role="group" aria-label="Filter shopping list by side">
-        {(["BRIDE", "GROOM"] as const).map((value) => <button key={value} type="button"
-          aria-pressed={side === value} disabled={adding}
-          onClick={() => { setSide(value); resetFilters(); setNotice(""); }}
-          className={`cursor-pointer rounded-xl px-5 py-3 text-base font-medium transition-colors disabled:cursor-default ${side === value
-            ? value === "BRIDE" ? "bg-blush text-rose" : "bg-sky text-bluebell"
-            : "text-text-secondary hover:bg-powder"}`}>
-          {SHOPPING_SIDE_LABELS[value]}
-        </button>)}
-      </div>
       <p role="status" className={notice ? "rounded-xl bg-sage-light px-5 py-3 text-sm text-sage" : "sr-only"}>{notice}</p>
       {adding && <section aria-labelledby="add-shopping-heading" className="rounded-2xl border border-accent/40 bg-warm-white p-5 sm:p-7">
         <h2 id="add-shopping-heading" className="mb-6 font-display text-3xl">Add an item</h2>
-        <ShoppingItemForm stores={stores} vendors={vendors} recipients={recipients} defaultSide={side} onClose={() => setAdding(false)} onSaved={(savedSide) => {
+        <ShoppingItemForm stores={stores} vendors={vendors} recipients={recipients} defaultSide={side === "ALL" ? "BRIDE" : side} onClose={() => setAdding(false)} onSaved={(savedSide) => {
           setAdding(false);
-          setSide(savedSide);
+          if (side !== "ALL") setSide(savedSide);
           resetFilters();
           setNotice("Item added.");
         }} />
       </section>}
       <section aria-labelledby="shopping-list-heading">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
-          <h2 id="shopping-list-heading" className="font-display text-3xl">{SHOPPING_SIDE_LABELS[side]} items</h2>
+          <h2 id="shopping-list-heading" className="font-display text-3xl">{side === "ALL" ? "Both sides’" : SHOPPING_SIDE_LABELS[side]} items</h2>
           {sideItems.length > 0 && <div className="flex flex-wrap gap-2" role="group" aria-label="Filter shopping list by status">
             {(["all", "needed", "purchased"] as const).map((value) => <button key={value} type="button"
               aria-pressed={filter === value} onClick={() => setFilter(value)}
@@ -251,7 +251,7 @@ export function ShoppingListWorkspace({ items }: { items: ShoppingListItem[] }) 
           </SelectField>
         </div>}
         {sideItems.length === 0 ? <div className="rounded-2xl border border-dashed border-border px-6 py-10">
-          <h3 className="mb-2 font-display text-2xl">No items for the {side === "BRIDE" ? "bride" : "groom"} side yet.</h3>
+          <h3 className="mb-2 font-display text-2xl">{side === "ALL" ? "No items yet." : `No items for the ${side === "BRIDE" ? "bride" : "groom"} side yet.`}</h3>
           <p className="max-w-prose text-base text-text-secondary">Add an item, choose who it’s for, and enter where to buy it.</p>
         </div> : filtered.length === 0 ? <div className="space-y-3 py-6">
           <p className="text-base text-text-secondary">No items match these filters.</p>
@@ -259,7 +259,7 @@ export function ShoppingListWorkspace({ items }: { items: ShoppingListItem[] }) 
         </div> : <ul className="space-y-3">{filtered.map((entry) => <ShoppingItemRow key={entry.id} entry={entry} stores={stores} vendors={vendors} recipients={recipients} onSaved={(message, savedSide) => {
           setNotice(message);
           if (savedSide) {
-            setSide(savedSide);
+            if (side !== "ALL") setSide(savedSide);
             resetFilters();
           }
         }} />)}</ul>}
