@@ -1,8 +1,9 @@
 "use client";
 
+import { useAdminSide } from "../AdminSideProvider";
 import { useState } from "react";
 import type { IFuseOptions } from "fuse.js";
-import type { GuestSide, RsvpStatus, SideFilter } from "@/lib/types";
+import type { GuestSide, RsvpStatus } from "@/lib/types";
 import { useFuzzyFilter } from "@/lib/useFuzzyFilter";
 import { InviteCheckbox } from "./InviteCheckbox";
 import { InviteFamilyButton } from "./InviteFamilyButton";
@@ -11,7 +12,6 @@ import {
   FuzzinessControl,
 } from "@/app/shared/FuzzinessControl";
 import { StatusIcon } from "@/app/shared/StatusIcon";
-import { Button } from "@/app/shared/Button";
 
 export type RosterEvent = {
   id: number;
@@ -30,12 +30,6 @@ export type RosterFamily = {
   label: string;
   guests: RosterGuest[];
 };
-
-const SIDE_FILTERS: { value: SideFilter; label: string }[] = [
-  { value: "ALL", label: "All families" },
-  { value: "BRIDE", label: "Bride's side" },
-  { value: "GROOM", label: "Groom's side" },
-];
 
 const STATUS_FILTERS: { value: RsvpStatus; label: string }[] = [
   { value: "PENDING", label: "Pending" },
@@ -162,7 +156,7 @@ export function RsvpRoster({
   const [search, setSearch] = useState("");
   const [fuzziness, setFuzziness] = useState(DEFAULT_FUZZINESS);
   const [statusFilter, setStatusFilter] = useState<RsvpStatus | null>(null);
-  const [sideFilter, setSideFilter] = useState<SideFilter>("ALL");
+  const { side: sideFilter } = useAdminSide();
 
   const matchedBride = filterByStatus(
     useFuzzyFilter(brideFamilies, search, searchOptions, fuzziness),
@@ -192,27 +186,6 @@ export function RsvpRoster({
           />
         </label>
         <FuzzinessControl value={fuzziness} onChange={setFuzziness} />
-        <div>
-          <p className="text-[10px] tracking-[0.3em] uppercase text-text-secondary font-body mb-2">
-            Side
-          </p>
-          <div
-            role="group"
-            aria-label="Filter guests by side"
-            className="inline-flex flex-wrap gap-2"
-          >
-            {SIDE_FILTERS.map((opt) => (
-              <Button
-                key={opt.value}
-                aria-pressed={sideFilter === opt.value}
-                variant={sideFilter === opt.value ? "primary" : "secondary"}
-                onClick={() => setSideFilter(opt.value)}
-              >
-                {opt.label}
-              </Button>
-            ))}
-          </div>
-        </div>
         <div>
           <span className="text-[10px] tracking-[0.3em] uppercase text-text-secondary font-body mb-1 block">
             Filter by status
