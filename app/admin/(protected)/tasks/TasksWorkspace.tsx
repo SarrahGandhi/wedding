@@ -2,6 +2,7 @@
 
 import { useId, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useAdminSide } from "../AdminSideProvider";
 import { Button } from "@/app/shared/Button";
 import { FormField, SelectField, TextareaField } from "@/app/shared/FormField";
 import { PageHeader } from "@/app/shared/PageHeader";
@@ -142,8 +143,8 @@ export function TasksWorkspace({ tasks }: { tasks: Task[] }) {
   const [adding, setAdding] = useState(false);
   const [filter, setFilter] = useState<"all" | "incomplete" | "complete">("all");
   const [notice, setNotice] = useState("");
-  const [side, setSide] = useState<TaskSide>("BRIDE");
-  const sideTasks = tasks.filter((task) => task.side === side);
+  const { side, setSide } = useAdminSide();
+  const sideTasks = tasks.filter((task) => side === "ALL" || task.side === side);
   const completedCount = sideTasks.filter((task) => task.completed).length;
   const owners = [...new Set(tasks.map((task) => task.owner))].sort();
   const filtered = sideTasks.filter((task) => filter === "all" || task.completed === (filter === "complete"));
@@ -155,29 +156,19 @@ export function TasksWorkspace({ tasks }: { tasks: Task[] }) {
         <p className="max-w-prose text-base text-text-secondary">Keep track of what needs doing, who owns it, and when it’s due.</p>
         <Button className={buttonStyle} onClick={() => setAdding(true)} disabled={adding}>Add task</Button>
       </div>
-      <div className="inline-flex flex-wrap gap-1 rounded-2xl border border-border/60 bg-warm-white p-1.5" role="group" aria-label="Filter tasks by side">
-        {(["BRIDE", "GROOM"] as const).map((value) => <button key={value} type="button"
-          aria-pressed={side === value} disabled={adding}
-          onClick={() => { setSide(value); setNotice(""); }}
-          className={`cursor-pointer rounded-xl px-5 py-3 text-base font-medium transition-colors disabled:cursor-default ${side === value
-            ? value === "BRIDE" ? "bg-blush text-rose" : "bg-sky text-bluebell"
-            : "text-text-secondary hover:bg-powder"}`}>
-          {TASK_SIDE_LABELS[value]}
-        </button>)}
-      </div>
       <p role="status" className={notice ? "rounded-xl bg-sage-light px-5 py-3 text-sm text-sage" : "sr-only"}>{notice}</p>
       {adding && <section aria-labelledby="add-task-heading" className="rounded-2xl border border-accent/40 bg-warm-white p-5 sm:p-7">
         <h2 id="add-task-heading" className="mb-6 font-display text-3xl">Add a task</h2>
-        <TaskForm owners={owners} defaultSide={side} onClose={() => setAdding(false)} onSaved={(savedSide) => {
+        <TaskForm owners={owners} defaultSide={side === "ALL" ? "BRIDE" : side} onClose={() => setAdding(false)} onSaved={(savedSide) => {
           setAdding(false);
-          setSide(savedSide);
+          if (side !== "ALL") setSide(savedSide);
           setFilter("all");
           setNotice("Task added.");
         }} />
       </section>}
       <section aria-labelledby="task-list-heading">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
-          <h2 id="task-list-heading" className="font-display text-3xl">{TASK_SIDE_LABELS[side]} tasks</h2>
+          <h2 id="task-list-heading" className="font-display text-3xl">{side === "ALL" ? "Both sides’" : TASK_SIDE_LABELS[side]} tasks</h2>
           {sideTasks.length > 0 && <div className="flex flex-wrap gap-2" role="group" aria-label="Filter tasks by status">
             {(["all", "incomplete", "complete"] as const).map((value) => <button key={value} type="button"
               aria-pressed={filter === value} onClick={() => setFilter(value)}
@@ -187,12 +178,12 @@ export function TasksWorkspace({ tasks }: { tasks: Task[] }) {
           </div>}
         </div>
         {sideTasks.length === 0 ? <div className="rounded-2xl border border-dashed border-border px-6 py-10">
-          <h3 className="mb-2 font-display text-2xl">No tasks for the {side === "BRIDE" ? "bride" : "groom"} side yet.</h3>
+          <h3 className="mb-2 font-display text-2xl">{side === "ALL" ? "No tasks yet." : `No tasks for the ${side === "BRIDE" ? "bride" : "groom"} side yet.`}</h3>
           <p className="max-w-prose text-base text-text-secondary">Add a task for this side, assign an owner, and choose a due date.</p>
         </div> : filtered.length === 0 ? <p className="py-6 text-base text-text-secondary">No {filter} tasks. Choose another filter to see the rest.</p>
           : <ul className="space-y-3">{filtered.map((task) => <TaskItem key={task.id} task={task} owners={owners} onSaved={(message, savedSide) => {
             setNotice(message);
-            if (savedSide) setSide(savedSide);
+            if (savedSide && side !== "ALL") setSide(savedSide);
           }} />)}</ul>}
       </section>
     </div>

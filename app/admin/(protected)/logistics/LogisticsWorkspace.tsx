@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useAdminSide } from "../AdminSideProvider";
 import { Button } from "@/app/shared/Button";
 import { FormField, SelectField } from "@/app/shared/FormField";
-import { accommodationLabel, arrivalSortKey, arrivalSupportSummary, compareNames, familyArrivals, filterLogisticsFamilies, formatArrivalDateTime, groupArrivalsByTime, hasIncompleteArrival, needsArrivalSupport, sortLogisticsFamilies, travelSummary, type Accommodation, type AccommodationRequiredFilter, type LogisticsFamily, type LogisticsSideFilter, type LogisticsSort } from "@/lib/logistics";
+import { accommodationLabel, arrivalSortKey, arrivalSupportSummary, compareNames, familyArrivals, filterLogisticsFamilies, formatArrivalDateTime, groupArrivalsByTime, hasIncompleteArrival, needsArrivalSupport, sortLogisticsFamilies, travelSummary, type Accommodation, type AccommodationRequiredFilter, type LogisticsFamily, type LogisticsSort } from "@/lib/logistics";
 import { LogisticsForm } from "./LogisticsForm";
 import { DepartureWorkspace } from "./DepartureWorkspace";
 import { setArrivalSupportRequired } from "./actions";
@@ -89,7 +90,7 @@ function ArrivalWorkspace({ families, accommodations, initialFamilyId }: {
 }) {
   const [search, setSearch] = useState(initialFamilyId ? `#${initialFamilyId}` : "");
   const [filter, setFilter] = useState("ALL");
-  const [side, setSide] = useState<LogisticsSideFilter>("ALL");
+  const { side } = useAdminSide();
   const [required, setRequired] = useState<AccommodationRequiredFilter>("ALL");
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
@@ -125,11 +126,6 @@ function ArrivalWorkspace({ families, accommodations, initialFamilyId }: {
       </p>
       <div className="mb-8 grid items-end gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <FormField label="Search families or stays" type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Guest name, family #, hotel or house…" />
-        <SelectField label="Side" value={side} onChange={(event) => setSide(event.target.value as LogisticsSideFilter)}>
-          <option value="ALL">Both sides</option>
-          <option value="BRIDE">Bride’s side</option>
-          <option value="GROOM">Groom’s side</option>
-        </SelectField>
         <SelectField label="Accommodation required" value={required} onChange={(event) => setRequired(event.target.value as AccommodationRequiredFilter)}>
           <option value="ALL">All families</option>
           <option value="REQUIRED">Required (checked)</option>

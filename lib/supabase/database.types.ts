@@ -39,6 +39,11 @@ export type Database = {
         Insert: Omit<import("../wedding-flow").FlowEntry, "id" | "revision" | "completed"> & { completed?: boolean; revision?: number; created_at?: string }
         Update: Partial<Omit<import("../wedding-flow").FlowEntry, "id">>
         Relationships: [{ foreignKeyName: "wedding_flow_entries_event_id_fkey"; columns: ["event_id"]; isOneToOne: false; referencedRelation: "events"; referencedColumns: ["id"] }]
+      gifting_plans: {
+        Row: { owner_id: string; recipients: Json; revision: number }
+        Insert: { owner_id?: string; recipients?: Json; revision?: number }
+        Update: { owner_id?: string; recipients?: Json; revision?: number }
+        Relationships: []
       }
       shopping_list_items: {
         Row: {
@@ -404,6 +409,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_access_gifting: { Args: Record<PropertyKey, never>; Returns: boolean }
       add_family_guests: {
         Args: {
           family_row_id: number

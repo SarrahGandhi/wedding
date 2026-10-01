@@ -61,7 +61,6 @@ export function GuestRoster({
   onSearchChange,
   searchRef,
   sideFilter,
-  onSideFilterChange,
   openFamilyIds,
   onOpenFamilyIdsChange,
 }: {
@@ -73,7 +72,6 @@ export function GuestRoster({
   // search and its lone result land together on small screens.
   searchRef?: Ref<HTMLLabelElement>;
   sideFilter: SideFilter;
-  onSideFilterChange: (filter: SideFilter) => void;
   openFamilyIds: Set<number>;
   onOpenFamilyIdsChange: Dispatch<SetStateAction<Set<number>>>;
 }) {
@@ -171,26 +169,6 @@ export function GuestRoster({
           </p>
         )}
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="text-[10px] tracking-[0.3em] uppercase text-text-secondary font-body mb-2">
-              Side
-            </p>
-            <div className="inline-flex flex-wrap gap-2">
-              {[
-                ["ALL", "All families"],
-                ["BRIDE", "Bride's side"],
-                ["GROOM", "Groom's side"],
-              ].map(([value, label]) => (
-                <Button
-                  key={value}
-                  variant={sideFilter === value ? "primary" : "secondary"}
-                  onClick={() => onSideFilterChange(value as SideFilter)}
-                >
-                  {label}
-                </Button>
-              ))}
-            </div>
-          </div>
           <Button
             variant="secondary"
             onClick={toggleAllVisibleFamilies}

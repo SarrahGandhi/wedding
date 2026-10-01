@@ -1,9 +1,10 @@
 "use client";
 
 import { useId, useState, useTransition } from "react";
+import { useAdminSide } from "../AdminSideProvider";
 import { Button } from "@/app/shared/Button";
 import { FormField, SelectField, TextareaField } from "@/app/shared/FormField";
-import { compareNames, filterLogisticsFamilies, formatArrival, sortLogisticsFamilies, travelLabel, TRAVEL_LABELS, TRAVEL_MODES, type LogisticsFamily, type LogisticsSideFilter } from "@/lib/logistics";
+import { compareNames, filterLogisticsFamilies, formatArrival, sortLogisticsFamilies, travelLabel, TRAVEL_LABELS, TRAVEL_MODES, type LogisticsFamily } from "@/lib/logistics";
 import { saveFamilyDeparture } from "./actions";
 
 function DepartureForm({ family, names, onSaved, onCancel }: {
@@ -91,7 +92,7 @@ function DepartureRow({ family, names }: { family: LogisticsFamily; names: strin
 export function DepartureWorkspace({ families, initialFamilyId }: { families: LogisticsFamily[]; initialFamilyId: number | null }) {
   const [search, setSearch] = useState(initialFamilyId ? `#${initialFamilyId}` : "");
   const [filter, setFilter] = useState("ALL");
-  const [side, setSide] = useState<LogisticsSideFilter>("ALL");
+  const { side } = useAdminSide();
   const [sort, setSort] = useState<"family" | "departure" | "dropoff">("family");
   const eligible = filterLogisticsFamilies(families, { required: "REQUIRED" });
   const names = [...new Set(eligible.flatMap((family) => family.logistics?.dropoff_by ? [family.logistics.dropoff_by] : []))].sort(compareNames);
@@ -108,13 +109,8 @@ export function DepartureWorkspace({ families, initialFamilyId }: { families: Lo
     <p className="mb-6 text-sm text-text-secondary tabular-nums">
       {eligible.length} {eligible.length === 1 ? "family" : "families"} requiring arrangements · {planned} with departure date and travel method · {eligible.length - planned} with departure details incomplete
     </p>
-    <div className="mb-8 grid items-end gap-4 sm:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr_1fr]">
+    <div className="mb-8 grid items-end gap-4 sm:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr]">
       <FormField label="Search families or stays" type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Guest name, family #, hotel or house…" />
-      <SelectField label="Side" value={side} onChange={(event) => setSide(event.target.value as LogisticsSideFilter)}>
-        <option value="ALL">Both sides</option>
-        <option value="BRIDE">Bride’s side</option>
-        <option value="GROOM">Groom’s side</option>
-      </SelectField>
       <SelectField label="Show" value={filter} onChange={(event) => setFilter(event.target.value)}>
         <option value="ALL">All requiring arrangements</option>
         <option value="TRAVEL">Departure details incomplete</option>
