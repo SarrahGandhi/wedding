@@ -38,3 +38,36 @@ test("reordering handles boundaries without mutating original arrays", () => {
   assert.deepEqual(moveEntry(original, 2, 1), original);
   assert.deepEqual(original, ["a", "b", "c"]);
 });
+
+test("older plans default to Awaiting without losing their content", () => {
+  const source = plan();
+  const parsed = parseGiftPlan(source);
+  assert.equal(parsed[0].categories[0].status, "Awaiting");
+  assert.ok(parsed[0].categories[0].gifts.every(gift => gift.status === "Awaiting"));
+  assert.equal(parsed[0].categories[0].creatives, "Flowers for decoration");
+  assert.equal(source[0].categories[0].status, undefined);
+});
+
+test("gift and category statuses persist independently through a save round trip", () => {
+  for (const categoryStatus of ["Awaiting", "Pending", "Completed"]) {
+    for (const giftStatus of ["Awaiting", "Received"]) {
+      const source = plan();
+      source[0].categories[0].status = categoryStatus;
+      source[0].categories[0].gifts[0].status = giftStatus;
+      const parsed = parseGiftPlan(JSON.parse(JSON.stringify(parseGiftPlan(source))));
+      assert.equal(parsed[0].categories[0].status, categoryStatus);
+      assert.equal(parsed[0].categories[0].gifts[0].status, giftStatus);
+    }
+  }
+});
+
+test("rejects statuses from the wrong level and invalid values", () => {
+  for (const status of ["Completed", "Pending", "received", "", null, 1]) {
+    const source = plan(); source[0].categories[0].gifts[0].status = status;
+    assert.throws(() => parseGiftPlan(source), /valid status/);
+  }
+  for (const status of ["Received", "completed", "", null, 1]) {
+    const source = plan(); source[0].categories[0].status = status;
+    assert.throws(() => parseGiftPlan(source), /valid status/);
+  }
+});

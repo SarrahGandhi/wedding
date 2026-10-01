@@ -208,7 +208,10 @@ Apply `migrations/20261001000000_private_gifting.sql` with the existing
 Gifting link stays hidden. No new environment variables are needed.
 
 Add recipients, categories within recipients, and gifts within categories.
-Creative requirements belong to each recipient’s category. Arrow controls reorder
+Creative requirements belong to each recipient’s category. Gifts have Awaiting or
+Received status; categories have Awaiting, Pending, or Completed status. Statuses
+are independent, and entries saved before status tracking default to Awaiting.
+No additional database migration is required for status tracking. Arrow controls reorder
 recipients, categories, or gifts; array order persists on **Save changes**.
 Edits and removals stay local until saved. Revision checks reject stale saves
 from another tab without discarding the current edits. The private plan is stored

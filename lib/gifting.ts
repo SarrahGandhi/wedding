@@ -1,5 +1,9 @@
-export type Gift = { id: string; name: string };
-export type GiftCategory = { id: string; name: string; creatives: string; gifts: Gift[] };
+export const GIFT_STATUSES = ["Awaiting", "Received"] as const;
+export const CATEGORY_STATUSES = ["Awaiting", "Pending", "Completed"] as const;
+export type GiftStatus = typeof GIFT_STATUSES[number];
+export type GiftCategoryStatus = typeof CATEGORY_STATUSES[number];
+export type Gift = { id: string; name: string; status: GiftStatus };
+export type GiftCategory = { id: string; name: string; status: GiftCategoryStatus; creatives: string; gifts: Gift[] };
 export type GiftRecipient = { id: string; name: string; categories: GiftCategory[] };
 
 export function moveEntry<T>(items: T[], index: number, direction: -1 | 1): T[] {
@@ -8,6 +12,15 @@ export function moveEntry<T>(items: T[], index: number, direction: -1 | 1): T[] 
   const next = [...items];
   [next[index], next[target]] = [next[target], next[index]];
   return next;
+}
+
+function parseStatus<T extends string>(value: unknown, options: readonly T[]): T {
+  // Plans saved before status tracking have no status field.
+  if (value === undefined) return options[0];
+  if (typeof value !== "string" || !options.includes(value as T)) {
+    throw new Error(`Choose a valid status: ${options.join(", ")}.`);
+  }
+  return value as T;
 }
 
 // Rebuild the payload so unexpected fields can never be persisted by the action.
@@ -39,9 +52,9 @@ export function parseGiftPlan(value: unknown): GiftRecipient[] {
     const recipient = record(entry);
     return { id: id(recipient.id), name: text(recipient.name, "a recipient name", 160), categories: list(recipient.categories).map((entry) => {
       const category = record(entry);
-      return { id: id(category.id), name: text(category.name, "a category", 160), creatives: text(category.creatives, "creative requirements", 5000, true), gifts: list(category.gifts).map((entry) => {
+      return { id: id(category.id), name: text(category.name, "a category", 160), status: parseStatus(category.status, CATEGORY_STATUSES), creatives: text(category.creatives, "creative requirements", 5000, true), gifts: list(category.gifts).map((entry) => {
         const gift = record(entry);
-        return { id: id(gift.id), name: text(gift.name, "a gift name", 200) };
+        return { id: id(gift.id), name: text(gift.name, "a gift name", 200), status: parseStatus(gift.status, GIFT_STATUSES) };
       }) };
     }) };
   });
