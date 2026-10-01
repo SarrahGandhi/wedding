@@ -34,6 +34,12 @@ export type Database = {
   }
   public: {
     Tables: {
+      wedding_flow_entries: {
+        Row: import("../wedding-flow").FlowEntry & { created_at: string }
+        Insert: Omit<import("../wedding-flow").FlowEntry, "id" | "revision" | "completed"> & { completed?: boolean; revision?: number; created_at?: string }
+        Update: Partial<Omit<import("../wedding-flow").FlowEntry, "id">>
+        Relationships: [{ foreignKeyName: "wedding_flow_entries_event_id_fkey"; columns: ["event_id"]; isOneToOne: false; referencedRelation: "events"; referencedColumns: ["id"] }]
+      }
       shopping_list_items: {
         Row: {
           side: Database["public"]["Enums"]["guest_side"]

@@ -7,6 +7,7 @@ const links = [
   { href: "/admin/dashboard", label: "Dashboard" },
   { href: "/admin/guests", label: "Roster" },
   { href: "/admin/events", label: "Events" },
+  { href: "/admin/wedding-flow", label: "Wedding Flow" },
   { href: "/admin/rsvp", label: "RSVP" },
   { href: "/admin/budgeting", label: "Budgeting" },
   { href: "/admin/tasks", label: "Tasks" },
