@@ -59,3 +59,23 @@ export function parseGiftPlan(value: unknown): GiftRecipient[] {
     }) };
   });
 }
+
+export type CategoryFilter = "All" | GiftCategoryStatus;
+export type CategorySort = "manual" | GiftCategoryStatus;
+
+export function visibleCategories(categories: GiftCategory[], filter: CategoryFilter, sort: CategorySort) {
+  const entries = categories.map((category, index) => ({ category, index }))
+    .filter(({ category }) => filter === "All" || category.status === filter);
+  if (sort !== "manual") {
+    const order = [sort, ...CATEGORY_STATUSES.filter(status => status !== sort)];
+    entries.sort((a, b) => order.indexOf(a.category.status) - order.indexOf(b.category.status));
+  }
+  return entries;
+}
+
+export function individualGifts(recipients: GiftRecipient[], status: "All" | GiftStatus) {
+  return recipients.flatMap((recipient, recipientIndex) => recipient.categories.flatMap((category, categoryIndex) =>
+    category.gifts.map((gift, giftIndex) => ({ gift, category, recipient, recipientIndex, categoryIndex, giftIndex }))
+      .filter(({ gift }) => status === "All" || gift.status === status)
+  ));
+}
