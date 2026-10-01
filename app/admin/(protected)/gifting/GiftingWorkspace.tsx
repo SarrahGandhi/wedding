@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
-import { moveEntry, type GiftRecipient } from "@/lib/gifting";
+import { CATEGORY_STATUSES, GIFT_STATUSES, moveEntry, type GiftStatus, type GiftCategoryStatus, type GiftRecipient } from "@/lib/gifting";
 import { saveGiftPlan } from "./actions";
 
 const inputClass = "w-full rounded-lg border border-border bg-warm-white px-3 py-2 text-base focus:border-accent";
@@ -79,23 +79,25 @@ export function GiftingWorkspace({ initialRecipients, initialRevision }: { initi
             return <section key={category.id} className="rounded-xl bg-background p-4 sm:p-5" aria-label={category.name || "New category"}>
               <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
                 <label className="min-w-0 flex-1 basis-48"><span className="mb-2 block text-sm font-medium">Category / theme</span><input required maxLength={160} value={category.name} placeholder="e.g. Wedding hamper" className={inputClass} onChange={(event) => editCategory({ ...category, name: event.target.value })} /></label>
+                <label className="w-full sm:w-auto"><span className="mb-2 block text-sm font-medium">Category status</span><select aria-label={`Status for ${category.name || "category"}`} className={inputClass} value={category.status} onChange={(event) => editCategory({ ...category, status: event.target.value as GiftCategoryStatus })}>{CATEGORY_STATUSES.map((status) => <option key={status} value={status}>{status}</option>)}</select></label>
                 <OrderControls label={category.name || "category"} index={ci} length={recipient.categories.length} move={(direction) => editRecipient(ri, { ...recipient, categories: moveEntry(recipient.categories, ci, direction) })} remove={() => { if (confirmRemove(category.name || "this category")) editRecipient(ri, { ...recipient, categories: recipient.categories.filter((_, i) => i !== ci) }); }} />
               </div>
               <div className="grid gap-6 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
                 <div><h3 className="mb-3 text-sm font-medium">Gifts</h3>
                   {category.gifts.length === 0 && <p className="mb-3 text-sm text-text-secondary">Add the gifts that belong in this category.</p>}
-                  <ol className="space-y-3">{category.gifts.map((gift, gi) => <li key={gift.id} className="flex flex-wrap items-center gap-2">
+                  <ol className="space-y-3">{category.gifts.map((gift, gi) => <li key={gift.id} className="flex flex-wrap items-end gap-2">
                     <input required maxLength={200} aria-label={`Gift ${gi + 1} in ${category.name || "category"}`} placeholder="Gift item" value={gift.name} className={`${inputClass} min-w-0 flex-1 basis-36`} onChange={(event) => editCategory({ ...category, gifts: category.gifts.map((entry, i) => i === gi ? { ...entry, name: event.target.value } : entry) })} />
+                    <label className="w-36"><span className="mb-1 block text-sm text-text-secondary">Gift status</span><select aria-label={`Status for ${gift.name || `gift ${gi + 1}`}`} className={inputClass} value={gift.status} onChange={(event) => editCategory({ ...category, gifts: category.gifts.map((entry, i) => i === gi ? { ...entry, status: event.target.value as GiftStatus } : entry) })}>{GIFT_STATUSES.map((status) => <option key={status} value={status}>{status}</option>)}</select></label>
                     <OrderControls label={gift.name || "gift"} index={gi} length={category.gifts.length} move={(direction) => editCategory({ ...category, gifts: moveEntry(category.gifts, gi, direction) })} remove={() => { if (!gift.name || confirmRemove(gift.name)) editCategory({ ...category, gifts: category.gifts.filter((_, i) => i !== gi) }); }} />
                   </li>)}</ol>
-                  <button type="button" className={`${buttonClass} mt-3`} onClick={() => editCategory({ ...category, gifts: [...category.gifts, { id: crypto.randomUUID(), name: "" }] })}><Plus size={16} /> Add gift</button>
+                  <button type="button" className={`${buttonClass} mt-3`} onClick={() => editCategory({ ...category, gifts: [...category.gifts, { id: crypto.randomUUID(), name: "", status: "Awaiting" }] })}><Plus size={16} /> Add gift</button>
                 </div>
                 <label><span className="mb-2 block text-sm font-medium">Creative requirements</span><textarea maxLength={5000} rows={5} value={category.creatives} placeholder="e.g. Flowers for decoration, ribbon, a printed name card…" className={inputClass} onChange={(event) => editCategory({ ...category, creatives: event.target.value })} /><span className="mt-2 block text-sm text-text-secondary">Shared by all gifts in this category.</span></label>
               </div>
             </section>;
           })}
         </div>
-        <button type="button" className={`${buttonClass} mt-5`} onClick={() => editRecipient(ri, { ...recipient, categories: [...recipient.categories, { id: crypto.randomUUID(), name: "", creatives: "", gifts: [] }] })}><Plus size={16} /> Add category</button>
+        <button type="button" className={`${buttonClass} mt-5`} onClick={() => editRecipient(ri, { ...recipient, categories: [...recipient.categories, { id: crypto.randomUUID(), name: "", status: "Awaiting", creatives: "", gifts: [] }] })}><Plus size={16} /> Add category</button>
       </section>)}
       <button type="button" className={buttonClass} onClick={() => change([...recipients, { id: crypto.randomUUID(), name: "", categories: [] }])}><Plus size={16} /> Add recipient</button>
     </fieldset>
