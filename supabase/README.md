@@ -195,3 +195,26 @@ a transaction and roll back their fixtures:
 ```sh
 docker exec -i supabase_db_wedding psql -U postgres -d postgres -v ON_ERROR_STOP=1 < supabase/tests/family_logistics.sql
 ```
+
+## Private gifting
+
+`/admin/gifting` is visible only to the confirmed account
+`thesarrahgandhi@gmail.com`. The navigation, page, save action, and database RLS
+use `can_access_gifting()`, which checks the current email in `auth.users`.
+Other admins cannot read or write the plan even through the database API.
+
+Apply `migrations/20261001000000_private_gifting.sql` with the existing
+`supabase db push` workflow before using the feature. Until it is applied, the
+Gifting link stays hidden. No new environment variables are needed.
+
+Add recipients, categories within recipients, and gifts within categories.
+Creative requirements belong to each recipient’s category. Arrow controls reorder
+recipients, categories, or gifts; array order persists on **Save changes**.
+Edits and removals stay local until saved. Revision checks reject stale saves
+from another tab without discarding the current edits. The private plan is stored
+as one JSON document, with a 500,000-character application limit.
+
+Run `node --experimental-strip-types --test tests/gifting.test.mjs` for input and
+ordering checks. Run `supabase/tests/gifting.sql` against a local/test database
+for owner access, other-admin denial, anonymous denial, and stale-save checks;
+that script rolls back its fixture data.

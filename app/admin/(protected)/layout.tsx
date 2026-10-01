@@ -10,7 +10,8 @@ export default async function ProtectedAdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user } = await requireAdmin();
+  const { user, supabase } = await requireAdmin();
+  const { data: canAccessGifting } = await supabase.rpc("can_access_gifting");
 
   const savedSide = (await cookies()).get("admin-side")?.value;
   const initialSide = savedSide === "BRIDE" || savedSide === "GROOM" ? savedSide : "ALL";
@@ -31,7 +32,7 @@ export default async function ProtectedAdminLayout({
                 Murtaza &amp; Sarrah
               </span>
             </div>
-            <AdminNav />
+            <AdminNav canAccessGifting={canAccessGifting === true} />
           </div>
           <div className="max-w-6xl mx-auto px-6 pb-3 flex items-center justify-between text-[10px] tracking-[0.25em] uppercase font-body text-text-secondary">
             <span className="truncate">
