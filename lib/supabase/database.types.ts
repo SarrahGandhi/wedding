@@ -34,6 +34,12 @@ export type Database = {
   }
   public: {
     Tables: {
+      gifting_plans: {
+        Row: { owner_id: string; recipients: Json; revision: number }
+        Insert: { owner_id?: string; recipients?: Json; revision?: number }
+        Update: { owner_id?: string; recipients?: Json; revision?: number }
+        Relationships: []
+      }
       shopping_list_items: {
         Row: {
           side: Database["public"]["Enums"]["guest_side"]
@@ -398,6 +404,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_access_gifting: { Args: Record<PropertyKey, never>; Returns: boolean }
       add_family_guests: {
         Args: {
           family_row_id: number

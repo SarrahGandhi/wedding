@@ -14,12 +14,12 @@ const links = [
   { href: "/admin/accommodation", label: "Accommodation" },
 ];
 
-export function AdminNav() {
+export function AdminNav({ canAccessGifting = false }: { canAccessGifting?: boolean }) {
   const pathname = usePathname();
 
   return (
     <nav className="flex flex-wrap items-center gap-x-7 gap-y-2">
-      {links.map(({ href, label }) => {
+      {[...links, ...(canAccessGifting ? [{ href: "/admin/gifting", label: "Gifting" }] : [])].map(({ href, label }) => {
         const isActive =
           pathname === href || pathname.startsWith(href + "/");
         return (
