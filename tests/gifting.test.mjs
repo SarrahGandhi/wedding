@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { randomUUID } from "node:crypto";
-import { parseGiftPlan, moveEntry } from "../lib/gifting.ts";
+import { parseGiftPlan, moveEntry, visibleCategories, individualGifts } from "../lib/gifting.ts";
 
 const plan = () => [{ id: randomUUID(), name: " Mum ", categories: [{ id: randomUUID(), name: " Hamper ", creatives: " Flowers for decoration ", gifts: [{ id: randomUUID(), name: " Scarf " }, { id: randomUUID(), name: " Perfume " }] }] }];
 
@@ -70,4 +70,31 @@ test("rejects statuses from the wrong level and invalid values", () => {
     const source = plan(); source[0].categories[0].status = status;
     assert.throws(() => parseGiftPlan(source), /valid status/);
   }
+});
+
+
+test("category filters and priority sorting preserve custom order and original edit positions", () => {
+  const categories = ["Completed", "Awaiting", "Pending", "Awaiting"].map((status, i) => ({
+    id: randomUUID(), name: `Category ${i}`, status, creatives: "", gifts: [],
+  }));
+  const original = structuredClone(categories);
+  assert.deepEqual(visibleCategories(categories, "All", "Awaiting").map(row => row.index), [1, 3, 2, 0]);
+  assert.deepEqual(visibleCategories(categories, "All", "Pending").map(row => row.index), [2, 1, 3, 0]);
+  assert.deepEqual(visibleCategories(categories, "All", "Completed").map(row => row.index), [0, 1, 3, 2]);
+  assert.deepEqual(visibleCategories(categories, "Awaiting", "manual").map(row => row.index), [1, 3]);
+  assert.deepEqual(visibleCategories(categories, "All", "manual").map(row => row.index), [0, 1, 2, 3]);
+  assert.deepEqual(categories, original);
+});
+
+test("individual gifts span all recipients and category statuses with correct edit positions", () => {
+  const recipients = parseGiftPlan([...plan(), ...plan()]);
+  recipients[0].categories[0].status = "Completed";
+  recipients[0].categories[0].gifts[0].status = "Received";
+  const awaiting = individualGifts(recipients, "Awaiting");
+  assert.equal(awaiting.length, 3);
+  assert.equal(awaiting[0].category.status, "Completed");
+  assert.deepEqual(awaiting.map(row => [row.recipientIndex, row.categoryIndex, row.giftIndex]), [[0, 0, 1], [1, 0, 0], [1, 0, 1]]);
+  assert.equal(individualGifts(recipients, "Received").length, 1);
+  assert.equal(individualGifts(recipients, "All").length, 4);
+  assert.deepEqual(individualGifts([], "Awaiting"), []);
 });

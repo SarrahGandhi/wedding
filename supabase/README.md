@@ -213,6 +213,10 @@ Received status; categories have Awaiting, Pending, or Completed status. Statuse
 are independent, and entries saved before status tracking default to Awaiting.
 No additional database migration is required for status tracking. Arrow controls reorder
 recipients, categories, or gifts; array order persists on **Save changes**.
+Filter categories by status or sort with Awaiting, Pending, or Completed first
+within each recipient; these view controls preserve the saved custom order.
+The Individual gifts view defaults to Awaiting and lists gifts across all
+recipients and categories, with recipient/category context and editable status.
 Edits and removals stay local until saved. Revision checks reject stale saves
 from another tab without discarding the current edits. The private plan is stored
 as one JSON document, with a 500,000-character application limit.
