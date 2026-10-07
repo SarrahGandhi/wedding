@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { allRows } from "@/lib/supabase/all-rows";
 import { GuestsWorkspace } from "./GuestsWorkspace";
 import { familyLabel } from "./family-label";
 import type { GuestCategory } from "@/lib/types";
@@ -27,17 +28,19 @@ function familyLabelFromGuests(
 export default async function GuestsPage() {
   const supabase = await createClient();
 
-  const [{ data: families }, { data: guestRows }] = await Promise.all([
-    supabase
+  const [families, guestRows] = await Promise.all([
+    allRows((from, to) => supabase
       .from("guest_families")
       .select(
         "id, side, email, phone, family_name, male_guest_slots, female_guest_slots, allow_all_guests",
       )
-      .order("id", { ascending: true }),
-    supabase
+      .order("id", { ascending: true })
+      .range(from, to)),
+    allRows((from, to) => supabase
       .from("guests")
       .select("id, name, category, family_id, added_by_family")
-      .order("id", { ascending: true }),
+      .order("id", { ascending: true })
+      .range(from, to)),
   ]);
 
   const guests: Guest[] = (guestRows ?? [])
