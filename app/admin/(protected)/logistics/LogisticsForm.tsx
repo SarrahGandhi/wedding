@@ -3,7 +3,7 @@
 import { useId, useRef, useState, useTransition } from "react";
 import { Button } from "@/app/shared/Button";
 import { FormField, SelectField, TextareaField } from "@/app/shared/FormField";
-import { accommodationKey, accommodationOptions, familyArrivals, TRAVEL_MODES, TRAVEL_LABELS, type Accommodation, type ArrivalPlan, type LogisticsFamily } from "@/lib/logistics";
+import { accommodationKey, accommodationOptions, guestRoom, familyArrivals, TRAVEL_MODES, TRAVEL_LABELS, type Accommodation, type ArrivalPlan, type LogisticsFamily } from "@/lib/logistics";
 import { saveFamilyLogistics } from "./actions";
 
 export function LogisticsForm({ family, accommodations, pickupNames, onSaved, onCancel }: {
@@ -19,7 +19,9 @@ export function LogisticsForm({ family, accommodations, pickupNames, onSaved, on
   const [choice, setChoice] = useState(String(initialProperty?.id ?? ""));
   const [kind, setKind] = useState("HOUSE");
   const [name, setName] = useState("");
-  const [room, setRoom] = useState(family.accommodation?.room_number ?? "");
+  const [rooms, setRooms] = useState<Record<string, string>>(() => Object.fromEntries(
+    family.guests.map((guest) => [String(guest.id), guestRoom(family, guest.id) ?? ""])
+  ));
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [arrivals, setArrivals] = useState(() => {
@@ -42,6 +44,8 @@ export function LogisticsForm({ family, accommodations, pickupNames, onSaved, on
       ["guests", "arrival_date", "arrival_time", "travel_mode", "travel_details", "pickup_by", "train_number", "coach_number", "flight_number"].map((field) =>
         [field, form.get(`arrival-${entry.id}-${field}`) || null])
     ))));
+    form.set("guest_rooms", JSON.stringify(Object.fromEntries(family.guests.map((guest) =>
+      [String(guest.id), choice ? rooms[String(guest.id)]?.trim() || null : null]))));
     setError(null);
     startTransition(async () => {
       try {
@@ -113,7 +117,7 @@ export function LogisticsForm({ family, accommodations, pickupNames, onSaved, on
 
         <div className="space-y-4 border-t border-border/60 pt-5">
           <h3 className="font-display text-xl">Where they’re staying</h3>
-          <SelectField label="Accommodation" name="accommodation_id" value={choice} onChange={(event) => { setChoice(event.target.value); setRoom(""); }}>
+          <SelectField label="Accommodation" name="accommodation_id" value={choice} onChange={(event) => { setChoice(event.target.value); setRooms({}); }}>
             <option value="">Not assigned yet</option>
             <option value="new">+ Add accommodation</option>
             {properties.length > 0 && (
@@ -123,16 +127,16 @@ export function LogisticsForm({ family, accommodations, pickupNames, onSaved, on
             )}
           </SelectField>
           <p className="text-sm leading-relaxed text-text-secondary">
-            Choose a hotel or house, then enter the family’s room number if known.
+            Choose a hotel or house, then enter a room number for each confirmed guest.
           </p>
           {isNew && (
             <div className="grid gap-5 sm:grid-cols-2">
-              <SelectField label="Stay type" name="new_kind" value={kind} onChange={(event) => { setKind(event.target.value); setName(""); setRoom(""); }}>
+              <SelectField label="Stay type" name="new_kind" value={kind} onChange={(event) => { setKind(event.target.value); setName(""); setRooms({}); }}>
                 <option value="HOUSE">House</option>
                 <option value="HOTEL">Hotel</option>
               </SelectField>
               <FormField label={kind === "HOTEL" ? "Hotel name" : "House name"} name="new_name" required maxLength={160}
-                value={name} onChange={(event) => { setName(event.target.value); setRoom(""); }}
+                value={name} onChange={(event) => { setName(event.target.value); setRooms({}); }}
                 list={kind === "HOTEL" ? `${inputId}-hotels` : undefined}
                 placeholder={kind === "HOTEL" ? "Hotel name" : "e.g. Gandhi house"} />
               {kind === "HOTEL" && (
@@ -144,12 +148,14 @@ export function LogisticsForm({ family, accommodations, pickupNames, onSaved, on
           )}
           {(isNew || selectedProperty) && (
             <div className="space-y-2 sm:max-w-sm">
-              <FormField label="Room number (optional)" name="room_number" maxLength={40}
-                value={room} onChange={(event) => setRoom(event.target.value)} list={`${inputId}-rooms`} placeholder="e.g. 201 or 12A" />
+              {family.guests.map((guest) => <FormField key={guest.id} label={`${guest.name} · Room number (optional)`}
+                name={`guest-room-${guest.id}`} maxLength={40} value={rooms[String(guest.id)] ?? ""}
+                onChange={(event) => setRooms((current) => ({ ...current, [String(guest.id)]: event.target.value }))}
+                list={`${inputId}-rooms`} placeholder="e.g. 201 or 12A" />)}
               <datalist id={`${inputId}-rooms`}>
                 {existingRooms.map((stay) => <option key={stay.id} value={stay.room_number ?? ""} />)}
               </datalist>
-              <p className="text-sm text-text-secondary">Use the same room number for families sharing a room.</p>
+              <p className="text-sm text-text-secondary">Use the same room number for guests sharing a room.</p>
             </div>
           )}
         </div>

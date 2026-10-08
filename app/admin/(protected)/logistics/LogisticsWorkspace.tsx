@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useAdminSide } from "../AdminSideProvider";
 import { Button } from "@/app/shared/Button";
 import { FormField, SelectField } from "@/app/shared/FormField";
-import { accommodationLabel, arrivalSortKey, arrivalSupportSummary, compareNames, familyArrivals, filterLogisticsFamilies, formatArrivalDateTime, groupArrivalsByTime, hasIncompleteArrival, needsArrivalSupport, sortLogisticsFamilies, travelSummary, type Accommodation, type AccommodationRequiredFilter, type LogisticsFamily, type LogisticsSort } from "@/lib/logistics";
+import { guestRoom, arrivalSortKey, arrivalSupportSummary, compareNames, familyArrivals, filterLogisticsFamilies, formatArrivalDateTime, groupArrivalsByTime, hasIncompleteArrival, needsArrivalSupport, sortLogisticsFamilies, travelSummary, type Accommodation, type AccommodationRequiredFilter, type LogisticsFamily, type LogisticsSort } from "@/lib/logistics";
 import { LogisticsForm } from "./LogisticsForm";
 import { DepartureWorkspace } from "./DepartureWorkspace";
 import { setArrivalSupportRequired } from "./actions";
@@ -62,8 +62,11 @@ function FamilyRow({ family, accommodations, pickupNames, initiallyOpen }: {
       {notice && <p role="status" className="mt-3 text-sm text-sage">{notice}</p>}
       {!required ? <p className="mt-4 text-sm text-text-secondary">Local family — pickup and accommodation not required.</p> : <>
       <dl className="mt-5 text-sm">
-        <dt className="mb-1 text-text-secondary">Accommodation</dt><dd className="break-words">{family.accommodation ? accommodationLabel(family.accommodation) : "Not assigned yet"}</dd>
+        <dt className="mb-1 text-text-secondary">Accommodation</dt><dd className="break-words">{family.accommodation ? family.accommodation.name : "Not assigned yet"}</dd>
       </dl>
+      {family.accommodation && <ul className="mt-3 space-y-1 text-sm" aria-label={`Rooms for ${family.label}`}>
+        {family.guests.map((guest) => <li key={guest.id} className="break-words">{guest.name} · {guestRoom(family, guest.id) ? `Room ${guestRoom(family, guest.id)}` : "Room not assigned"}</li>)}
+      </ul>}
       {arrivals.length === 0 ? <p className="mt-5 text-sm text-text-secondary">No arrivals planned yet.</p> : <ul className="mt-5 space-y-4" aria-label={`Pickups for ${family.label}`}>
         {arrivals.map((entry, index) => <li key={index} className="rounded-xl border border-border/60 p-4">
           <dl className="grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-4">

@@ -196,6 +196,7 @@ export type Database = {
       family_logistics: {
         Row: {
           arrival_support_required: boolean
+          guest_rooms: Json
           arrivals: Json | null
           departure_mode: string | null
           departure_date: string | null
@@ -213,6 +214,7 @@ export type Database = {
         }
         Insert: {
           arrival_support_required?: boolean
+          guest_rooms?: Json
           arrivals?: Json | null
           departure_mode?: string | null
           departure_date?: string | null
@@ -230,6 +232,7 @@ export type Database = {
         }
         Update: {
           arrival_support_required?: boolean
+          guest_rooms?: Json
           arrivals?: Json | null
           departure_mode?: string | null
           departure_date?: string | null
@@ -458,6 +461,18 @@ export type Database = {
         Args: {
           p_family_id: number
           p_arrivals: Json
+          p_accommodation_id: number | null
+          p_new_kind: string | null
+          p_new_name: string | null
+          p_new_room_number: string | null
+        }
+        Returns: undefined
+      }
+      save_family_guest_rooms: {
+        Args: {
+          p_family_id: number
+          p_arrivals: Json
+          p_guest_rooms: Json
           p_accommodation_id: number | null
           p_new_kind: string | null
           p_new_name: string | null

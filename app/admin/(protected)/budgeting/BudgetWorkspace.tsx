@@ -145,7 +145,7 @@ function CategoryForm({ category, vendors, onClose, onSaved }: {
       </fieldset>
       {save.error && <p role="alert" className="text-sm text-rose">{save.error}</p>}
       <div className="flex flex-wrap gap-3">
-        <Button type="submit" pending={save.pending} disabled={save.pending || !validSplit} className={buttonStyle}>{save.pending ? "Saving…" : initial ? "Save changes" : "Add category"}</Button>
+        <Button type="submit" pending={save.pending} disabled={save.pending} className={buttonStyle}>{save.pending ? "Saving…" : initial ? "Save changes" : "Add category"}</Button>
         <Button variant="secondary" disabled={save.pending} onClick={onClose} className={buttonStyle}>Cancel</Button>
       </div>
     </form>

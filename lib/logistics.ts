@@ -83,6 +83,38 @@ export type LogisticsFamily = {
   accommodation: Accommodation | null;
 };
 
+// Missing entries inherit the original family room; an explicit null clears it.
+export function guestRoom(family: LogisticsFamily, guestId: number): string | null {
+  const rooms = family.logistics?.guest_rooms;
+  if (rooms && typeof rooms === "object" && !Array.isArray(rooms) && Object.hasOwn(rooms, String(guestId))) {
+    const room = rooms[String(guestId)];
+    return typeof room === "string" ? room : null;
+  }
+  return family.accommodation?.room_number ?? null;
+}
+
+export function familyRooms(family: LogisticsFamily): string[] {
+  return [...new Set(family.guests.flatMap((guest) => guestRoom(family, guest.id) ? [guestRoom(family, guest.id)!] : []))].sort(compareNames);
+}
+
+export function parseGuestRooms(form: FormData): { data: Record<string, string | null>; error?: never } | { error: string; data?: never } {
+  let rooms: unknown;
+  try { rooms = JSON.parse(String(form.get("guest_rooms") ?? "")); } catch {
+    return { error: "The guest rooms could not be read. Refresh and try again." };
+  }
+  if (!rooms || typeof rooms !== "object" || Array.isArray(rooms)) return { error: "Enter valid guest rooms." };
+  const data: Record<string, string | null> = {};
+  for (const [id, room] of Object.entries(rooms)) {
+    if (!/^[1-9]\d*$/.test(id) || !Number.isSafeInteger(Number(id)) || (room !== null && typeof room !== "string")) {
+      return { error: "Enter valid guest rooms." };
+    }
+    const value = typeof room === "string" ? room.trim() : null;
+    if (value && value.length > 40) return { error: "Enter room numbers of up to 40 characters." };
+    data[id] = value || null;
+  }
+  return { data };
+}
+
 export function needsArrivalSupport(family: LogisticsFamily) {
   return family.logistics?.arrival_support_required !== false;
 }
@@ -169,7 +201,7 @@ export function travelSummary(plan: Pick<ArrivalPlan, "travel_mode" | "train_num
 export function matchesFamily(family: LogisticsFamily, query: string): boolean {
   const words = query.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
   const haystack = [family.label, `#${family.id}`, ...family.guests.map((g) => g.name),
-    family.accommodation?.name, family.accommodation?.room_number]
+    family.accommodation?.name, ...familyRooms(family)]
     .join(" ").toLocaleLowerCase();
   return words.every((word) => haystack.includes(word));
 }
@@ -212,8 +244,8 @@ export function groupByAccommodation(families: LogisticsFamily[]): Accommodation
 export function sortAccommodationFamilies(families: LogisticsFamily[], sort: "room" | "family" | "arrival") {
   return [...families].sort((a, b) => {
     const primary = sort === "room"
-      ? Number(!a.accommodation?.room_number) - Number(!b.accommodation?.room_number)
-        || compareNames(a.accommodation?.room_number ?? "", b.accommodation?.room_number ?? "")
+      ? Number(!familyRooms(a).length) - Number(!familyRooms(b).length)
+        || compareNames(familyRooms(a)[0] ?? "", familyRooms(b)[0] ?? "")
       : sort === "arrival"
         ? compareNames(earliestArrivalKey(a.logistics), earliestArrivalKey(b.logistics))
         : 0;

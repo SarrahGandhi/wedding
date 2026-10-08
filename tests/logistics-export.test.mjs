@@ -54,6 +54,33 @@ test("an empty export remains a valid workbook with the requested headings", asy
   assert.equal(workbook.getWorksheet("Logistics").columnCount, 11);
 });
 
+test("export sorts arrival dates chronologically, leaving undated families last without changing input order", async () => {
+  const families = [
+    family(1),
+    family(2, { arrival_date: "2026-11-01" }),
+    family(3, { arrival_date: "2026-10-09" }),
+    family(4, { arrival_date: "2026-10-02" }),
+    family(5, { arrival_date: null }),
+  ];
+  for (const entry of families) entry.guests = [{ id: entry.id, name: entry.label }];
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(await createLogisticsExport(families));
+  const sheet = workbook.getWorksheet("Logistics");
+  assert.deepEqual([2, 3, 4, 5, 6].map((row) => sheet.getCell(`E${row}`).value),
+    ["Family 4", "Family 3", "Family 2", "Family 1", "Family 5"]);
+  assert.deepEqual(families.map((entry) => entry.id), [1, 2, 3, 4, 5]);
+});
+
+test("export keeps room labels from repeating", async () => {
+  const rooms = ["room 1", "Room 2", " ROOM 3 ", "02A", "   ", null];
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(await createLogisticsExport(rooms.map((room_number, index) =>
+    family(index, null, { name: "Lake Hotel", kind: "HOTEL", room_number }))));
+  const sheet = workbook.getWorksheet("Logistics");
+  assert.deepEqual(rooms.map((_, index) => sheet.getCell(`G${index + 2}`).value),
+    ["room 1", "Room 2", "ROOM 3", "Room 02A", null, null]);
+});
+
 test("browser download uses an XLSX blob and releases the temporary link", async (t) => {
   const link = { click: t.mock.fn(), remove: t.mock.fn() };
   const createObjectURL = t.mock.method(URL, "createObjectURL", (blob) => {
@@ -79,4 +106,12 @@ test("browser download uses an XLSX blob and releases the temporary link", async
   assert.equal(link.click.mock.callCount(), 1);
   assert.equal(link.remove.mock.callCount(), 1);
   assert.equal(revokeObjectURL.mock.calls[0].arguments[0], "blob:test-logistics");
+});
+
+test("export associates each room with its guest and retains explicitly unassigned rooms", async () => {
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(await createLogisticsExport([
+    family(1, { guest_rooms: { 1: "02A", 11: null } }, { name: "Lake Hotel", kind: "HOTEL", room_number: "100" }),
+  ]));
+  assert.equal(workbook.getWorksheet("Logistics").getCell("G2").value, "Amina & Bilal: Room 02A\nZoë Gandhi: Room not assigned");
 });

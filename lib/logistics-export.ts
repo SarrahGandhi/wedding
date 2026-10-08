@@ -19,7 +19,7 @@ export async function createLogisticsExport(families: LogisticsFamily[]) {
   sheet.columns = LOGISTICS_EXPORT_HEADERS.map((header, index) => ({
     header, width: COLUMN_WIDTHS[index],
     style: {
-      font: { name: "Calibri", size: 11, color: { argb: "FF000000" } },
+      font: { name: "Calibri", size: 12, color: { argb: "FF000000" } },
       alignment: { vertical: "top", wrapText: true },
       numFmt: "@",
     },
@@ -27,9 +27,19 @@ export async function createLogisticsExport(families: LogisticsFamily[]) {
   for (const column of [1, 8]) sheet.getColumn(column).numFmt = "dd mmm yyyy";
   for (const column of [2, 10]) sheet.getColumn(column).numFmt = "hh:mm";
 
-  for (const family of families) {
+  const orderedFamilies = [...families].sort((a, b) =>
+    (a.logistics?.arrival_date || "9999-99-99").localeCompare(b.logistics?.arrival_date || "9999-99-99"));
+  for (const family of orderedFamilies) {
     const plan = family.logistics;
     const stay = family.accommodation;
+    const guestRooms = plan?.guest_rooms;
+    const room = stay?.room_number?.trim();
+    const roomAssignments = guestRooms && typeof guestRooms === "object" && !Array.isArray(guestRooms)
+      && Object.keys(guestRooms).length > 0
+      ? family.guests.map((guest) => {
+        const assigned = Object.hasOwn(guestRooms, String(guest.id)) ? guestRooms[String(guest.id)] : room;
+        return `${guest.name}: ${typeof assigned === "string" && assigned ? `Room ${assigned}` : "Room not assigned"}`;
+      }).join("\n") : null;
     const mode = plan?.travel_mode;
     const travel = mode === "TRAIN" ? ["Train", plan?.train_number].filter(Boolean).join(" ")
       : mode === "FLIGHT" ? ["Flight", plan?.flight_number].filter(Boolean).join(" ")
@@ -42,28 +52,28 @@ export async function createLogisticsExport(families: LogisticsFamily[]) {
       mode === "TRAIN" ? plan?.coach_number ?? null : null,
       family.guests.map((guest) => guest.name).join("\n"),
       stay?.name ?? null,
-      stay?.room_number ? `Room ${stay.room_number}` : null,
+      roomAssignments ?? (room ? (/^room\b/i.test(room) ? room : `Room ${room}`) : null),
       null, null, null,
       plan?.travel_details ?? null,
     ];
     const row = sheet.addRow(values);
     // Estimate wrapped lines so family names and notes remain readable.
     const lines = values.map((value, index) => typeof value === "string"
-      ? value.split("\n").reduce((count, line) => count + Math.max(1, Math.ceil(line.length / (COLUMN_WIDTHS[index] - 3))), 0)
+      ? value.split("\n").reduce((count, line) => count + Math.max(1, Math.ceil(line.length / ((COLUMN_WIDTHS[index] - 3) * 11 / 12))), 0)
       : 1);
-    row.height = Math.min(409, Math.max(30, Math.max(...lines) * 15 + 8));
+    row.height = Math.min(409, Math.max(32, Math.max(...lines) * 17 + 8));
   }
 
-  sheet.getRow(1).height = 36;
+  sheet.getRow(1).height = 42;
   sheet.eachRow((row) => {
     for (let column = 1; column <= LOGISTICS_EXPORT_HEADERS.length; column++) {
       const cell = row.getCell(column);
       cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFFFFF" } };
       cell.border = {
-        top: { style: "thin", color: { argb: "FF000000" } },
-        left: { style: "thin", color: { argb: "FF000000" } },
-        bottom: { style: "thin", color: { argb: "FF000000" } },
-        right: { style: "thin", color: { argb: "FF000000" } },
+        top: { style: "thin", color: { argb: "FFD1D5DB" } },
+        left: { style: "thin", color: { argb: "FFD1D5DB" } },
+        bottom: { style: "thin", color: { argb: "FFD1D5DB" } },
+        right: { style: "thin", color: { argb: "FFD1D5DB" } },
       };
     }
   });
