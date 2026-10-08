@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/supabase/admin-auth";
-import { parseArrivalPlans, parseDepartureForm, parseLogisticsForm } from "@/lib/logistics";
+import { parseGuestRooms, parseArrivalPlans, parseDepartureForm, parseLogisticsForm } from "@/lib/logistics";
 
 export async function setArrivalSupportRequired(form: FormData) {
   const { supabase } = await requireAdmin();
@@ -37,6 +37,8 @@ export async function saveFamilyLogistics(formData: FormData) {
   if (parsed.error) return { error: parsed.error };
   const arrivals = parseArrivalPlans(formData);
   if (!arrivals.data) return { error: arrivals.error };
+  const rooms = parseGuestRooms(formData);
+  if (!rooms.data) return { error: rooms.error };
   const values = { ...parsed.data };
   if (values.p_accommodation_id !== null) {
     const { data: accommodation, error } = await supabase
@@ -52,7 +54,8 @@ export async function saveFamilyLogistics(formData: FormData) {
     values.p_new_kind = accommodation.kind;
     values.p_new_name = accommodation.name;
   }
-  const { error } = await supabase.rpc("save_family_arrivals", {
+  const { error } = await supabase.rpc("save_family_guest_rooms", {
+    p_guest_rooms: rooms.data,
     p_family_id: values.p_family_id,
     p_arrivals: arrivals.data,
     p_accommodation_id: values.p_accommodation_id,

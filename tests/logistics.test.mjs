@@ -317,3 +317,25 @@ test("search covers guests, accommodation and room; dates do not shift time zone
   assert.equal(formatArrival("2026-10-10"), "10 Oct 2026");
   assert.equal(accommodationLabel(families[0].accommodation), "Lake Hotel · Room 10");
 });
+
+test("individual guest rooms inherit legacy rooms and support clearing, search and sorting", async () => {
+  const { guestRoom, familyRooms } = await import("../lib/logistics.ts");
+  const family = { id: 1, label: "Family", guests: [{ id: 11, name: "Same name" }, { id: 12, name: "Same name" }], accommodation: { room_number: "101" }, logistics: null };
+  assert.equal(guestRoom(family, 11), "101");
+  family.logistics = { guest_rooms: { 11: "12A", 12: null } };
+  assert.equal(guestRoom(family, 11), "12A");
+  assert.equal(guestRoom(family, 12), null);
+  assert.deepEqual(familyRooms(family), ["12A"]);
+  assert.equal(matchesFamily(family, "12A"), true);
+  assert.equal(matchesFamily(family, "101"), false);
+  const other = { ...family, id: 2, logistics: { guest_rooms: { 11: "2", 12: "2" } } };
+  assert.deepEqual(sortAccommodationFamilies([family, other], "room").map(f => f.id), [2, 1]);
+});
+
+test("guest room input validates IDs and text, trims numbers and allows clearing", async () => {
+  const { parseGuestRooms } = await import("../lib/logistics.ts");
+  assert.deepEqual(parseGuestRooms(form({ guest_rooms: JSON.stringify({ 11: " 12A ", 12: " " }) })).data, { 11: "12A", 12: null });
+  for (const value of ["bad", "[]", "null", '{"0":"12"}', '{"11":12}', JSON.stringify({ 11: "x".repeat(41) })]) {
+    assert.ok(parseGuestRooms(form({ guest_rooms: value })).error);
+  }
+});

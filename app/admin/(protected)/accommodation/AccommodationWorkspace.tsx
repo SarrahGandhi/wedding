@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { FormField, SelectField } from "@/app/shared/FormField";
-import { arrivalSupportSummary, earliestArrivalPlan, formatArrivalDateTime, groupByAccommodation, matchesFamily, needsArrivalSupport, sortAccommodationFamilies, travelLabel, type AccommodationGroup, type LogisticsFamily } from "@/lib/logistics";
+import { familyRooms, guestRoom, arrivalSupportSummary, earliestArrivalPlan, formatArrivalDateTime, groupByAccommodation, matchesFamily, needsArrivalSupport, sortAccommodationFamilies, travelLabel, type AccommodationGroup, type LogisticsFamily } from "@/lib/logistics";
 
 function FamilyDetails({ family }: { family: LogisticsFamily }) {
   const arrival = earliestArrivalPlan(family.logistics);
@@ -13,7 +13,7 @@ function FamilyDetails({ family }: { family: LogisticsFamily }) {
         {family.label} <span className="sr-only">— edit logistics</span>
       </Link>
       <p className="mt-1 text-sm text-text-secondary">{family.guests.length} attending {family.guests.length === 1 ? "guest" : "guests"} · {family.side === "BRIDE" ? "Bride’s side" : "Groom’s side"}</p>
-      <p className="mt-1 break-words text-sm text-text-secondary">{family.guests.map((guest) => guest.name).join(", ")}</p>
+      <p className="mt-1 break-words text-sm text-text-secondary">{family.guests.map((guest) => `${guest.name} · ${guestRoom(family, guest.id) ? `Room ${guestRoom(family, guest.id)}` : "Room not assigned"}`).join("; ")}</p>
       <p className="mt-2 text-sm tabular-nums">{arrival ? `${formatArrivalDateTime(arrival)} · ${travelLabel(arrival.travel_mode)}` : "Arrival not set"}</p>
     </div>
   );
@@ -23,7 +23,7 @@ function StayGroup({ group }: { group: AccommodationGroup }) {
   const [sort, setSort] = useState<"room" | "family" | "arrival">("room");
   const isHotel = group.kind === "HOTEL";
   const ordered = sortAccommodationFamilies(group.families, sort);
-  const rooms = new Set(group.families.filter((family) => family.accommodation?.room_number).map((family) => family.accommodation?.id)).size;
+  const rooms = new Set(group.families.flatMap(familyRooms).map((room) => room.toLocaleLowerCase())).size;
   const guestCount = group.families.reduce((sum, family) => sum + family.guests.length, 0);
   return (
     <section className="border-t border-border/60 py-7">
@@ -46,8 +46,8 @@ function StayGroup({ group }: { group: AccommodationGroup }) {
           <li key={family.id} className="flex flex-col gap-3 bg-warm-white p-4 sm:flex-row sm:gap-6 sm:p-5">
             <div className="w-24 shrink-0">
               <p className="text-xs uppercase tracking-[0.1em] text-text-secondary">Room</p>
-              <p className={`mt-1 break-words ${family.accommodation?.room_number ? "font-display text-2xl tabular-nums" : "text-sm text-text-secondary"}`}>{family.accommodation?.room_number ?? "Not assigned"}</p>
-              {family.accommodation?.room_number && group.families.filter((other) => other.accommodation?.id === family.accommodation?.id).length > 1 && (
+              <p className={`mt-1 break-words ${familyRooms(family).length ? "font-display text-2xl tabular-nums" : "text-sm text-text-secondary"}`}>{familyRooms(family).length ?? "Not assigned"}</p>
+              {familyRooms(family).some((room) => group.families.some((other) => other.id !== family.id && familyRooms(other).some((otherRoom) => otherRoom.toLocaleLowerCase() === room.toLocaleLowerCase()))) && (
                 <p className="mt-1 text-xs text-sage">Shared room</p>
               )}
             </div>
