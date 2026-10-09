@@ -9,6 +9,13 @@ export const LOGISTICS_EXPORT_HEADERS = [
 ] as const;
 
 const COLUMN_WIDTHS = [20, 14, 28, 20, 38, 32, 26, 20, 30, 14, 48];
+const FONT_SIZE = 14;
+const ACCOMMODATION_COLORS = [
+  "FFE2F0D9", "FFFFF2CC", "FFFCE4D6", "FFE4DFEC",
+  "FFDDF2EF", "FFF8DFEA", "FFECE5D8", "FFF0EED5",
+];
+
+const accommodationKey = (name?: string | null) => name?.trim().replace(/\s+/g, " ").toLowerCase() ?? "";
 
 export async function createLogisticsExport(families: LogisticsFamily[]) {
   const workbook = new ExcelJS.Workbook();
@@ -19,13 +26,22 @@ export async function createLogisticsExport(families: LogisticsFamily[]) {
   sheet.columns = LOGISTICS_EXPORT_HEADERS.map((header, index) => ({
     header, width: COLUMN_WIDTHS[index],
     style: {
-      font: { name: "Calibri", size: 12, color: { argb: "FF000000" } },
+      font: { name: "Calibri", size: FONT_SIZE, color: { argb: "FF000000" } },
       alignment: { vertical: "top", wrapText: true },
       numFmt: "@",
     },
   }));
   for (const column of [1, 8]) sheet.getColumn(column).numFmt = "dd mmm yyyy";
   for (const column of [2, 10]) sheet.getColumn(column).numFmt = "hh:mm";
+
+  const accommodationNames = [...new Set(families.map((family) => accommodationKey(family.accommodation?.name)))].filter(Boolean).sort();
+  const accommodationColors = new Map<string, string>();
+  let colorIndex = 0;
+  for (const name of accommodationNames) {
+    accommodationColors.set(name, /\bmarhaba\b/.test(name)
+      ? "FFDDEBF7"
+      : ACCOMMODATION_COLORS[colorIndex++ % ACCOMMODATION_COLORS.length]);
+  }
 
   const orderedFamilies = [...families].sort((a, b) =>
     (a.logistics?.arrival_date || "9999-99-99").localeCompare(b.logistics?.arrival_date || "9999-99-99"));
@@ -59,16 +75,18 @@ export async function createLogisticsExport(families: LogisticsFamily[]) {
     const row = sheet.addRow(values);
     // Estimate wrapped lines so family names and notes remain readable.
     const lines = values.map((value, index) => typeof value === "string"
-      ? value.split("\n").reduce((count, line) => count + Math.max(1, Math.ceil(line.length / ((COLUMN_WIDTHS[index] - 3) * 11 / 12))), 0)
+      ? value.split("\n").reduce((count, line) => count + Math.max(1, Math.ceil(line.length / ((COLUMN_WIDTHS[index] - 3) * 11 / FONT_SIZE))), 0)
       : 1);
-    row.height = Math.min(409, Math.max(32, Math.max(...lines) * 17 + 8));
+    row.height = Math.min(409, Math.max(36, Math.max(...lines) * 20 + 8));
   }
 
-  sheet.getRow(1).height = 42;
+  sheet.getRow(1).height = 52;
   sheet.eachRow((row) => {
+    const background = row.number === 1 ? "FFFFFFFF"
+      : accommodationColors.get(accommodationKey(row.getCell(6).value as string | null)) ?? "FFFFFFFF";
     for (let column = 1; column <= LOGISTICS_EXPORT_HEADERS.length; column++) {
       const cell = row.getCell(column);
-      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFFFFF" } };
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: background } };
       cell.border = {
         top: { style: "thin", color: { argb: "FFD1D5DB" } },
         left: { style: "thin", color: { argb: "FFD1D5DB" } },

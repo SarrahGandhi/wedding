@@ -42,18 +42,34 @@ function StayGroup({ group }: { group: AccommodationGroup }) {
         </SelectField>
       </div>
       <ul className="space-y-4">
-        {ordered.map((family) => (
+        {ordered.map((family) => {
+          const assignedRooms = familyRooms(family);
+          const unassignedGuests = family.guests.filter((guest) => !guestRoom(family, guest.id)).length;
+          return (
           <li key={family.id} className="flex flex-col gap-3 bg-warm-white p-4 sm:flex-row sm:gap-6 sm:p-5">
-            <div className="w-24 shrink-0">
-              <p className="text-xs uppercase tracking-[0.1em] text-text-secondary">Room</p>
-              <p className={`mt-1 break-words ${familyRooms(family).length ? "font-display text-2xl tabular-nums" : "text-sm text-text-secondary"}`}>{familyRooms(family).length ?? "Not assigned"}</p>
-              {familyRooms(family).some((room) => group.families.some((other) => other.id !== family.id && familyRooms(other).some((otherRoom) => otherRoom.toLocaleLowerCase() === room.toLocaleLowerCase()))) && (
-                <p className="mt-1 text-xs text-sage">Shared room</p>
+            <div className="min-w-0 shrink-0 sm:w-36">
+              <p className="text-xs uppercase tracking-[0.1em] text-text-secondary">{assignedRooms.length > 1 ? "Room numbers" : "Room number"}</p>
+              {assignedRooms.length > 0 ? (
+                <ul className="mt-1 space-y-2">
+                  {assignedRooms.map((room) => {
+                    const shared = group.families.some((other) => other.id !== family.id && familyRooms(other).some((otherRoom) => otherRoom.toLocaleLowerCase() === room.toLocaleLowerCase()));
+                    return (
+                      <li key={room}>
+                        <p className="break-words font-display text-2xl tabular-nums">{room}</p>
+                        {shared && <p className="text-sm text-sage">Shared with another family</p>}
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : <p className="mt-1 text-sm text-text-secondary">Not assigned</p>}
+              {assignedRooms.length > 0 && unassignedGuests > 0 && (
+                <p className="mt-2 text-sm text-text-secondary">{unassignedGuests} {unassignedGuests === 1 ? "guest awaiting a room" : "guests awaiting rooms"}</p>
               )}
             </div>
             <FamilyDetails family={family} />
           </li>
-        ))}
+          );
+        })}
       </ul>
     </section>
   );
