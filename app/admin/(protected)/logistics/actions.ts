@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/supabase/admin-auth";
-import { parseGuestRooms, parseArrivalPlans, parseDepartureForm, parseLogisticsForm } from "@/lib/logistics";
+import { parseGuestRooms, parseArrivalPlans, parseDeparturePlans, parseDepartureForm, parseLogisticsForm } from "@/lib/logistics";
 
 export async function setArrivalSupportRequired(form: FormData) {
   const { supabase } = await requireAdmin();
@@ -25,7 +25,11 @@ export async function saveFamilyDeparture(formData: FormData) {
   const { supabase } = await requireAdmin();
   const parsed = parseDepartureForm(formData);
   if (parsed.error) return { error: parsed.error };
-  const { error } = await supabase.rpc("save_family_departure", parsed.data);
+  const departures = parseDeparturePlans(formData);
+  if (!departures.data) return { error: departures.error };
+  const { error } = await supabase.rpc("save_family_departures", {
+    p_family_id: parsed.data.p_family_id, p_departures: departures.data,
+  });
   if (error) return { error: error.message };
   revalidatePath("/admin/logistics");
   return { success: true };
