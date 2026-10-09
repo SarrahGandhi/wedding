@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useAdminSide } from "../AdminSideProvider";
 import { FormField, SelectField } from "@/app/shared/FormField";
 import { familyRooms, guestRoom, arrivalSupportSummary, earliestArrivalPlan, formatArrivalDateTime, groupByAccommodation, matchesFamily, needsArrivalSupport, sortAccommodationFamilies, travelLabel, type AccommodationGroup, type LogisticsFamily } from "@/lib/logistics";
 
@@ -76,15 +77,17 @@ function StayGroup({ group }: { group: AccommodationGroup }) {
 }
 
 export function AccommodationWorkspace({ families }: { families: LogisticsFamily[] }) {
+  const { side } = useAdminSide();
   const [search, setSearch] = useState("");
   const [kind, setKind] = useState("ALL");
-  const visible = families.filter((family) => needsArrivalSupport(family) && matchesFamily(family, search) &&
+  const sideFamilies = families.filter((family) => side === "ALL" || family.side === side);
+  const visible = sideFamilies.filter((family) => needsArrivalSupport(family) && matchesFamily(family, search) &&
     (kind === "ALL" || (kind === "UNASSIGNED" ? !family.accommodation : family.accommodation?.kind === kind)));
   const groups = groupByAccommodation(visible);
   const unassigned = visible.filter((family) => !family.accommodation);
-  const totalGroups = groupByAccommodation(families);
-  const { assigned, notRequired } = arrivalSupportSummary(families);
-  const attendingCount = families.filter(needsArrivalSupport).reduce((total, family) => total + family.guests.length, 0);
+  const totalGroups = groupByAccommodation(sideFamilies);
+  const { assigned, notRequired } = arrivalSupportSummary(sideFamilies);
+  const attendingCount = sideFamilies.filter(needsArrivalSupport).reduce((total, family) => total + family.guests.length, 0);
   return (
     <>
       <p className="mb-6 text-sm text-text-secondary tabular-nums">

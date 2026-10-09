@@ -11,6 +11,7 @@ import {
   SPLIT_LABELS, summarizeBudget, type BudgetCategory, type SplitType,
 } from "@/lib/budgeting";
 import { deleteCategory, saveCategory } from "./actions";
+import { useAdminSide } from "../AdminSideProvider";
 
 const buttonStyle = "rounded-full px-5 py-3 !tracking-[0.08em]";
 const amountProps = { type: "number", min: "0", max: "999999999.99", step: "0.01", inputMode: "decimal", required: true } as const;
@@ -207,12 +208,14 @@ function CategoryCard({ category, vendors, onSaved }: { category: BudgetCategory
 }
 
 export function BudgetWorkspace({ categories }: { categories: BudgetCategory[] }) {
+  const { side } = useAdminSide();
   const [adding, setAdding] = useState(false);
   const [query, setQuery] = useState("");
   const [notice, setNotice] = useState("");
-  const { totals, vendors } = summarizeBudget(categories);
+  const sideCategories = categories.filter((category) => side === "ALL" || category.split_type === side || category.split_type === "EQUAL" || category.split_type === "CUSTOM");
+  const { totals, vendors } = summarizeBudget(sideCategories);
   const vendorNames = [...new Set(categories.flatMap((category) => category.vendor ? [category.vendor] : []))].sort();
-  const filtered = categories.filter((category) => `${category.name} ${category.vendor ?? ""}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
+  const filtered = sideCategories.filter((category) => `${category.name} ${category.vendor ?? ""}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
 
   return (
     <div className="space-y-8 font-body [font-kerning:normal]">
@@ -227,9 +230,10 @@ export function BudgetWorkspace({ categories }: { categories: BudgetCategory[] }
       {notice && <div role="status" className="flex items-center justify-between gap-3 rounded-xl bg-sage-light px-4 py-3 text-sm text-sage"><span className="flex items-center gap-2"><Check size={16} aria-hidden="true" />{notice}</span><button type="button" onClick={() => setNotice("")} aria-label="Dismiss confirmation" className="cursor-pointer p-2"><X size={16} aria-hidden="true" /></button></div>}
 
       <section aria-label="Budget summary" className="rounded-3xl border border-border/60 bg-warm-white p-5 sm:p-7">
+        {side !== "ALL" && <p className="mb-5 text-sm text-text-secondary">Showing {side === "BRIDE" ? "bride" : "groom"} and shared categories, including equal and custom splits. Totals include the full cost and both sides’ payments for these categories.</p>}
         <dl className="grid gap-6 sm:grid-cols-3">
           {[
-            { label: "Total expenses", value: totals.total, hint: `${categories.length} ${categories.length === 1 ? "category" : "categories"}` },
+            { label: "Total expenses", value: totals.total, hint: `${sideCategories.length} ${sideCategories.length === 1 ? "category" : "categories"}` },
             { label: "Paid so far", value: totals.paid, hint: "Bride and groom combined" },
             { label: "Still owed to vendors", value: totals.outstanding, hint: "Across all unpaid vendors" },
           ].map(({ label, value, hint }) => <div key={label} className="min-w-0"><dt className="text-sm text-text-secondary">{label}</dt><dd className="mt-2 break-words text-2xl font-medium leading-tight tabular-nums lg:text-3xl">{formatMoney(value)}</dd><dd className="mt-2 text-xs text-text-secondary">{hint}</dd></div>)}
@@ -244,7 +248,7 @@ export function BudgetWorkspace({ categories }: { categories: BudgetCategory[] }
 
       {adding && <section className="rounded-3xl border border-accent/40 bg-warm-white p-5 sm:p-7" aria-labelledby="new-category-heading"><h2 id="new-category-heading" className="mb-6 font-display text-3xl">Add a category</h2><CategoryForm vendors={vendorNames} onClose={() => setAdding(false)} onSaved={() => { setAdding(false); setNotice("Category added."); }} /></section>}
 
-      {categories.length > 0 && <section aria-labelledby="vendor-heading">
+      {sideCategories.length > 0 && <section aria-labelledby="vendor-heading">
         <h2 id="vendor-heading" className="font-display text-3xl">Vendor balances</h2>
         <p className="mb-5 mt-2 max-w-prose text-sm leading-relaxed text-text-secondary">Categories with the same vendor name are combined here. Credits are applied only within that vendor’s total.</p>
         <div className="overflow-x-auto rounded-2xl border border-border/60 bg-warm-white" role="region" aria-label="Vendor balances table" tabIndex={0}>
@@ -268,6 +272,7 @@ export function BudgetWorkspace({ categories }: { categories: BudgetCategory[] }
           {categories.length > 0 && <label className="block sm:w-72"><span className="sr-only">Search categories or vendors</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search categories or vendors" className="w-full rounded-full border border-border bg-warm-white px-4 py-3 text-base sm:text-sm" /></label>}
         </div>
         {categories.length === 0 ? <div className="rounded-3xl border border-dashed border-border bg-warm-white/50 px-6 py-10"><h3 className="mb-3 font-display text-2xl">Start with your first expense.</h3><p className="mb-5 max-w-prose text-sm leading-relaxed text-text-secondary">Add a category such as venue or catering, enter one or more amounts, and choose how you’ll share the cost. You can add the vendor and any payments already made.</p><Button variant="secondary" className={buttonStyle} onClick={() => setAdding(true)} disabled={adding}>Add your first category</Button></div>
+          : sideCategories.length === 0 ? <p className="py-6 text-sm text-text-secondary">No categories for this side yet. Add a category or select Both sides.</p>
           : filtered.length === 0 ? <p className="py-6 text-sm text-text-secondary">No categories match this search. Try a different category or vendor name.</p>
           : <div className="space-y-4">{filtered.map((category) => <CategoryCard key={category.id} category={category} vendors={vendorNames} onSaved={setNotice} />)}</div>}
       </section>

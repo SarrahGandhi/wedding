@@ -42,7 +42,7 @@ export function AdminSideToggle() {
           </button>
         ))}
       </div>
-      <p className="text-sm text-text-secondary">Applies to Roster, RSVP, Tasks, Shopping, and Logistics.</p>
+      <p className="text-sm text-text-secondary">Applies to Roster, RSVP, Tasks, Shopping, Logistics, Accommodation, and Budgeting.</p>
     </div>
   );
 }
