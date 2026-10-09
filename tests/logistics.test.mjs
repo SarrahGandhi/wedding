@@ -339,3 +339,60 @@ test("guest room input validates IDs and text, trims numbers and allows clearing
     assert.ok(parseGuestRooms(form({ guest_rooms: value })).error);
   }
 });
+
+test("multiple departures preserve each group's dates, times, numbers and boarding locations", async () => {
+  const { parseDeparturePlans, familyDepartures } = await import("../lib/logistics.ts");
+  const entries = [
+    { guests: "Amina", departure_mode: "TRAIN", departure_date: "2026-10-14", departure_time: "08:30", train_number: " 01234 ", station: " Central station ", dropoff_by: " Ali  Khan " },
+    { guests: "Bilal", departure_mode: "FLIGHT", departure_date: "2026-10-15", departure_time: "00:05", flight_number: " AI 101 ", train_number: "stale", station: "stale" },
+    { guests: "Zoë", departure_mode: "BUS", departure_date: "2026-10-15", bus_location: " Main bus stand ", flight_number: "stale" },
+    {},
+  ];
+  const parsed = parseDeparturePlans(form({ departures: JSON.stringify(entries) }));
+  assert.equal(parsed.error, undefined);
+  assert.equal(parsed.data.length, 3);
+  assert.equal(parsed.data[0].train_number, "01234");
+  assert.equal(parsed.data[0].station, "Central station");
+  assert.equal(parsed.data[0].dropoff_by, "Ali Khan");
+  assert.equal(parsed.data[1].departure_time, "00:05");
+  assert.equal(parsed.data[1].flight_number, "AI 101");
+  assert.equal(parsed.data[1].station, null);
+  assert.equal(parsed.data[1].train_number, null);
+  assert.equal(parsed.data[2].bus_location, "Main bus stand");
+  assert.equal(parsed.data[2].flight_number, null);
+  assert.deepEqual(familyDepartures({ departures: parsed.data, departure_mode: "CAR" }), parsed.data);
+  assert.deepEqual(familyDepartures({ departures: [], departure_mode: "CAR" }), []);
+  const legacy = familyDepartures({ departure_mode: "TRAIN", departure_date: "2026-10-14", departure_details: "Original notes", dropoff_by: "Ali" });
+  assert.equal(legacy.length, 1);
+  assert.equal(legacy[0].departure_details, "Original notes");
+  assert.equal(legacy[0].departure_time, null);
+});
+
+test("departure validation rejects invalid dates, times, types and excessive entries", async () => {
+  const { parseDeparturePlans } = await import("../lib/logistics.ts");
+  for (const entry of [
+    { departure_date: "2026-02-30" }, { departure_date: "0000-01-01" },
+    { departure_time: "08:30" }, { departure_date: "2026-10-14", departure_time: "24:00" },
+    { departure_date: "2026-10-14", departure_time: "8:30" }, { departure_mode: "BOAT" },
+    { train_number: 123 }, { station: "x".repeat(161) }, { bus_location: {} }, null,
+  ]) assert.ok(parseDeparturePlans(form({ departures: JSON.stringify([entry]) })).error);
+  for (const raw of ["broken", "{}", JSON.stringify(Array(51).fill({}))]) {
+    assert.ok(parseDeparturePlans(form({ departures: raw })).error);
+  }
+  assert.deepEqual(parseDeparturePlans(form({ departures: "[]" })).data, []);
+});
+
+test("departure sorting uses all entries and their times without mutating saved order", async () => {
+  const { familyDepartures } = await import("../lib/logistics.ts");
+  const families = [
+    { id: 1, label: "A", logistics: { departures: [
+      { departure_date: "2026-10-15", departure_time: "18:00", dropoff_by: "Zain" },
+      { departure_date: "2026-10-14", departure_time: "07:30", dropoff_by: "Ali" },
+    ] } },
+    { id: 2, label: "B", logistics: { departure_date: "2026-10-14", dropoff_by: "Bilal" } },
+    { id: 3, label: "C", logistics: { departures: [{ departure_date: "2026-10-14", departure_time: "06:00" }] } },
+  ];
+  assert.deepEqual(sortLogisticsFamilies(families, "departure").map((family) => family.id), [3, 1, 2]);
+  assert.deepEqual(sortLogisticsFamilies(families, "dropoff").map((family) => family.id), [1, 2, 3]);
+  assert.equal(familyDepartures(families[0].logistics)[0].departure_date, "2026-10-15");
+});

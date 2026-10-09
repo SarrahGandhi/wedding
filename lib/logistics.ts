@@ -24,6 +24,39 @@ export type ArrivalPlan = {
   pickup_by: string | null;
 };
 
+export type DeparturePlan = {
+  guests: string | null;
+  departure_date: string | null;
+  departure_time: string | null;
+  departure_mode: string | null;
+  train_number: string | null;
+  flight_number: string | null;
+  station: string | null;
+  bus_location: string | null;
+  departure_details: string | null;
+  dropoff_by: string | null;
+};
+
+export function familyDepartures(logistics: FamilyLogistics | null): DeparturePlan[] {
+  if (Array.isArray(logistics?.departures)) return [...logistics.departures] as DeparturePlan[];
+  if (!logistics || !(logistics.departure_date || logistics.departure_mode || logistics.departure_details || logistics.dropoff_by)) return [];
+  return [{ guests: null, departure_date: logistics.departure_date, departure_time: null,
+    departure_mode: logistics.departure_mode, departure_details: logistics.departure_details,
+    dropoff_by: logistics.dropoff_by, train_number: null, flight_number: null, station: null, bus_location: null }];
+}
+
+export function departureSortKey(entry: DeparturePlan) {
+  return entry.departure_date ? `${entry.departure_date}T${entry.departure_time || "99:99"}` : "9999-99-99T99:99";
+}
+
+function earliestDepartureKey(logistics: FamilyLogistics | null) {
+  return familyDepartures(logistics).map(departureSortKey).sort()[0] ?? "9999-99-99T99:99";
+}
+
+function firstDropoffName(logistics: FamilyLogistics | null) {
+  return familyDepartures(logistics).flatMap((entry) => entry.dropoff_by ? [entry.dropoff_by] : []).sort(compareNames)[0] ?? "";
+}
+
 export function familyArrivals(logistics: FamilyLogistics | null): ArrivalPlan[] {
   if (Array.isArray(logistics?.arrivals)) return [...logistics.arrivals] as ArrivalPlan[];
   if (!logistics || !(logistics.arrival_date || logistics.travel_mode || logistics.travel_details || logistics.pickup_by)) return [];
@@ -138,10 +171,10 @@ export type LogisticsSort = "family" | "arrival" | "pickup" | "departure" | "dro
 
 export function sortLogisticsFamilies(families: LogisticsFamily[], sort: LogisticsSort) {
   return [...families].sort((a, b) => {
-    const pickupA = sort === "dropoff" ? a.logistics?.dropoff_by ?? "" : firstPickupName(a.logistics);
-    const pickupB = sort === "dropoff" ? b.logistics?.dropoff_by ?? "" : firstPickupName(b.logistics);
-    const dateA = sort === "departure" ? a.logistics?.departure_date : earliestArrivalKey(a.logistics);
-    const dateB = sort === "departure" ? b.logistics?.departure_date : earliestArrivalKey(b.logistics);
+    const pickupA = sort === "dropoff" ? firstDropoffName(a.logistics) : firstPickupName(a.logistics);
+    const pickupB = sort === "dropoff" ? firstDropoffName(b.logistics) : firstPickupName(b.logistics);
+    const dateA = sort === "departure" ? earliestDepartureKey(a.logistics) : earliestArrivalKey(a.logistics);
+    const dateB = sort === "departure" ? earliestDepartureKey(b.logistics) : earliestArrivalKey(b.logistics);
     const primary = sort === "pickup" || sort === "dropoff"
       ? Number(!pickupA) - Number(!pickupB) || compareNames(pickupA, pickupB)
       : sort === "arrival" || sort === "departure"
@@ -376,6 +409,46 @@ export function parseArrivalPlans(form: FormData): { data: ArrivalPlan[]; error?
     plan.train_number = parsed.data.p_train_number;
     plan.coach_number = parsed.data.p_coach_number;
     plan.flight_number = parsed.data.p_flight_number;
+    if (Object.values(plan).some(Boolean)) plans.push(plan);
+  }
+  return { data: plans };
+}
+
+export function parseDeparturePlans(form: FormData): { data: DeparturePlan[]; error?: never } | { error: string; data?: never } {
+  let entries: unknown;
+  try {
+    const raw = form.get("departures");
+    if (typeof raw !== "string") throw new Error();
+    entries = JSON.parse(raw);
+  } catch {
+    return { error: "The departure entries could not be read. Refresh and try again." };
+  }
+  if (!Array.isArray(entries) || entries.length > 50) return { error: "Use up to 50 departures per family." };
+  const plans: DeparturePlan[] = [];
+  for (const [index, entry] of entries.entries()) {
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) return { error: `Check departure ${index + 1}.` };
+    const normalized: Record<string, string | null> = {};
+    for (const [key, limit] of Object.entries({ guests: 300, departure_date: 10, departure_time: 5,
+      departure_mode: 10, train_number: 40, flight_number: 40, station: 160, bus_location: 160,
+      departure_details: 1000, dropoff_by: 160 })) {
+      const value = entry[key];
+      if (value != null && typeof value !== "string") return { error: `Departure ${index + 1}: enter details as text.` };
+      normalized[key] = value?.trim() || null;
+      if ((normalized[key]?.length ?? 0) > limit) return { error: `Departure ${index + 1}: ${key.replaceAll("_", " ")} must be ${limit} characters or fewer.` };
+    }
+    const plan = normalized as DeparturePlan;
+    if (plan.departure_time && (!/^([01]\d|2[0-3]):[0-5]\d$/.test(plan.departure_time) || !plan.departure_date)) {
+      return { error: `Departure ${index + 1}: choose a departure date and a valid time.` };
+    }
+    const single = new FormData();
+    single.set("family_id", String(form.get("family_id") ?? ""));
+    for (const key of ["departure_mode", "departure_date", "departure_details", "dropoff_by"] as const) single.set(key, plan[key] ?? "");
+    const parsed = parseDepartureForm(single);
+    if (parsed.error) return { error: `Departure ${index + 1}: ${parsed.error}` };
+    plan.dropoff_by = parsed.data.p_dropoff_by;
+    if (plan.departure_mode !== "TRAIN") { plan.train_number = null; plan.station = null; }
+    if (plan.departure_mode !== "FLIGHT") plan.flight_number = null;
+    if (plan.departure_mode !== "BUS") plan.bus_location = null;
     if (Object.values(plan).some(Boolean)) plans.push(plan);
   }
   return { data: plans };
